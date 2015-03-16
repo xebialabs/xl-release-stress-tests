@@ -1,4 +1,5 @@
 apply plugin: 'scala'
+apply plugin:'application'
 
 repositories {
   maven { url "http://repository.excilys.com/content/groups/public" }
@@ -21,51 +22,40 @@ dependencies {
   compile 'joda-time:joda-time:2.1'
 
   compile 'org.scalatest:scalatest_2.11:2.2.4'
+  compile 'org.clapper:classutil_2.11:1.0.5'
+  compile 'com.typesafe.scala-logging:scala-logging_2.11:3.1.0'
+  compile 'ch.qos.logback:logback-parent:1.1.2'
 }
 
-task gatling(dependsOn: ['processResources', 'compileScala']) << {
-  def simulationsToRun = project.hasProperty("simulation") ? project.simulation : 'Simulation'
+mainClassName = "stress.utils.GatlingRunner"
 
-  file('src/main/scala/simulations').listFiles()
-      .findAll { it.name.endsWith("${simulationsToRun}.scala") }
-      .collect { it.name.replace('.scala', '') }
-      .each { simulation ->
+def maxResponseSeconds = project.hasProperty("maxResponseSeconds") ? Integer.parseInt(project.maxResponseSeconds) : 300
+def myJvmArgs = [
+  '-Xmx4g',
+  '-Xms1g',
+  '-Xss1m',
+  '-XX:MaxPermSize=256M',
+  "-Dgatling.http.ahc.requestTimeout=${maxResponseSeconds * 1000}",
+  "-Dgatling.http.ahc.readTimeout=${maxResponseSeconds * 1000}",
+  "-Dgatling.http.ahc.connectTimeout=${maxResponseSeconds * 1000}"
+]
 
-          println "========== Starting Gatling simulation $simulation =========="
-          javaexec {
-              standardInput = System.in
-              main = 'io.gatling.app.Gatling'
-              classpath = sourceSets.main.output + sourceSets.main.runtimeClasspath
-
-              def maxResponseSeconds = project.hasProperty("maxResponseSeconds") ? Integer.parseInt(project.maxResponseSeconds) : 300
-
-
-              def myJvmArgs = [
-                  '-Xmx4g',
-                  '-Xms1g',
-                  '-Xss1m',
-                  '-XX:MaxPermSize=256M',
-                  "-Dgatling.http.ahc.requestTimeout=${maxResponseSeconds * 1000}",
-                  "-Dgatling.http.ahc.readTimeout=${maxResponseSeconds * 1000}",
-                  "-Dgatling.http.ahc.connectTimeout=${maxResponseSeconds * 1000}"
-              ]
-
-              if(project.hasProperty("users")) {
-                myJvmArgs.add("-Dusers=${project.users}")
-              }
-
-              if(project.hasProperty("baseUrl")) {
-                myJvmArgs.add("-DbaseUrl=${project.baseUrl}")
-              }
-
-              jvmArgs = myJvmArgs
-              args = ['-rf', file('reports'),
-                  '-df', sourceSets.main.output.resourcesDir.toString(),
-                  '-s', "simulations.$simulation"]
-          }
-      }
+if(project.hasProperty("simulation")) {
+  myJvmArgs.add("-Dsimulation=${project.simulation}")
 }
 
+if(project.hasProperty("users")) {
+  myJvmArgs.add("-Dusers=${project.users}")
+}
+
+if(project.hasProperty("baseUrl")) {
+  myJvmArgs.add("-DbaseUrl=${project.baseUrl}")
+}
+
+run {
+  jvmArgs myJvmArgs
+  args '-rf', file('reports')
+}
 
 task cleanSimulations(type: Delete) {
   delete 'reports'

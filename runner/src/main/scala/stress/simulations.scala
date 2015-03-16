@@ -38,15 +38,15 @@ class ReleasesOverviewSimulation extends SimulationBase(
 class ReleaseFlowSimulation extends SimulationBase(releaseFlowScenario)
 
 
-class GroupSimulation extends Simulation {
-
-  setUp(
-      createReleaseScenario.inject(atOnceUsers(nbUsers)),
-      queryAllReleasesScenario.inject(atOnceUsers(nbUsers)),
-      queryPipelinesScenario.inject(atOnceUsers(nbUsers)),
-      openCalendarScenario.inject(atOnceUsers(nbUsers)),
-      queryMyTasksScenario.inject(atOnceUsers(nbUsers)),
-      queryTemplatesScenario.inject(atOnceUsers(nbUsers))
-    ).protocols(httpProtocol)
-
-}
+//class GroupSimulation extends Simulation {
+//
+//  setUp(
+//      createReleaseScenario.inject(atOnceUsers(nbUsers)),
+//      queryAllReleasesScenario.inject(atOnceUsers(nbUsers)),
+//      queryPipelinesScenario.inject(atOnceUsers(nbUsers)),
+//      openCalendarScenario.inject(atOnceUsers(nbUsers)),
+//      queryMyTasksScenario.inject(atOnceUsers(nbUsers)),
+//      queryTemplatesScenario.inject(atOnceUsers(nbUsers))
+//    ).protocols(httpProtocol)
+//
+//}
