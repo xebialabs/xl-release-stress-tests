@@ -25,7 +25,8 @@ object Calendar {
         jsonPath("$[*]['id']")
           .findAll
           .saveAs("releaseIds")
-      )).execGetDependencies("calendar")
+      ))
+    .execGetDependencies("calendar")
     .exec(
       http("Get special days for calendar")
         .get("/calendar/specialDays")

@@ -4,6 +4,7 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import stress.chain._
 
+import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 object Scenarios {
@@ -15,7 +16,7 @@ object Scenarios {
     .exec(Release.queryAll)
 
   val queryPipelinesScenario = scenario("Query pipelines")
-    .exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+    .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
 
   val openCalendarScenario = scenario("Calendar page")
     .exec(Calendar.open)
@@ -28,5 +29,11 @@ object Scenarios {
 
   val queryTemplatesScenario = scenario("Template overview")
     .exec(Template.query)
+
+  val releaseManagerScenario = scenario("Release manager")
+    .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+    .pause(4 minutes, 6 minutes)
+    .exec(Calendar.open)
+    .pause(4 minutes, 6 minutes)
 
 }

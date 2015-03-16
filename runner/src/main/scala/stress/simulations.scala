@@ -1,7 +1,6 @@
 package stress
 
 import io.gatling.core.Predef._
-import io.gatling.core.scenario.Simulation
 import stress.chain.Release
 import stress.utils.Scenarios
 import stress.utils.Scenarios._
@@ -33,10 +32,14 @@ class ReleasesOverviewSimulation extends SimulationBase(
 )
 
 /**
- * - X users are looking at the details of the release at Release Flow screen
+ * X users are looking at the details of the release at Release Flow screen
  */
 class ReleaseFlowSimulation extends SimulationBase(releaseFlowScenario)
 
+/**
+ * X release managers are working with XL Release
+ */
+class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario)
 
 //class GroupSimulation extends Simulation {
 //

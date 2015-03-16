@@ -3,10 +3,10 @@ package stress.utils
 import com.typesafe.scalalogging.LazyLogging
 import io.gatling.app.Gatling
 import io.gatling.core.scenario.Simulation
-import org.clapper.classutil.{ClassFinder, ClassInfo}
+import org.clapper.classutil.ClassFinder
 
 /**
- * This runner allows to run find and execute simulations from the same classpath as the runner itself.
+ * This runner allows to find and execute simulations from the same classpath as the runner itself.
  * Simplifies build logic.
  */
 object GatlingRunner extends App with LazyLogging {
