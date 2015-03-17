@@ -5,6 +5,7 @@ import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.scalatest.FunSuite
 import spray.http.{HttpResponse, StatusCodes, StatusCode}
 
+import scala.collection.immutable.IndexedSeq
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
@@ -53,6 +54,42 @@ class XlrClientTest extends UnitTestSugar {
 
       client.removeCi(release.id)
     }
+
+    it("should create many releases in batches") {
+      val range = 0 until 20
+      val releases = range.map(id =>
+        Release.build(s"Release$id")
+      )
+      val groups = releases.grouped(100).toSeq
+
+      val releaseResponsesFutures = groups.map(client.createReleases)
+      expectSuccessfulResponses(releaseResponsesFutures)
+
+      val releaseRemovalFutures = releases.map(release => {
+        client.removeCi(release.id)
+      })
+      expectSuccessfulResponses(releaseRemovalFutures)
+    }
+
+    it("should create many releases") {
+      val range = 0 until 20
+      val releases = range.map(id =>
+        Release.build(s"Release$id")
+      )
+      val releaseResponsesFutures = releases.map(client.createRelease)
+      expectSuccessfulResponses(releaseResponsesFutures)
+
+      val releaseRemovalFutures = releases.map(release => {
+        client.removeCi(release.id)
+      })
+      expectSuccessfulResponses(releaseRemovalFutures)
+    }
   }
 
+  def expectSuccessfulResponses(responsesFutures: Seq[Future[HttpResponse]]): Unit = {
+    val releaseResponses = Future.sequence(responsesFutures).futureValue
+    releaseResponses.foreach(releaseResponse =>
+      releaseResponse.status.intValue should (be >= 200 and be < 300)
+    )
+  }
 }

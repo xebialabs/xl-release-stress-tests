@@ -19,7 +19,7 @@ class XlrClient(apiUrl: String) extends XlrJsonProtocol with AdditionalFormats w
 
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val timeout: Timeout = Timeout(15.seconds)
+  implicit val timeout: Timeout = Timeout(60.minutes)
 
   private val loggingReq = (i: HttpRequest) => logger.debug(i.toString)
   private val loggingResp = (i: HttpResponse) => logger.debug(i.toString)
@@ -45,6 +45,9 @@ class XlrClient(apiUrl: String) extends XlrJsonProtocol with AdditionalFormats w
 
   def createRelease(release: Release): Future[HttpResponse] =
     pipeline(Post(s"$apiUrl/repository/ci/${release.id}", release))
+
+  def createReleases(releases: Seq[Release]): Future[HttpResponse] =
+    pipeline(Post(s"$apiUrl/fixtures/", releases))
 
   def removeCi(id: String): Future[HttpResponse] =
     pipeline(Delete(s"$apiUrl/repository/ci/$id"))
