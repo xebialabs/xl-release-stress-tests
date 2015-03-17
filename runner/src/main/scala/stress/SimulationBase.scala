@@ -21,7 +21,7 @@ abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulati
       _.inject(
         rampUsers(nbUsers) over (2 seconds)
       )
-      .customPauses("1 second")
+//      .customPauses("1 second")
     })
   ).protocols(httpProtocol)
 

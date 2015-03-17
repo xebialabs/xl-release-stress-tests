@@ -40,11 +40,11 @@ object Scenarios {
   val opsScenario = scenario("Ops person")
     .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 4 minutes))
     .exec(Calendar.open)
-    .pause(1 minute)
+    .pause(0.5 minute, 1.5 minutes)
     .exec(Tasks.commentOnRandomTask())
-    .pause(1 minute)
+    .pause(0.5 minute, 1.5 minutes)
     .exec(Tasks.changeTeamAssignmentOfRandomTask())
-    .pause(1 minute)
+    .pause(0.5 minute, 1.5 minutes)
     .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 3 minutes))
 
 }
