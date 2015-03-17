@@ -41,6 +41,12 @@ class ReleaseFlowSimulation extends SimulationBase(releaseFlowScenario)
  */
 class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario)
 
+/**
+ * X ops people are working with XL Release
+ */
+class OpsSimulation extends SimulationBase(opsScenario)
+
+
 //class GroupSimulation extends Simulation {
 //
 //  setUp(

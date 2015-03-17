@@ -12,7 +12,7 @@ import scala.language.postfixOps
 class TasksOverviewWithFilterSimulation extends SimulationBase(
 
   scenario("X users are searching for not existing tasks")
-    .exec(Tasks.tasks(
+    .exec(Tasks.open(
     StringBody("""{"active":true,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}""")
   ))
 

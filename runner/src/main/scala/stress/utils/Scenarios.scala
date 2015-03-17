@@ -2,6 +2,7 @@ package stress.utils
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
+import io.gatling.http.request.StringBody
 import stress.chain._
 
 import scala.concurrent.duration._
@@ -22,7 +23,7 @@ object Scenarios {
     .exec(Calendar.open)
 
   val queryMyTasksScenario = scenario("Query my tasks")
-    .exec(Tasks.tasks(RawFileBody("my-filters-body.json")))
+    .exec(Tasks.open(RawFileBody("my-filters-body.json")))
 
   val releaseFlowScenario = scenario("Release flow")
     .exec(Release.flow("Release1"))
@@ -35,5 +36,12 @@ object Scenarios {
     .pause(4 minutes, 6 minutes)
     .exec(Calendar.open)
     .pause(4 minutes, 6 minutes)
+
+  val opsScenario = scenario("Ops person")
+    .exec(Tasks.openAndPoll(
+      StringBody("""{"active":true,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""),
+      4 minutes
+    ))
+    .exec(Calendar.open)
 
 }
