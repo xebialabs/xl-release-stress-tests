@@ -7,7 +7,6 @@ import io.gatling.http.request.Body
 
 import scala.concurrent.duration.{Duration, _}
 import scala.language.postfixOps
-import scala.util.Random
 
 object Tasks {
 
@@ -41,42 +40,35 @@ object Tasks {
       .pause(2 seconds)
     }
 
-  def commentOnRandomTask() = chooseRandomTask(ALL_TASKS_FILTER)
+  def commentOnRandomTask() = open(ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
-        .post("/tasks/${randomTaskId}/comments")
+        .post("/tasks/${taskIds.random()}/comments")
         .body(StringBody("""{"text":"This task needs some comments"}"""))
         .asJSON
     )
 
-  def changeTeamAssignmentOfRandomTask() = chooseRandomTask(ALL_TASKS_FILTER)
+  def changeTeamAssignmentOfRandomTask() = open(ALL_TASKS_FILTER)
     .randomSwitch(
-      50d -> setTaskTeam(Some("Release Admin")),
-      50d -> setTaskTeam(None)
+      50d -> setTeamOnRandomTask(Some("Release Admin")),
+      50d -> setTeamOnRandomTask(None)
     )
 
-  private def chooseRandomTask(filter: String) = open(filter)
-    .exec(session => {
-      val rnd = new Random()
-      val taskId = if (session.taskIds.nonEmpty) session.taskIds.get(rnd.nextInt(session.taskIds.size)) else ""
-      session.set("randomTaskId", taskId)
-    })
-
-  private def setTaskTeam(team: Option[String]) = {
+  private def setTeamOnRandomTask(team: Option[String]) = {
     val teamJson = team match {
       case Some(t) => s""""$t""""
       case None => "null"
     }
     exec(
       http("Change task team assignment")
-        .put("/tasks/${randomTaskId}/team")
-        .body(StringBody( s"""{"team":$teamJson}"""))
+        .put("/tasks/${taskIds.random()}/team")
+        .body(StringBody(s"""{"team":$teamJson}"""))
         .asJSON
     )
   }
 
   private implicit class SessionEnhancedByTasks(session: Session) {
-    def taskIds: Vector[String] = session.attributes.get("taskIds").get.asInstanceOf[Vector[String]]
+    def taskIds: Vector[String] = session("taskIds").as[Vector[String]]
   }
 
 }

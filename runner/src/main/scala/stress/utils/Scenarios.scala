@@ -11,10 +11,10 @@ import scala.language.{implicitConversions, postfixOps}
 object Scenarios {
 
   val createReleaseScenario = scenario("Create release")
-    .exec(Release.create(RawFileBody("create-release-body.json")))
+    .exec(Releases.create(RawFileBody("create-release-body.json")))
 
   val queryAllReleasesScenario = scenario("Query all releases")
-    .exec(Release.queryAll)
+    .exec(Releases.queryAll)
 
   val queryPipelinesScenario = scenario("Query pipelines")
     .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
@@ -26,10 +26,10 @@ object Scenarios {
     .exec(Tasks.open(RawFileBody("my-filters-body.json")))
 
   val releaseFlowScenario = scenario("Release flow")
-    .exec(Release.flow("Release1"))
+    .exec(Releases.flow("Release1"))
 
   val queryTemplatesScenario = scenario("Template overview")
-    .exec(Template.query)
+    .exec(Templates.open)
 
   val releaseManagerScenario = scenario("Release manager")
     .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
@@ -46,5 +46,11 @@ object Scenarios {
     .exec(Tasks.changeTeamAssignmentOfRandomTask())
     .pause(0.5 minute, 1.5 minutes)
     .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 3 minutes))
+
+  val developmentTeamScenario = scenario("Team of developers")
+    .repeat(2) {
+      exec(Releases.createFromTemplate("create-release-20-automated-tasks.json", "20 automated tasks"))
+      .pause(5 minutes)
+    }
 
 }

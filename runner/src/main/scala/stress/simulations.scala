@@ -1,7 +1,7 @@
 package stress
 
 import io.gatling.core.Predef._
-import stress.chain.Release
+import stress.chain.Releases
 import stress.utils.Scenarios
 import stress.utils.Scenarios._
 
@@ -28,7 +28,7 @@ class TasksOverviewSimulation extends SimulationBase(queryMyTasksScenario)
  * X users are looking at release overview
  */
 class ReleasesOverviewSimulation extends SimulationBase(
-  scenario("Release overview").exec(Release.queryAll)
+  scenario("Release overview").exec(Releases.queryAll)
 )
 
 /**
@@ -46,16 +46,7 @@ class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario)
  */
 class OpsSimulation extends SimulationBase(opsScenario)
 
-
-//class GroupSimulation extends Simulation {
-//
-//  setUp(
-//      createReleaseScenario.inject(atOnceUsers(nbUsers)),
-//      queryAllReleasesScenario.inject(atOnceUsers(nbUsers)),
-//      queryPipelinesScenario.inject(atOnceUsers(nbUsers)),
-//      openCalendarScenario.inject(atOnceUsers(nbUsers)),
-//      queryMyTasksScenario.inject(atOnceUsers(nbUsers)),
-//      queryTemplatesScenario.inject(atOnceUsers(nbUsers))
-//    ).protocols(httpProtocol)
-//
-//}
+/**
+ * X development teams commit code which triggers new releases. Each teams consists of ~10 developers.
+ */
+class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario)

@@ -15,11 +15,11 @@ abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulati
       _.inject(
         atOnceUsers(1),
         nothingFor(20 seconds),
-        rampUsers(nbUsers) over (15 seconds)
+        rampUsers(nbUsers) over rampUpPeriod
       )
     } else {
       _.inject(
-        rampUsers(nbUsers) over (2 seconds)
+        rampUsers(nbUsers) over rampUpPeriod
       )
 //      .customPauses("1 second")
     })
