@@ -37,10 +37,14 @@ package object domain {
                    status: String = "PLANNED")
 
   object Task {
+
     def build(title: String, containerId: String): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
       Task(s"$containerId/$title", title)
     }
+
+    def buildGate(title: String, containerId: String): Task =
+      build(title, containerId).copy(`type` = "xlrelease.GateTask")
   }
 
   case class Task(id: String,
@@ -48,7 +52,9 @@ package object domain {
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED")
 
-  case class Gate()
+
+  case class ImportResult(id: String)
+
 
   implicit def users2pusers(uu: Seq[User]): Seq[PUser] = uu.map(u => PUser(u.username, u.fullName))
 }

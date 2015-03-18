@@ -20,6 +20,7 @@ dependencies {
   compile "com.typesafe.scala-logging:scala-logging_2.11:3.1.0"
 
 
+  testCompile 'junit:junit:4.12'
   testCompile 'org.scalatest:scalatest_2.11:2.2.4'
 }
 
