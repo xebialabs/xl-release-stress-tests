@@ -17,9 +17,9 @@ object Main extends App with LazyLogging {
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
   private val templatesAmount: Int = config.getInt("xl.data-generator.templates")
 
-  logger.info("Active releases: {}", activeReleasesAmount)
-  logger.info("Completed releases: {}", completedReleasesAmount)
-  logger.info("Templates: {}", templatesAmount)
+  logger.info("Active releases: {}", activeReleasesAmount.toString)
+  logger.info("Completed releases: {}", completedReleasesAmount.toString)
+  logger.info("Templates: {}", templatesAmount.toString)
 
   val client = new XlrClient(
     config.getString("xl.data-generator.server-url"),
