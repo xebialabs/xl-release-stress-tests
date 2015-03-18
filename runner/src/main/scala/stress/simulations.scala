@@ -50,17 +50,3 @@ class OpsSimulation extends SimulationBase(opsScenario)
  * X development teams commit code which triggers new releases. Each teams consists of ~10 developers.
  */
 class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario)
-
-
-//class GroupSimulation extends Simulation {
-//
-//  setUp(
-//      createReleaseScenario.inject(atOnceUsers(nbUsers)),
-//      queryAllReleasesScenario.inject(atOnceUsers(nbUsers)),
-//      queryPipelinesScenario.inject(atOnceUsers(nbUsers)),
-//      openCalendarScenario.inject(atOnceUsers(nbUsers)),
-//      queryMyTasksScenario.inject(atOnceUsers(nbUsers)),
-//      queryTemplatesScenario.inject(atOnceUsers(nbUsers))
-//    ).protocols(httpProtocol)
-//
-//}
