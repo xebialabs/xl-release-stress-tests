@@ -1,5 +1,6 @@
 package com.xebialabs.xlrelease.client
 
+import com.xebialabs.xlrelease.XlrJsonProtocol
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.scalatest.FunSuite
@@ -9,8 +10,11 @@ import scala.collection.immutable.IndexedSeq
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
+import spray.httpx.marshalling.Marshaller
+import spray.httpx.unmarshalling._
+import spray.json._
 
-class XlrClientTest extends UnitTestSugar {
+class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
   val client = new XlrClient("http://localhost:5516")
 
@@ -41,7 +45,7 @@ class XlrClientTest extends UnitTestSugar {
     }
 
     it("should create tasks") {
-      val release = Release.build("Release002")
+      val release = Release.build("Release102")
       val phase = Phase.build("Phase002", release.id)
 
       val taskResponse = for (
@@ -62,7 +66,9 @@ class XlrClientTest extends UnitTestSugar {
       )
       val groups = releases.grouped(100).toSeq
 
-      val releaseResponsesFutures = groups.map(client.createReleases)
+      val releaseResponsesFutures = groups.map {
+        case group: Seq[Release] => client.createCis(group.toSeq)
+      }
       expectSuccessfulResponses(releaseResponsesFutures)
 
       val releaseRemovalFutures = releases.map(release => {

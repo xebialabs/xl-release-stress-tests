@@ -46,8 +46,27 @@ class XlrClient(apiUrl: String) extends XlrJsonProtocol with AdditionalFormats w
   def createRelease(release: Release): Future[HttpResponse] =
     pipeline(Post(s"$apiUrl/repository/ci/${release.id}", release))
 
-  def createReleases(releases: Seq[Release]): Future[HttpResponse] =
-    pipeline(Post(s"$apiUrl/fixtures/", releases))
+
+
+  def createCis(cis: Seq[Any]): Future[HttpResponse] = {
+
+    val jsValues = cis.map {
+      case ci: Release => ci.toJson
+      case ci: Phase => ci.toJson
+      case ci: Task => ci.toJson
+      case ci => throw new IllegalArgumentException(s"Undefined CI type ${ci.getClass}")
+    }
+
+    val data = JsArray(jsValues.toVector)
+
+    pipeline(Post(s"$apiUrl/fixtures/", data))
+  }
+
+
+
+
+
+
 
   def removeCi(id: String): Future[HttpResponse] =
     pipeline(Delete(s"$apiUrl/repository/ci/$id"))
