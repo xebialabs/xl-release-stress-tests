@@ -28,16 +28,16 @@ class XlrClientTest extends UnitTestSugar {
     it("should create a phase within release") {
       val release = Release.build("Release005")
 
-      client.createRelease(release).onComplete {
-        case Success(r) =>
-          val phase = Phase.build("Phase001", release.id)
-          val createPhaseResponse = client.createPhase(phase).futureValue
-          createPhaseResponse.status shouldBe StatusCodes.OK
-          val removeResponse = client.removeCi(phase.id).futureValue
-          removeResponse.status shouldBe StatusCodes.NoContent
-        case Failure(ex) =>
-          throw ex
-      }
+      val phase = Phase.build("Phase002", release.id)
+
+      val phaseResponse = for (
+        releaseResponse <- client.createRelease(release);
+        phaseResponse <- client.createPhase(phase)
+      ) yield phaseResponse
+
+      phaseResponse.futureValue.status shouldBe StatusCodes.OK
+
+      client.removeCi(release.id)
     }
 
     it("should create tasks") {

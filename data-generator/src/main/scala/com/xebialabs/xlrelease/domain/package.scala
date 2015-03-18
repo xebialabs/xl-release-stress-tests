@@ -22,13 +22,19 @@ package object domain {
   case class Release(id: String, title: String, status: String = "PLANNED", `type`: String = "xlrelease.Release")
 
   object Phase {
-    def build(title: String, releaseId: String): Phase = {
+    def build(title: String,
+              releaseId: String
+             ): Phase = {
       if (!title.startsWith("Phase")) throw new IllegalArgumentException("Phase id/title should start with 'Phase'")
       Phase(s"$releaseId/$title", title)
     }
   }
 
-  case class Phase(id: String, title: String, `type`: String = "xlrelease.Phase")
+  case class Phase(id: String,
+                   title: String,
+                   `type`: String = "xlrelease.Phase",
+                   color: String = "#009CDB",
+                   status: String = "PLANNED")
 
   object Task {
     def build(title: String, containerId: String): Task = {
@@ -37,7 +43,10 @@ package object domain {
     }
   }
 
-  case class Task(id: String, title: String, `type`: String = "xlrelease.Task")
+  case class Task(id: String,
+                  title: String,
+                  `type`: String = "xlrelease.Task",
+                  status: String = "PLANNED")
 
   case class Gate()
 
