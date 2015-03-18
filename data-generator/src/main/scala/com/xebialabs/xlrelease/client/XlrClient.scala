@@ -51,7 +51,7 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
 
 
-  def createCis(cis: Seq[Any]): Future[HttpResponse] = {
+  def createCis(cis: Seq[Ci]): Future[HttpResponse] = {
 
     val jsValues = cis.map {
       case ci: Release => ci.toJson

@@ -5,6 +5,11 @@ import scala.language.implicitConversions
 
 package object domain {
 
+  trait Ci {
+    def id: String
+    def `type`: String
+  }
+
   case class User(password: String, username: String, email: String = "", fullName: String ="", loginAllowed: Boolean = true)
   case class Permission(role: Role, permissions: Seq[String])
   case class Role(id: Option[Int] = None, name: String)
@@ -19,7 +24,7 @@ package object domain {
     }
 
   }
-  case class Release(id: String, title: String, status: String = "PLANNED", `type`: String = "xlrelease.Release")
+  case class Release(id: String, title: String, status: String = "PLANNED", `type`: String = "xlrelease.Release") extends Ci
 
   object Phase {
     def build(title: String,
@@ -34,7 +39,7 @@ package object domain {
                    title: String,
                    `type`: String = "xlrelease.Phase",
                    color: String = "#009CDB",
-                   status: String = "PLANNED")
+                   status: String = "PLANNED") extends Ci
 
   object Task {
 
@@ -50,7 +55,7 @@ package object domain {
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
-                  status: String = "PLANNED")
+                  status: String = "PLANNED") extends Ci
 
 
   case class ImportResult(id: String)
