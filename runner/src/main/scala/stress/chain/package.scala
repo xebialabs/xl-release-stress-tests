@@ -11,9 +11,9 @@ package object chain {
     def execGetDependencies(scenarioName: String): ChainBuilder = chainBuilder
       .exitHereIfFailed
       .exec(session => {
-      val ids: Vector[String] = session.attributes.get("releaseIds").get.asInstanceOf[Vector[String]]
-      session.set("dependenciesBody", s"""{"ids":[${ids.map(s => s""""$s"""").mkString(",")}]}""")
-    })
+        val ids = session("releaseIds").as[Vector[String]]
+        session.set("dependenciesBody", s"""{"ids":[${ids.map(s => s""""$s"""").mkString(",")}]}""")
+      })
       .exec(
         http(stringToExpression(s"Get $scenarioName release dependencies"))
           .post("/dependencies")
