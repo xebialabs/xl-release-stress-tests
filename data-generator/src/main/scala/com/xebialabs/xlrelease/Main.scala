@@ -1,45 +1,29 @@
 package com.xebialabs.xlrelease
 
+import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigFactory.parseResources
+import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.domain._
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
-object Main extends App {
+object Main extends App with LazyLogging {
+  val config = parseResources("data-generator.conf")
+      .withFallback(ConfigFactory.load())
 
-  val client = new XlrClient("http://localhost:5516")
+  logger.info("Active releases: {}", config.getString("xl.data-generator.active-releases"))
+  logger.info("Completed releases: {}", config.getString("xl.data-generator.completed-releases"))
+  logger.info("Templates: {}", config.getString("xl.data-generator.templates"))
 
-  println("Creating data in XLR repo...")
+  val client = new XlrClient(
+    config.getString("xl.data-generator.server-url"),
+    config.getString("xl.data-generator.username"),
+    config.getString("xl.data-generator.password"))
+  val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
 
-  private val users = Range(1, 201).map(n => "cdPerfUser%03d".format(n)).map(username => User(username, username))
-
-  users.foreach {
-    case user =>
-      println(s"Creating $user")
-      Await.result(printFuture(client.createUser(user)), 100 seconds)
-  }
-
-  printFuture(client.setRoles(Seq(Principal(Role(name = "PERFORMANCE"), users))))
-
-  printFuture(client.setPermissions(Seq(Permission(Role(name = "PERFORMANCE"), Seq("admin")))))
-
-  client.getPermissions("PERFORMANCE").onSuccess {
-    case p: Permission =>
-      val copy = p.copy(permissions = p.permissions :+ "admin")
-      client.setPermissions(Seq(copy))
-  }
-
-  private def printFuture(f: Future[Any]): Future[Any] = {
-    f.onComplete {
-      case Success(t) => println(t)
-      case Failure(e) => e.printStackTrace()
-    }
-
-    f
+  importTemplateFuture.andThen {
+    case _ =>
+      client.system.shutdown()
+      client.system.awaitTermination()
   }
 
 

@@ -1,14 +1,13 @@
 package com.xebialabs.xlrelease.client
 
-import java.io.{InputStream, File}
+import java.io.InputStream
 
 import akka.actor.ActorSystem
-import akka.util.{ByteString, Timeout}
+import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease._
 import com.xebialabs.xlrelease.domain._
 import spray.client.pipelining._
-import spray.http.HttpEntity.NonEmpty
 import spray.http.{BasicHttpCredentials, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -17,10 +16,9 @@ import spray.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.io.{BufferedSource, Source}
 import scala.language.postfixOps
 
-class XlrClient(apiUrl: String) extends XlrJsonProtocol with AdditionalFormats with LazyLogging {
+class XlrClient(apiUrl: String, username: String = "admin", password: String = "admin") extends XlrJsonProtocol with AdditionalFormats with LazyLogging {
 
 
   implicit val system: ActorSystem = ActorSystem()
