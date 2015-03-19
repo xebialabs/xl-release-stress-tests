@@ -8,6 +8,7 @@ package object domain {
   trait Ci {
     def id: String
     def `type`: String
+    def status: String
   }
 
   case class User(password: String, username: String, email: String = "", fullName: String ="", loginAllowed: Boolean = true)
@@ -28,10 +29,11 @@ package object domain {
 
   object Phase {
     def build(title: String,
-              releaseId: String
+              releaseId: String,
+              status: String = "PLANNED"
              ): Phase = {
       if (!title.startsWith("Phase")) throw new IllegalArgumentException("Phase id/title should start with 'Phase'")
-      Phase(s"$releaseId/$title", title)
+      Phase(s"$releaseId/$title", title, status = status)
     }
   }
 
@@ -43,9 +45,9 @@ package object domain {
 
   object Task {
 
-    def build(title: String, containerId: String): Task = {
+    def build(title: String, containerId: String, status: String = "PLANNED"): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
-      Task(s"$containerId/$title", title)
+      Task(s"$containerId/$title", title, status = "COMPLETED")
     }
 
     def buildGate(title: String, containerId: String): Task =
@@ -56,9 +58,6 @@ package object domain {
                   title: String,
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED") extends Ci
-
-
-  case class ImportResult(id: String)
 
 
   implicit def users2pusers(uu: Seq[User]): Seq[PUser] = uu.map(u => PUser(u.username, u.fullName))

@@ -17,7 +17,7 @@ object ReleasesGenerator {
 
 
   private def createReleaseContent(release: Release): Seq[Ci] = {
-    val phases: Seq[Phase] = (1 to phasesPerRelease).map( n => Phase.build(s"Phase$n", release.id))
+    val phases: Seq[Phase] = (1 to phasesPerRelease).map( n => Phase.build(s"Phase$n", release.id, "COMPLETED"))
 
     val tasks: Seq[Task] = phases.flatMap( phase => {
       (1 to tasksPerPhase).map( n => Task.build(s"Task$n", phase.id))

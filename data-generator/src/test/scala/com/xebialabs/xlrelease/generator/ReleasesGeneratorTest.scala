@@ -7,7 +7,6 @@ import com.xebialabs.xlrelease.support.UnitTestSugar
 
 class ReleasesGeneratorTest extends UnitTestSugar {
 
-
   describe("release generator") {
 
     it("should return empty seq if called with 0") {
@@ -34,10 +33,9 @@ class ReleasesGeneratorTest extends UnitTestSugar {
 
         batch.filterNot(_.isInstanceOf[Release]).foreach( ci => {
           ci.id should startWith(releaseOfTheBatch.id)
+          ci.status should be("COMPLETED")
         })
       })
     }
-
-
   }
 }

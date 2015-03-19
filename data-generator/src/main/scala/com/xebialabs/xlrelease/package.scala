@@ -12,21 +12,14 @@ package object xlrelease {
 
   trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats {
     implicit val releaseFormat = jsonFormat4(Release.apply)
-    implicit val releaseSeqFormat: RootJsonFormat[Seq[Release]] = seqFormat(jsonFormat4(Release.apply))
     implicit val phaseFormat = jsonFormat5(Phase.apply)
     implicit val taskFormat = jsonFormat4(Task.apply)
 
-
-    implicit val importResultFormat = jsonFormat1(ImportResult)
-
-
-
-    implicit val format = jsonFormat5(User)
+    implicit val userFormat = jsonFormat5(User)
     implicit val roleFormat = jsonFormat2(Role)
     implicit val puserFormat = jsonFormat2(PUser)
     implicit val principalFormat = jsonFormat2(Principal)
     implicit val permissionFormat = jsonFormat2(Permission)
-
   }
 
   // Helper functions
