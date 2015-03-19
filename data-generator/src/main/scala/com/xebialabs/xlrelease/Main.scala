@@ -27,29 +27,31 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.password"))
 
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
+  
   val dependantReleaseFuture = client.createCis(ReleasesGenerator.generateDependentRelease())
+  val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
+    // Creating some content to increase repository size
+    val createCompletedReleasesFutures = ReleasesGenerator
+      .generateCompletedReleases(completedReleasesAmount)
+      .map(client.createCis)
+    val createTemplateReleasesFutures = ReleasesGenerator
+      .generateTemplateReleases(templatesAmount)
+      .map(client.createCis)
+    val createActiveReleasesFutures = ReleasesGenerator
+      .generateActiveReleases(activeReleasesAmount)
+      .map(client.createCis)
 
-  // Creating some content to increase repository size
-  val createCompletedReleasesFutures = ReleasesGenerator
-    .generateCompletedReleases(completedReleasesAmount)
-    .map(client.createCis)
-  val createTemplateReleasesFutures = ReleasesGenerator
-    .generateTemplateReleases(templatesAmount)
-    .map(client.createCis)
-  val createActiveReleasesFutures = ReleasesGenerator
-    .generateActiveReleases(activeReleasesAmount)
-    .map(client.createCis)
+    Future.sequence(
+      createCompletedReleasesFutures ++
+      createTemplateReleasesFutures ++
+      createActiveReleasesFutures)
+  })
 
-  val allResponses = Future.sequence(Seq(importTemplateFuture) ++
-    Seq(dependantReleaseFuture) ++
-    createCompletedReleasesFutures ++
-    createTemplateReleasesFutures ++
-    createActiveReleasesFutures)
+  val allResponses = Future.sequence(Seq(importTemplateFuture, allReleasesFuture))
 
   allResponses.andThen {
     case _ =>
       client.system.shutdown()
       client.system.awaitTermination()
   }
-
 }
