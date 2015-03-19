@@ -45,14 +45,19 @@ package object domain {
       if (!title.startsWith("Release"))
         throw new IllegalArgumentException("Release id/title should start with 'Release'")
 
-      build(s"Applications/$title", title, "PLANNED")
+      build(s"Applications/$title", title, "PLANNED", 0, 1)
     }
 
-    def build(id: String, title: String, status: String): Release = {
+    def build(id: String,
+              title: String,
+              status: String,
+              releaseNumber: Double,
+              releasesCount: Double): Release = {
       if (!id.startsWith("Applications/Release"))
         throw new IllegalArgumentException("Release id should start with 'Applications/Release'")
 
-      val start = new DateTime(2015, 1, 1, 9, 0).plusDays((Math.random * 365).toInt)
+      val offset = Math.floor(365.0 * releaseNumber / releasesCount).toInt % 365
+      val start = new DateTime(2015, 1, 1, 9, 0).plusDays(offset)
       val end = start.plusDays(30)
 
       Release(id, title, status,
