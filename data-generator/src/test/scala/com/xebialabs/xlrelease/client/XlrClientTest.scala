@@ -42,7 +42,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create tasks") {
-      val release = Release.build("ReleaseTest102")
+      val release = Release.build("ReleaseTest103")
       val phase = Phase.build("Phase002", release.id)
 
       val taskResponse = for (
@@ -52,6 +52,24 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       ) yield taskResponse
 
       taskResponse.futureValue.status shouldBe StatusCodes.OK
+
+      client.removeCi(release.id)
+    }
+
+    it("should create tasks and dependencies") {
+      val release = Release.build("ReleaseTest104")
+      val phase = Phase.build("Phase002", release.id)
+      val task = Task.build("Task002", phase.id).toGate
+      val dependency = Dependency.build("Dependency", task.id, task.id)
+
+      val dependencyResponse = for (
+        releaseResponse <- client.createRelease(release);
+        phaseResponse <- client.createPhase(phase);
+        taskResponse <- client.createTask(task);
+        dependencyResponse <- client.createDependency(dependency)
+      ) yield dependencyResponse
+
+      dependencyResponse.futureValue.status shouldBe StatusCodes.OK
 
       client.removeCi(release.id)
     }

@@ -57,6 +57,7 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
       case ci: Release => ci.toJson
       case ci: Phase => ci.toJson
       case ci: Task => ci.toJson
+      case ci: Dependency => ci.toJson
       case ci => throw new IllegalArgumentException(s"Undefined CI type ${ci.getClass}")
     }
 
@@ -74,7 +75,9 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
   def createTask(task: Task): Future[HttpResponse] =
     pipeline(Post(s"$apiUrl/repository/ci/${task.id}", task))
-
+  
+  def createDependency(dependency: Dependency): Future[HttpResponse] =
+    pipeline(Post(s"$apiUrl/repository/ci/${dependency.id}", dependency))
 
   def importTemplate(file: String): Future[HttpResponse] = {
     val is: InputStream = getClass.getResourceAsStream(file)

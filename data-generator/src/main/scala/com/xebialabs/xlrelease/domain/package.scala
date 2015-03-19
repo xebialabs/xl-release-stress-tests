@@ -9,6 +9,10 @@ package object domain {
   trait Ci {
     def id: String
     def `type`: String
+  }
+
+  trait PlanItem extends Ci {
+    def title: String
     def status: String
   }
 
@@ -25,23 +29,27 @@ package object domain {
                       dueDate: DateTime,
                       queryableStartDate: DateTime,
                       queryableEndDate: DateTime,
-                      `type`: String = "xlrelease.Release") extends Ci
+                      `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
                    title: String,
                    `type`: String = "xlrelease.Phase",
                    color: String = "#009CDB",
-                   status: String = "PLANNED") extends Ci
+                   status: String = "PLANNED") extends PlanItem
 
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED"
-                  ) extends Ci {
+                  ) extends PlanItem {
     def toGate: Task = {
       copy(`type` = "xlrelease.GateTask")
     }
   }
+
+  case class Dependency(id: String,
+                        target: String,
+                        `type`: String = "xlrelease.Dependency") extends Ci
 
 
   object Release {
@@ -94,6 +102,12 @@ package object domain {
 
     def buildGate(title: String, containerId: String, status: String = "COMPLETED"): Task =
       build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
+  }
+
+  object Dependency {
+    def build(title: String, containerId: String, target: String): Dependency = {
+      Dependency(s"$containerId/$title", target)
+    }
   }
 
   implicit def users2pusers(uu: Seq[User]): Seq[PUser] = uu.map(u => PUser(u.username, u.fullName))

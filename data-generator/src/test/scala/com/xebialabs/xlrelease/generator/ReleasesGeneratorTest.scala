@@ -1,6 +1,6 @@
 package com.xebialabs.xlrelease.generator
 
-import com.xebialabs.xlrelease.domain.{Ci, Phase, Release, Task}
+import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.generator.ReleasesGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
@@ -93,6 +93,11 @@ class ReleasesGeneratorTest extends UnitTestSugar {
 
       val gates = tasksOfBatch(cis).filter(_.`type` == "xlrelease.GateTask")
       gates should have size 1
+
+      val dependencies = dependenciesOfBatch(cis)
+      dependencies should have size 1
+      dependencies.head.id should startWith(gates.head.id)
+      dependencies.head.target should be(ReleasesGenerator.dependentReleaseId)
     }
   }
 
@@ -112,7 +117,11 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     cis.filter(_.isInstanceOf[Task]).asInstanceOf[Seq[Task]]
   }
 
-  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[Ci] = {
-    batch.filterNot(_.isInstanceOf[Release])
+  def dependenciesOfBatch(cis: Seq[Ci]): Seq[Dependency] = {
+    cis.filter(_.isInstanceOf[Dependency]).asInstanceOf[Seq[Dependency]]
+  }
+
+  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[PlanItem] = {
+    batch.filter(x => x.isInstanceOf[Phase] || x.isInstanceOf[Task]).asInstanceOf[Seq[PlanItem]]
   }
 }

@@ -2,7 +2,7 @@ package com.xebialabs.xlrelease.generator
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.xebialabs.xlrelease.domain.{Ci, Task, Phase, Release}
+import com.xebialabs.xlrelease.domain._
 
 object ReleasesGenerator {
   val phasesPerRelease = 5
@@ -41,23 +41,28 @@ object ReleasesGenerator {
     val phases: Seq[Phase] = phaseNumbers.map(n =>
       Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
 
-    val tasks: Seq[Task] = phases.zip(phaseNumbers).flatMap( tuple => {
+    val cis: Seq[Ci] = phases.zip(phaseNumbers).flatMap( tuple => {
       val phase = tuple._1
       val phaseNumber = tuple._2
-      (1 to tasksPerPhase).map(taskNumber =>
-        makeTask(phase, phaseNumber, taskNumber))
+      (1 to tasksPerPhase).flatMap(taskNumber =>
+        makeTaskCis(phase, phaseNumber, taskNumber))
     })
 
-    phases ++ tasks
+    phases ++ cis
   }
 
-  private def makeTask(phase: Phase, phaseNumber: Int, taskNumber: Int): Task = {
+  private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int): Seq[Ci] = {
     val task = Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
 
-    if (isLastTaskOfRelease(phaseNumber, taskNumber)) task.toGate else task
+    if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
+      val dependency = Dependency.build("Dependency", task.id, dependentReleaseId)
+      Seq(task.toGate, dependency)
+    }
+    else
+      Seq(task)
   }
 
-  def isLastTaskOfRelease(phaseNumber: Int, taskNumber: Int): Boolean = {
+  private def isLastTaskOfRelease(phaseNumber: Int, taskNumber: Int): Boolean = {
     phaseNumber == phasesPerRelease && taskNumber == tasksPerPhase
   }
 

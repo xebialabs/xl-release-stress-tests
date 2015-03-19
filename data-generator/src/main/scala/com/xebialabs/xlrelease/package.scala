@@ -43,6 +43,7 @@ package object xlrelease {
     implicit val releaseFormat = jsonFormat8(Release.apply)
     implicit val phaseFormat = jsonFormat5(Phase.apply)
     implicit val taskFormat = jsonFormat4(Task.apply)
+    implicit val dependencyFormat = jsonFormat3(Dependency.apply)
 
     implicit val userFormat = jsonFormat5(User)
     implicit val roleFormat = jsonFormat2(Role)
