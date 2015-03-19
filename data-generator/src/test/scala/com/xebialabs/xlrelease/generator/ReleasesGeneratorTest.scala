@@ -62,6 +62,13 @@ class ReleasesGeneratorTest extends UnitTestSugar {
         ci.status should be("PLANNED")
       })
     }
+
+    it("should generate active releases") {
+      val cis = ReleasesGenerator.generateActiveReleases(1).head
+
+      val release = releaseOfBatch(cis)
+      release.status should be("IN_PROGRESS")
+    }
   }
 
   def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[Ci] = {

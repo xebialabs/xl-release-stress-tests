@@ -36,8 +36,14 @@ object Main extends App with LazyLogging {
   val createTemplateReleasesFutures = ReleasesGenerator
     .generateTemplateReleases(templatesAmount)
     .map(client.createCis)
+  val createActiveReleasesFutures = ReleasesGenerator
+    .generateActiveReleases(activeReleasesAmount)
+    .map(client.createCis)
 
-  val allResponses = Future.sequence(Seq(importTemplateFuture) ++ createCompletedReleasesFutures ++ createTemplateReleasesFutures)
+  val allResponses = Future.sequence(Seq(importTemplateFuture) ++
+    createCompletedReleasesFutures ++
+    createTemplateReleasesFutures ++
+    createActiveReleasesFutures)
 
   allResponses.andThen {
     case _ =>

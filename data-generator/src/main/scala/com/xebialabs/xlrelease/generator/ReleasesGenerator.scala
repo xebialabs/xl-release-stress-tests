@@ -28,6 +28,15 @@ object ReleasesGenerator {
     releases.map( release => createReleaseContent(release, "PLANNED") :+ release)
   }
 
+  def generateActiveReleases(amount: Int): Seq[Seq[Ci]] = {
+    val releases = (1 to amount).map( n => {
+      val releaseNumber = idCounter.incrementAndGet()
+      Release.build(s"Applications/Release$releaseNumber", s"Stress test active release $n", "IN_PROGRESS", n, amount)
+    })
+
+    releases.map( release => createReleaseContent(release, "IN_PROGRESS") :+ release)
+  }
+
   private def createReleaseContent(release: Release, status: String): Seq[Ci] = {
     val phases: Seq[Phase] = (1 to phasesPerRelease).map( n => Phase.build(s"Phase$n", release.id, status))
 
