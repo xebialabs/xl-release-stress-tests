@@ -26,29 +26,28 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.username"),
     config.getString("xl.data-generator.password"))
 
-  // The first 'Realistic' template which will be used by stress tests
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
+  val dependantReleaseFuture = client.createCis(ReleasesGenerator.generateDependentRelease())
 
-  // Creating some content to increase repository size
-  val createCompletedReleasesFutures = ReleasesGenerator
-    .generateCompletedReleases(completedReleasesAmount)
-    .map(client.createCis)
-  val createTemplateReleasesFutures = ReleasesGenerator
-    .generateTemplateReleases(templatesAmount)
-    .map(client.createCis)
-  val createActiveReleasesFutures = ReleasesGenerator
-    .generateActiveReleases(activeReleasesAmount)
-    .map(client.createCis)
+  Future.sequence(Seq(importTemplateFuture) ++ Seq(dependantReleaseFuture)) andThen {
+    case _ =>
+      val createCompletedReleasesFutures = ReleasesGenerator
+        .generateCompletedReleases(completedReleasesAmount)
+        .map(client.createCis)
+      val createTemplateReleasesFutures = ReleasesGenerator
+        .generateTemplateReleases(templatesAmount)
+        .map(client.createCis)
+      val createActiveReleasesFutures = ReleasesGenerator
+        .generateActiveReleases(activeReleasesAmount)
+        .map(client.createCis)
 
-  val allResponses = Future.sequence(Seq(importTemplateFuture) ++
-    createCompletedReleasesFutures ++
-    createTemplateReleasesFutures ++
-    createActiveReleasesFutures)
-
-  allResponses.andThen {
+      Future.sequence(
+        createCompletedReleasesFutures ++
+          createTemplateReleasesFutures ++
+          createActiveReleasesFutures)
+  } andThen {
     case _ =>
       client.system.shutdown()
       client.system.awaitTermination()
   }
-
 }

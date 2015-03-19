@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.xebialabs.xlrelease.domain.{Ci, Task, Phase, Release}
 
 object ReleasesGenerator {
-
   val phasesPerRelease = 5
   val tasksPerPhase = 10
   val idCounter = new AtomicInteger()
+  val dependentReleaseId = "Applications/ReleaseDependent"
 
   def generateCompletedReleases(amount: Int): Seq[Seq[Ci]] = {
     generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n")
@@ -20,6 +20,11 @@ object ReleasesGenerator {
 
   def generateActiveReleases(amount: Int): Seq[Seq[Ci]] = {
     generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n")
+  }
+
+  def generateDependentRelease(): Seq[Ci] = {
+    val release = Release.build(dependentReleaseId, "Stress test Dependent release", "PLANNED", 1, 1)
+    createReleaseContent(release) :+ release
   }
 
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String): Seq[Seq[Ci]] = {

@@ -75,6 +75,18 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       val activeTasks = tasksOfBatch(cis).filter(_.status == "IN_PROGRESS")
       activeTasks should have size 1
     }
+
+    it("should generate the dependent release") {
+      val cis = ReleasesGenerator.generateDependentRelease()
+
+      val release = releaseOfBatch(cis)
+      release.id should be(ReleasesGenerator.dependentReleaseId)
+      release.status should be("PLANNED")
+
+      phasesAndTasksOfBatch(cis).foreach( ci => {
+        ci.status should be("PLANNED")
+      })
+    }
   }
 
   def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {
