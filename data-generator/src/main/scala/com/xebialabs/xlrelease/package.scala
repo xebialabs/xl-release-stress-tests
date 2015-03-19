@@ -1,7 +1,9 @@
 package com.xebialabs
 
 import com.xebialabs.xlrelease.domain._
-import spray.json.{AdditionalFormats, DefaultJsonProtocol, RootJsonFormat}
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -10,8 +12,35 @@ import scala.util.{Failure, Success}
 
 package object xlrelease {
 
-  trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats {
-    implicit val releaseFormat = jsonFormat4(Release.apply)
+  trait DateTimeProtocol extends DefaultJsonProtocol {
+    implicit object DateTimeFormat extends RootJsonFormat[DateTime] {
+
+      val formatter = ISODateTimeFormat.dateTimeNoMillis
+
+      def write(obj: DateTime): JsValue = {
+        JsString(formatter.print(obj))
+      }
+
+      def read(json: JsValue): DateTime = json match {
+        case JsString(s) => try {
+          formatter.parseDateTime(s)
+        }
+        catch {
+          case t: Throwable => error(s)
+        }
+        case _ =>
+          error(json.toString())
+      }
+
+      def error(v: Any): DateTime = {
+        val example = formatter.print(0)
+        deserializationError(f"'$v' is not a valid date value. Dates must be in compact ISO-8601 format, e.g. '$example'")
+      }
+    }
+  }
+
+  trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with DateTimeProtocol {
+    implicit val releaseFormat = jsonFormat8(Release.apply)
     implicit val phaseFormat = jsonFormat5(Phase.apply)
     implicit val taskFormat = jsonFormat4(Task.apply)
 

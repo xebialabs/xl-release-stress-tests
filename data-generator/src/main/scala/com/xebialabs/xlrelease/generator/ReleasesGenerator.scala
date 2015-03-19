@@ -9,7 +9,7 @@ object ReleasesGenerator {
 
   def generateCompletedReleases(amount: Int): Seq[Seq[Ci]] = {
     val releases = (1 to amount).map( n => {
-      Release(s"Applications/Release$n", s"Stress test release $n", "COMPLETED")
+      Release.build(s"Applications/Release$n", s"Stress test release $n", "COMPLETED")
     })
 
     releases.map( release => createReleaseContent(release) :+ release)

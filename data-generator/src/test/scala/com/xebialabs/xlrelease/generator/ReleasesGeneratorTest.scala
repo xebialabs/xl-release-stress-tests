@@ -31,32 +31,34 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       batches.foreach( batch => {
         batch.filter(_.isInstanceOf[Release]) should have size 1
 
-        val releaseOfTheBatch = findReleaseOfTheBatch(batch)
+        val releaseOfTheBatch = releaseOfBatch(batch)
 
-        phasesAndTasks(batch).foreach( ci => {
+        phasesAndTasksOfBatch(batch).foreach( ci => {
           ci.id should startWith(releaseOfTheBatch.id)
         })
       })
     }
 
     it("should generate completed releases") {
-      val batches = ReleasesGenerator.generateCompletedReleases(1)
+      val cis = ReleasesGenerator.generateCompletedReleases(1).head
 
-      val cis = batches.head
+      val release = releaseOfBatch(cis)
+      release.queryableEndDate.isAfter(release.queryableStartDate) should be(right = true)
+      release.dueDate.isAfter(release.scheduledStartDate) should be(right = true)
 
-      val releaseOfTheBatch = findReleaseOfTheBatch(cis)
-      phasesAndTasks(cis).foreach( ci => {
-        ci.id should startWith(releaseOfTheBatch.id)
+
+      phasesAndTasksOfBatch(cis).foreach( ci => {
+        ci.id should startWith(release.id)
         ci.status should be("COMPLETED")
       })
     }
   }
 
-  def phasesAndTasks(batch: Seq[Ci]): Seq[Ci] = {
+  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[Ci] = {
     batch.filterNot(_.isInstanceOf[Release])
   }
 
-  def findReleaseOfTheBatch(batch: Seq[Ci]): Release = {
+  def releaseOfBatch(batch: Seq[Ci]): Release = {
     batch.find(_.isInstanceOf[Release]).get.asInstanceOf[Release]
   }
 }
