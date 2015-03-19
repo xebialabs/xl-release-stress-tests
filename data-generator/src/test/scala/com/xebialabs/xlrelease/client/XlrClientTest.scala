@@ -17,7 +17,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
   describe("XLR client") {
     it("should create a release") {
-      val release = Release.build("Release004")
+      val release = Release.build("ReleaseTest004")
 
       val createResponse = client.createRelease(release).futureValue
       createResponse.status shouldBe StatusCodes.OK
@@ -27,7 +27,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create a phase within release") {
-      val release = Release.build("Release005")
+      val release = Release.build("ReleaseTest005")
 
       val phase = Phase.build("Phase002", release.id)
 
@@ -42,7 +42,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create tasks") {
-      val release = Release.build("Release102")
+      val release = Release.build("ReleaseTest102")
       val phase = Phase.build("Phase002", release.id)
 
       val taskResponse = for (
@@ -59,7 +59,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create many releases in batches") {
       val range = 0 until 20
       val releases = range.map(id =>
-        Release.build(s"Release$id")
+        Release.build(s"ReleaseTest$id")
       )
       val groups = releases.grouped(100).toSeq
 
@@ -77,7 +77,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create many releases") {
       val range = 0 until 20
       val releases = range.map(id =>
-        Release.build(s"Release$id")
+        Release.build(s"ReleaseTest$id")
       )
       val releaseResponsesFutures = releases.map(client.createRelease)
       expectSuccessfulResponses(releaseResponsesFutures)
@@ -92,8 +92,6 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val createResponseFuture = client.importTemplate("/20-automated-tasks.xlr")
       expectSuccessfulResponse(createResponseFuture)
     }
-
-
   }
 
   def expectSuccessfulResponses(responsesFutures: Seq[Future[HttpResponse]]): Unit = {
