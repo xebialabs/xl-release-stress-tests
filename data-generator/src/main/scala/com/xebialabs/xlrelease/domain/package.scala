@@ -83,9 +83,9 @@ package object domain {
 
   object Task {
 
-    def build(title: String, containerId: String, status: String = "PLANNED"): Task = {
+    def build(title: String, containerId: String, status: String = "COMPLETED"): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
-      Task(s"$containerId/$title", title, status = "COMPLETED")
+      Task(s"$containerId/$title", title, status = status)
     }
 
     def buildGate(title: String, containerId: String): Task =

@@ -30,9 +30,14 @@ object Main extends App with LazyLogging {
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
 
   // Creating some content to increase repository size
-  val createReleasesFutures = ReleasesGenerator.generateCompletedReleases(templatesAmount).map(client.createCis)
+  val createCompletedReleasesFutures = ReleasesGenerator
+    .generateCompletedReleases(completedReleasesAmount)
+    .map(client.createCis)
+  val createTemplateReleasesFutures = ReleasesGenerator
+    .generateTemplateReleases(templatesAmount)
+    .map(client.createCis)
 
-  val allResponses = Future.sequence(Seq(importTemplateFuture) ++ createReleasesFutures)
+  val allResponses = Future.sequence(Seq(importTemplateFuture) ++ createCompletedReleasesFutures ++ createTemplateReleasesFutures)
 
   allResponses.andThen {
     case _ =>

@@ -31,10 +31,10 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       batches.foreach( batch => {
         batch.filter(_.isInstanceOf[Release]) should have size 1
 
-        val releaseOfTheBatch = releaseOfBatch(batch)
+        val release = releaseOfBatch(batch)
 
         phasesAndTasksOfBatch(batch).foreach( ci => {
-          ci.id should startWith(releaseOfTheBatch.id)
+          ci.id should startWith(release.id)
         })
       })
     }
@@ -43,13 +43,23 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       val cis = ReleasesGenerator.generateCompletedReleases(1).head
 
       val release = releaseOfBatch(cis)
+      release.status should be("COMPLETED")
       release.queryableEndDate.isAfter(release.queryableStartDate) should be(right = true)
       release.dueDate.isAfter(release.scheduledStartDate) should be(right = true)
 
+      phasesAndTasksOfBatch(cis).foreach( ci => {
+        ci.status should be("COMPLETED")
+      })
+    }
+
+    it("should generate template releases") {
+      val cis = ReleasesGenerator.generateTemplateReleases(1).head
+
+      val release = releaseOfBatch(cis)
+      release.status should be("TEMPLATE")
 
       phasesAndTasksOfBatch(cis).foreach( ci => {
-        ci.id should startWith(release.id)
-        ci.status should be("COMPLETED")
+        ci.status should be("PLANNED")
       })
     }
   }
