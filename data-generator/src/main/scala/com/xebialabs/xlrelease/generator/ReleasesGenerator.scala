@@ -33,25 +33,28 @@ object ReleasesGenerator {
 
   private def createReleaseContent(release: Release): Seq[Ci] = {
     val phases: Seq[Phase] = (1 to phasesPerRelease).map(
-      n => Phase.build(s"Phase$n", release.id, phaseStatus(release)))
+      n => Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
 
     val tasks: Seq[Task] = phases.flatMap( phase => {
       (1 to tasksPerPhase).map(
-        n => Task.build(s"Task$n", phase.id, taskStatus(phase)))
+        n => Task.build(s"Task$n", phase.id, taskStatus(phase, n)))
     })
 
     phases ++ tasks
   }
 
-  private def phaseStatus(release: Release): String = {
+  private def phaseStatus(release: Release, phaseNumber: Int): String = {
     release.status match {
-      case "COMPLETED" => "COMPLETED"
       case "TEMPLATE" => "PLANNED"
-      case "IN_PROGRESS" => "IN_PROGRESS"
+      case "IN_PROGRESS" => if (phaseNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case _ => release.status
     }
   }
 
-  private def taskStatus(phase: Phase): String = {
-    phase.status
+  private def taskStatus(phase: Phase, taskNumber: Int): String = {
+    phase.status match {
+      case "IN_PROGRESS" => if (taskNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case _ => phase.status
+    }
   }
 }

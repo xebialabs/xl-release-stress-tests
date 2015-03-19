@@ -18,9 +18,9 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     it("should generate completed releases with default amount of phases and tasks") {
       val amount = 5
       val cis = ReleasesGenerator.generateCompletedReleases(amount).flatten
-      cis.filter(_.isInstanceOf[Release]) should have size amount
-      cis.filter(_.isInstanceOf[Phase]) should have size amount * phasesPerRelease
-      cis.filter(_.isInstanceOf[Task]) should have size amount * phasesPerRelease * tasksPerPhase
+      releasesOfBatch(cis) should have size amount
+      phasesOfBatch(cis) should have size amount * phasesPerRelease
+      tasksOfBatch(cis) should have size amount * phasesPerRelease * tasksPerPhase
     }
 
     it("should slice CIs according to releases") {
@@ -29,7 +29,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       batches should have size 5
 
       batches.foreach( batch => {
-        batch.filter(_.isInstanceOf[Release]) should have size 1
+        releasesOfBatch(batch) should have size 1
 
         val release = releaseOfBatch(batch)
 
@@ -68,14 +68,32 @@ class ReleasesGeneratorTest extends UnitTestSugar {
 
       val release = releaseOfBatch(cis)
       release.status should be("IN_PROGRESS")
+
+      val activePhases = phasesOfBatch(cis).filter(_.status == "IN_PROGRESS")
+      activePhases should have size 1
+
+      val activeTasks = tasksOfBatch(cis).filter(_.status == "IN_PROGRESS")
+      activeTasks should have size 1
     }
   }
 
-  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[Ci] = {
-    batch.filterNot(_.isInstanceOf[Release])
+  def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {
+    cis.filter(_.isInstanceOf[Release]).asInstanceOf[Seq[Release]]
   }
 
   def releaseOfBatch(batch: Seq[Ci]): Release = {
     batch.find(_.isInstanceOf[Release]).get.asInstanceOf[Release]
+  }
+
+  def phasesOfBatch(cis: Seq[Ci]): Seq[Phase] = {
+    cis.filter(_.isInstanceOf[Phase]).asInstanceOf[Seq[Phase]]
+  }
+
+  def tasksOfBatch(cis: Seq[Ci]): Seq[Task] = {
+    cis.filter(_.isInstanceOf[Task]).asInstanceOf[Seq[Task]]
+  }
+
+  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[Ci] = {
+    batch.filterNot(_.isInstanceOf[Release])
   }
 }
