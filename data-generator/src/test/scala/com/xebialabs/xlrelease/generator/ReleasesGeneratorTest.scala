@@ -87,6 +87,13 @@ class ReleasesGeneratorTest extends UnitTestSugar {
         ci.status should be("PLANNED")
       })
     }
+
+    it("should add one gate on each release with a dependency on the dependent release") {
+      val cis = ReleasesGenerator.generateActiveReleases(1).head
+
+      val gates = tasksOfBatch(cis).filter(_.`type` == "xlrelease.GateTask")
+      gates should have size 1
+    }
   }
 
   def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {

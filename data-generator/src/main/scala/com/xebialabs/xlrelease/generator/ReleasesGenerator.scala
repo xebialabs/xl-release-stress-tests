@@ -37,15 +37,28 @@ object ReleasesGenerator {
   }
 
   private def createReleaseContent(release: Release): Seq[Ci] = {
-    val phases: Seq[Phase] = (1 to phasesPerRelease).map(
-      n => Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
+    val phaseNumbers = 1 to phasesPerRelease
+    val phases: Seq[Phase] = phaseNumbers.map(n =>
+      Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
 
-    val tasks: Seq[Task] = phases.flatMap( phase => {
-      (1 to tasksPerPhase).map(
-        n => Task.build(s"Task$n", phase.id, taskStatus(phase, n)))
+    val tasks: Seq[Task] = phases.zip(phaseNumbers).flatMap( tuple => {
+      val phase = tuple._1
+      val phaseNumber = tuple._2
+      (1 to tasksPerPhase).map(taskNumber =>
+        makeTask(phase, phaseNumber, taskNumber))
     })
 
     phases ++ tasks
+  }
+
+  private def makeTask(phase: Phase, phaseNumber: Int, taskNumber: Int): Task = {
+    val task = Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
+
+    if (isLastTaskOfRelease(phaseNumber, taskNumber)) task.toGate else task
+  }
+
+  def isLastTaskOfRelease(phaseNumber: Int, taskNumber: Int): Boolean = {
+    phaseNumber == phasesPerRelease && taskNumber == tasksPerPhase
   }
 
   private def phaseStatus(release: Release, phaseNumber: Int): String = {

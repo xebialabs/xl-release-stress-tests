@@ -37,7 +37,11 @@ package object domain {
                   title: String,
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED"
-                  ) extends Ci
+                  ) extends Ci {
+    def toGate: Task = {
+      copy(`type` = "xlrelease.GateTask")
+    }
+  }
 
 
   object Release {
@@ -88,8 +92,8 @@ package object domain {
       Task(s"$containerId/$title", title, status = status)
     }
 
-    def buildGate(title: String, containerId: String): Task =
-      build(title, containerId).copy(`type` = "xlrelease.GateTask")
+    def buildGate(title: String, containerId: String, status: String = "COMPLETED"): Task =
+      build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
   }
 
   implicit def users2pusers(uu: Seq[User]): Seq[PUser] = uu.map(u => PUser(u.username, u.fullName))
