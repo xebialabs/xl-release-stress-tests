@@ -22,8 +22,14 @@ object Scenarios {
   val openCalendarScenario = scenario("Calendar page")
     .exec(Calendar.open)
 
-  val queryMyTasksScenario = scenario("Query my tasks")
-    .exec(Tasks.open(RawFileBody("my-filters-body.json")))
+  val queryAllTasksScenario = scenario("Query all tasks")
+    .exec(Tasks.open(StringBody(Tasks.ALL_TASKS_FILTER)))
+
+  val queryNonExistingTaskScenario = scenario("Query all tasks with non-existing filter")
+    .exec(Tasks.open(StringBody(Tasks.NOT_EXISTING_TASKS_FILTER)))
+
+  val pollingScenario = scenario("Poll 320 tasks")
+    .exec(Tasks.pollManyTasks)
 
   val releaseFlowScenario = scenario("Release flow")
     .exec(Releases.flow("Release1"))

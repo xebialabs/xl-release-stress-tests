@@ -22,7 +22,17 @@ class CreateReleaseSimulation extends SimulationBase(
 /**
  * X concurrent users are opening tasks overview page
  */
-class TasksOverviewSimulation extends SimulationBase(queryMyTasksScenario)
+class TasksOverviewSimulation extends SimulationBase(queryAllTasksScenario)
+
+/**
+ * X concurrent users are opening tasks overview page with a text filter which won't ever match
+ */
+class TasksOverviewWithFilterSimulation extends SimulationBase(queryNonExistingTaskScenario)
+
+/**
+ * X users poll status of 300 tasks
+ */
+class PollingSimulation extends SimulationBase(pollingScenario)
 
 /**
  * X users are looking at release overview
@@ -32,9 +42,32 @@ class ReleasesOverviewSimulation extends SimulationBase(
 )
 
 /**
+ * X users are looking at templates overview without filters
+ */
+class TemplateOverviewSimulation extends SimulationBase(queryTemplatesScenario)
+
+/**
  * X users are looking at the details of the release at Release Flow screen
  */
 class ReleaseFlowSimulation extends SimulationBase(releaseFlowScenario)
+
+/**
+ * X users open Pipeline page
+ */
+class PipelineSimulation extends SimulationBase(queryPipelinesScenario)
+
+
+/**
+ * A simulation which combines several roles of people working with XL Release
+ * in one realistic usage scenario.
+ */
+class RealisticSimulation extends Simulation {
+  setUp(
+    releaseManagerScenario.inject(rampUsers(nbReleaseManagers) over rampUpPeriod),
+    opsScenario.inject(rampUsers(nbOps) over rampUpPeriod),
+    developmentTeamScenario.inject(rampUsers(nbTeams) over rampUpPeriod)
+  ).protocols(httpProtocol)
+}
 
 /**
  * X release managers are working with XL Release
