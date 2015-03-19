@@ -3,8 +3,10 @@ package com.xebialabs.xlrelease.generator
 import com.xebialabs.xlrelease.domain.{Ci, Phase, Release, Task}
 import com.xebialabs.xlrelease.generator.ReleasesGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
-
+@RunWith(classOf[JUnitRunner])
 class ReleasesGeneratorTest extends UnitTestSugar {
 
   describe("release generator") {
@@ -29,13 +31,32 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       batches.foreach( batch => {
         batch.filter(_.isInstanceOf[Release]) should have size 1
 
-        val releaseOfTheBatch = batch.find(_.isInstanceOf[Release]).get
+        val releaseOfTheBatch = findReleaseOfTheBatch(batch)
 
-        batch.filterNot(_.isInstanceOf[Release]).foreach( ci => {
+        phasesAndTasks(batch).foreach( ci => {
           ci.id should startWith(releaseOfTheBatch.id)
-          ci.status should be("COMPLETED")
         })
       })
     }
+
+    it("should generate completed releases") {
+      val batches = ReleasesGenerator.generateCompletedReleases(1)
+
+      val cis = batches.head
+
+      val releaseOfTheBatch = findReleaseOfTheBatch(cis)
+      phasesAndTasks(cis).foreach( ci => {
+        ci.id should startWith(releaseOfTheBatch.id)
+        ci.status should be("COMPLETED")
+      })
+    }
+  }
+
+  def phasesAndTasks(batch: Seq[Ci]): Seq[Ci] = {
+    batch.filterNot(_.isInstanceOf[Release])
+  }
+
+  def findReleaseOfTheBatch(batch: Seq[Ci]): Release = {
+    batch.find(_.isInstanceOf[Release]).get.asInstanceOf[Release]
   }
 }
