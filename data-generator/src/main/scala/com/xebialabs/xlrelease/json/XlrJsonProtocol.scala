@@ -20,13 +20,13 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
       deserializationError("Read is not implemented")
     }
 
-    def write(obj: Ci): JsValue = {
-      obj match {
+    def write(ci: Ci): JsValue = {
+      ci match {
         case ci: Release => ci.toJson
         case ci: Phase => ci.toJson
         case ci: Task => ci.toJson
         case ci: Dependency => ci.toJson
-        case _ => serializationError(s"Undefined CI type ${obj.getClass}")
+        case _ => serializationError(s"Undefined CI type ${ci.getClass}")
       }
     }
   }
