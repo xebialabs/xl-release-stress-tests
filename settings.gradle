@@ -1,0 +1,3 @@
+rootProject.name = 'xl-release'
+
+include 'data-generator', 'runner'
