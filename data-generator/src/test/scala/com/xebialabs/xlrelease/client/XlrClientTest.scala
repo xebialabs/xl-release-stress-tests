@@ -5,11 +5,11 @@ import com.xebialabs.xlrelease.json.XlrJsonProtocol
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import spray.http.{HttpResponse, StatusCodes}
+import spray.http.{HttpEntity, HttpResponse, StatusCodes}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
+import XlrClient._
 @RunWith(classOf[JUnitRunner])
 class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
@@ -109,6 +109,23 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should import template from a file") {
       val createResponseFuture = client.importTemplate("/20-automated-tasks.xlr")
       expectSuccessfulResponse(createResponseFuture)
+    }
+
+    it("should fail future of non-successful responses") {
+
+      val response = new HttpResponse(StatusCodes.BadRequest, HttpEntity("Some bad thing has happened."))
+
+      val changedFuture = failNonSuccessfulResponses(Future.successful(response))
+
+      whenReady(changedFuture.failed) {
+        case ex => ex.getMessage shouldBe "Some bad thing has happened."
+      }
+    }
+
+    it("should not modify the future with successful response") {
+      val response = new HttpResponse(StatusCodes.OK, HttpEntity("Great success."))
+      val changedFuture = failNonSuccessfulResponses(Future.successful(response))
+      changedFuture.futureValue shouldBe response
     }
   }
 

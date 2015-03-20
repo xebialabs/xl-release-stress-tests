@@ -8,11 +8,12 @@ import com.xebialabs.xlrelease.generator.ReleasesGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Failure
 
 object Main extends App with LazyLogging {
 
   val config = parseResources("data-generator.conf")
-      .withFallback(ConfigFactory.load())
+    .withFallback(ConfigFactory.load())
 
   private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
@@ -30,7 +31,7 @@ object Main extends App with LazyLogging {
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
 
   val generator = new ReleasesGenerator()
-  
+
   val dependantReleaseFuture = client.createCis(generator.generateDependentRelease())
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
@@ -46,14 +47,18 @@ object Main extends App with LazyLogging {
 
     Future.sequence(
       createCompletedReleasesFutures ++
-      createTemplateReleasesFutures ++
-      createActiveReleasesFutures)
+        createTemplateReleasesFutures ++
+        createActiveReleasesFutures)
   })
 
   val allResponses = Future.sequence(Seq(importTemplateFuture, allReleasesFuture))
 
   allResponses.andThen {
+    case Failure(ex) =>
+      logger.error("Could not generate data set: ", ex)
+  } andThen {
     case _ =>
+      logger.debug("Shutting down the actor system after everything has been done.")
       client.system.shutdown()
       client.system.awaitTermination()
   }
