@@ -2,7 +2,7 @@ package com.xebialabs.xlrelease.json
 import com.xebialabs.xlrelease.domain._
 import spray.json.{AdditionalFormats, DefaultJsonProtocol, ProductFormatsInstances}
 
-trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with DateTimeProtocol {
+trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with ZonedDateTimeProtocol {
   this: ProductFormatsInstances =>
 
   implicit val releaseFormat = jsonFormat8(Release.apply)

@@ -1,6 +1,7 @@
 package com.xebialabs.xlrelease
 
-import org.joda.time.DateTime
+
+import org.threeten.bp.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import scala.language.implicitConversions
 
@@ -25,10 +26,10 @@ package object domain {
   case class Release(id: String,
                       title: String,
                       status: String,
-                      scheduledStartDate: DateTime,
-                      dueDate: DateTime,
-                      queryableStartDate: DateTime,
-                      queryableEndDate: DateTime,
+                      scheduledStartDate: ZonedDateTime,
+                      dueDate: ZonedDateTime,
+                      queryableStartDate: ZonedDateTime,
+                      queryableEndDate: ZonedDateTime,
                       `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
@@ -68,8 +69,9 @@ package object domain {
       if (!id.startsWith("Applications/Release"))
         throw new IllegalArgumentException("Release id should start with 'Applications/Release'")
 
+      val firstDayOfYear = ZonedDateTime.of(LocalDateTime.of(2015, 1, 1, 9, 0), ZoneId.systemDefault)
       val offset = Math.floor(365.0 * releaseNumber / releasesCount).toInt % 365
-      val start = new DateTime(2015, 1, 1, 9, 0).plusDays(offset)
+      val start = firstDayOfYear.plusDays(offset)
       val end = start.plusDays(30)
 
       Release(id, title, status,
