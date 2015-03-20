@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
 import com.xebialabs.xlrelease.generator.ReleasesGenerator
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -27,17 +28,19 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.password"))
 
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
+
+  val generator = new ReleasesGenerator()
   
-  val dependantReleaseFuture = client.createCis(ReleasesGenerator.generateDependentRelease())
+  val dependantReleaseFuture = client.createCis(generator.generateDependentRelease())
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
-    val createCompletedReleasesFutures = ReleasesGenerator
+    val createCompletedReleasesFutures = generator
       .generateCompletedReleases(completedReleasesAmount)
       .map(client.createCis)
-    val createTemplateReleasesFutures = ReleasesGenerator
+    val createTemplateReleasesFutures = generator
       .generateTemplateReleases(templatesAmount)
       .map(client.createCis)
-    val createActiveReleasesFutures = ReleasesGenerator
+    val createActiveReleasesFutures = generator
       .generateActiveReleases(activeReleasesAmount)
       .map(client.createCis)
 

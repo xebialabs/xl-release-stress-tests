@@ -1,14 +1,22 @@
 package com.xebialabs.xlrelease.generator
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.xebialabs.xlrelease.domain._
+import ReleaseGenerator._
 
-object ReleasesGenerator {
+object ReleaseGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
-  val idCounter = new AtomicInteger()
   val dependentReleaseId = "Applications/ReleaseDependent"
+}
+
+class ReleasesGenerator {
+  
+  var idCounter = 0
+
+  private def incrementCounterAndGet(): Int = {
+    idCounter += 1
+    idCounter
+  }
 
   def generateCompletedReleases(amount: Int): Seq[Seq[Ci]] = {
     generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n")
@@ -29,7 +37,7 @@ object ReleasesGenerator {
 
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String): Seq[Seq[Ci]] = {
     val releases = (1 to amount).map(n => {
-      val releaseNumber = idCounter.incrementAndGet()
+      val releaseNumber = incrementCounterAndGet()
       Release.build(s"Applications/Release$releaseNumber", titleGenerator(n), status, n, amount)
     })
 
@@ -41,12 +49,11 @@ object ReleasesGenerator {
     val phases: Seq[Phase] = phaseNumbers.map(n =>
       Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
 
-    val cis: Seq[Ci] = phases.zip(phaseNumbers).flatMap( tuple => {
-      val phase = tuple._1
-      val phaseNumber = tuple._2
-      (1 to tasksPerPhase).flatMap(taskNumber =>
-        makeTaskCis(phase, phaseNumber, taskNumber))
-    })
+    val cis: Seq[Ci] = phases.zip(phaseNumbers).flatMap {
+      case (phase, phaseNumber) =>
+        (1 to tasksPerPhase).flatMap(taskNumber =>
+          makeTaskCis(phase, phaseNumber, taskNumber))
+    }
 
     phases ++ cis
   }

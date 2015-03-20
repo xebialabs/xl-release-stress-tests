@@ -1,30 +1,36 @@
 package com.xebialabs.xlrelease.generator
 
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.ReleasesGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import ReleaseGenerator._
 
 @RunWith(classOf[JUnitRunner])
 class ReleasesGeneratorTest extends UnitTestSugar {
 
+  var generator: ReleasesGenerator = _
+
+  override protected def beforeEach(): Unit = {
+    generator = new ReleasesGenerator()
+  }
+
   describe("release generator") {
 
     it("should return empty seq if called with 0") {
-      ReleasesGenerator.generateCompletedReleases(0).flatten shouldBe 'empty
+      generator.generateCompletedReleases(0).flatten shouldBe 'empty
     }
 
     it("should generate completed releases with default amount of phases and tasks") {
       val amount = 5
-      val cis = ReleasesGenerator.generateCompletedReleases(amount).flatten
+      val cis = generator.generateCompletedReleases(amount).flatten
       releasesOfBatch(cis) should have size amount
       phasesOfBatch(cis) should have size amount * phasesPerRelease
       tasksOfBatch(cis) should have size amount * phasesPerRelease * tasksPerPhase
     }
 
     it("should slice CIs according to releases") {
-      val batches = ReleasesGenerator.generateCompletedReleases(5)
+      val batches = generator.generateCompletedReleases(5)
 
       batches should have size 5
 
@@ -40,7 +46,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate completed releases") {
-      val cis = ReleasesGenerator.generateCompletedReleases(1).head
+      val cis = generator.generateCompletedReleases(1).head
 
       val release = releaseOfBatch(cis)
       release.status should be("COMPLETED")
@@ -53,7 +59,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate template releases") {
-      val cis = ReleasesGenerator.generateTemplateReleases(1).head
+      val cis = generator.generateTemplateReleases(1).head
 
       val release = releaseOfBatch(cis)
       release.status should be("TEMPLATE")
@@ -64,7 +70,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate active releases") {
-      val cis = ReleasesGenerator.generateActiveReleases(1).head
+      val cis = generator.generateActiveReleases(1).head
 
       val release = releaseOfBatch(cis)
       release.status should be("IN_PROGRESS")
@@ -77,10 +83,10 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate the dependent release") {
-      val cis = ReleasesGenerator.generateDependentRelease()
+      val cis = generator.generateDependentRelease()
 
       val release = releaseOfBatch(cis)
-      release.id should be(ReleasesGenerator.dependentReleaseId)
+      release.id should be(dependentReleaseId)
       release.status should be("PLANNED")
 
       phasesAndTasksOfBatch(cis).foreach( ci => {
@@ -89,7 +95,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should add one gate on each release with a dependency on the dependent release") {
-      val cis = ReleasesGenerator.generateActiveReleases(1).head
+      val cis = generator.generateActiveReleases(1).head
 
       val gates = tasksOfBatch(cis).filter(_.`type` == "xlrelease.GateTask")
       gates should have size 1
@@ -97,7 +103,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       val dependencies = dependenciesOfBatch(cis)
       dependencies should have size 1
       dependencies.head.id should startWith(gates.head.id)
-      dependencies.head.target should be(ReleasesGenerator.dependentReleaseId)
+      dependencies.head.target should be(dependentReleaseId)
     }
   }
 
