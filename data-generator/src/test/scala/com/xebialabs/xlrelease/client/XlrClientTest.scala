@@ -19,7 +19,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create a release") {
       val release = Release.build("ReleaseTest004")
 
-      val createResponse = client.createRelease(release).futureValue
+      val createResponse = client.createCi(release).futureValue
       createResponse.status shouldBe StatusCodes.OK
 
       val removeResponse = client.removeCi(release.id).futureValue
@@ -32,8 +32,8 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val phase = Phase.build("Phase002", release.id)
 
       val phaseResponse = for (
-        releaseResponse <- client.createRelease(release);
-        phaseResponse <- client.createPhase(phase)
+        releaseResponse <- client.createCi(release);
+        phaseResponse <- client.createCi(phase)
       ) yield phaseResponse
 
       phaseResponse.futureValue.status shouldBe StatusCodes.OK
@@ -46,9 +46,9 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val phase = Phase.build("Phase002", release.id)
 
       val taskResponse = for (
-        releaseResponse <- client.createRelease(release);
-        phaseResponse <- client.createPhase(phase);
-        taskResponse <- client.createTask(Task.build("Task002", phase.id))
+        releaseResponse <- client.createCi(release);
+        phaseResponse <- client.createCi(phase);
+        taskResponse <- client.createCi(Task.build("Task002", phase.id))
       ) yield taskResponse
 
       taskResponse.futureValue.status shouldBe StatusCodes.OK
@@ -63,10 +63,10 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val dependency = Dependency.build("Dependency", task.id, task.id)
 
       val dependencyResponse = for (
-        releaseResponse <- client.createRelease(release);
-        phaseResponse <- client.createPhase(phase);
-        taskResponse <- client.createTask(task);
-        dependencyResponse <- client.createDependency(dependency)
+        releaseResponse <- client.createCi(release);
+        phaseResponse <- client.createCi(phase);
+        taskResponse <- client.createCi(task);
+        dependencyResponse <- client.createCi(dependency)
       ) yield dependencyResponse
 
       dependencyResponse.futureValue.status shouldBe StatusCodes.OK
@@ -97,7 +97,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val releases = range.map(id =>
         Release.build(s"ReleaseTest$id")
       )
-      val releaseResponsesFutures = releases.map(client.createRelease)
+      val releaseResponsesFutures = releases.map(client.createCi)
       expectSuccessfulResponses(releaseResponsesFutures)
 
       val releaseRemovalFutures = releases.map(release => {

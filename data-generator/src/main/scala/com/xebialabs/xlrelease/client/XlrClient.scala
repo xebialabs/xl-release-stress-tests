@@ -70,36 +70,14 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
   def setPermissions(permissions: Seq[Permission]): Future[HttpResponse] = strictPipeline(Put(s"$apiUrl/roles/permissions/global", permissions))
 
-  def createRelease(release: Release): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/repository/ci/${release.id}", release))
-
-  def createCis(cis: Seq[Ci]): Future[HttpResponse] = {
-
-    val jsValues = cis.map {
-      case ci: Release => ci.toJson
-      case ci: Phase => ci.toJson
-      case ci: Task => ci.toJson
-      case ci: Dependency => ci.toJson
-      case ci => throw new IllegalArgumentException(s"Undefined CI type ${ci.getClass}")
-    }
-
-    val data = JsArray(jsValues.toVector)
-
-    strictPipeline(Post(s"$apiUrl/fixtures/", data))
-  }
+  def createCi(ci: Ci): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/repository/ci/${ci.id}", ci))
 
   def removeCi(id: String): Future[HttpResponse] =
     strictPipeline(Delete(s"$apiUrl/repository/ci/$id"))
 
-
-  def createPhase(phase: Phase): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/repository/ci/${phase.id}", phase))
-
-  def createTask(task: Task): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/repository/ci/${task.id}", task))
-  
-  def createDependency(dependency: Dependency): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/repository/ci/${dependency.id}", dependency))
+  def createCis(cis: Seq[Ci]): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/fixtures/", cis))
 
   def importTemplate(file: String): Future[HttpResponse] = {
     val is: InputStream = getClass.getResourceAsStream(file)
