@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.client
 
-import com.xebialabs.xlrelease.XlrJsonProtocol
 import com.xebialabs.xlrelease.domain._
+import com.xebialabs.xlrelease.json.XlrJsonProtocol
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner

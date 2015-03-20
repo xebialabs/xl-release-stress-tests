@@ -7,6 +7,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease._
 import com.xebialabs.xlrelease.domain._
+import com.xebialabs.xlrelease.json.XlrJsonProtocol
 import spray.client.pipelining._
 import spray.http.{BasicHttpCredentials, _}
 import spray.httpx.SprayJsonSupport._
