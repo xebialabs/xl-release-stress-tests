@@ -9,6 +9,8 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val phaseFormat = jsonFormat5(Phase.apply)
   implicit val taskFormat = jsonFormat4(Task.apply)
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)
+  implicit val specialDayFormat = jsonFormat5(SpecialDay.apply)
+  implicit val directoryFormat = jsonFormat2(Directory.apply)
   implicit val userFormat = jsonFormat5(User)
   implicit val roleFormat = jsonFormat2(Role)
   implicit val puserFormat = jsonFormat2(PUser)
@@ -26,6 +28,8 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: Phase => ci.toJson
         case ci: Task => ci.toJson
         case ci: Dependency => ci.toJson
+        case ci: SpecialDay => ci.toJson
+        case ci: Directory => ci.toJson
         case _ => serializationError(s"Undefined CI type ${ci.getClass}")
       }
     }

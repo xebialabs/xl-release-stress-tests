@@ -52,6 +52,13 @@ package object domain {
                         target: String,
                         `type`: String = "xlrelease.Dependency") extends Ci
 
+  case class SpecialDay(id: String,
+                        label: String,
+                        date: String,
+                        color: String= "#c3d4ef",
+                        `type`: String = "xlrelease.SpecialDay") extends Ci
+
+  case class Directory(id: String, `type`: String = "core.Directory") extends Ci
 
   object Release {
     def build(title: String): Release = {

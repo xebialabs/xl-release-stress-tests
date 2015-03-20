@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.generator.ReleasesGenerator
+import com.xebialabs.xlrelease.generator.{SpecialDayGenerator, ReleasesGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -30,18 +30,19 @@ object Main extends App with LazyLogging {
 
   val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
 
-  val generator = new ReleasesGenerator()
+  val specialDaysFuture = client.createCis(SpecialDayGenerator.generateSpecialDays())
 
-  val dependantReleaseFuture = client.createCis(generator.generateDependentRelease())
+  val releaseGenerator = new ReleasesGenerator()
+  val dependantReleaseFuture = client.createCis(releaseGenerator.generateDependentRelease())
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
-    val createCompletedReleasesFutures = generator
+    val createCompletedReleasesFutures = releaseGenerator
       .generateCompletedReleases(completedReleasesAmount)
       .map(client.createCis)
-    val createTemplateReleasesFutures = generator
+    val createTemplateReleasesFutures = releaseGenerator
       .generateTemplateReleases(templatesAmount)
       .map(client.createCis)
-    val createActiveReleasesFutures = generator
+    val createActiveReleasesFutures = releaseGenerator
       .generateActiveReleases(activeReleasesAmount)
       .map(client.createCis)
 
@@ -51,7 +52,8 @@ object Main extends App with LazyLogging {
         createActiveReleasesFutures)
   })
 
-  val allResponses = Future.sequence(Seq(importTemplateFuture, allReleasesFuture))
+  val allResponses = Future.sequence(
+    Seq(importTemplateFuture, allReleasesFuture, specialDaysFuture))
 
   allResponses.andThen {
     case Failure(ex) =>

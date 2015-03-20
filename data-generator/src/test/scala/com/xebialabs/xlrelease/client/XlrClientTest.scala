@@ -1,6 +1,8 @@
 package com.xebialabs.xlrelease.client
 
+import com.xebialabs.xlrelease.client.XlrClient._
 import com.xebialabs.xlrelease.domain._
+import com.xebialabs.xlrelease.generator.SpecialDayGenerator
 import com.xebialabs.xlrelease.json.XlrJsonProtocol
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
@@ -9,7 +11,6 @@ import spray.http.{HttpEntity, HttpResponse, StatusCodes}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import XlrClient._
 @RunWith(classOf[JUnitRunner])
 class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
@@ -72,6 +73,15 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       dependencyResponse.futureValue.status shouldBe StatusCodes.OK
 
       client.removeCi(release.id)
+    }
+
+    it("should create special days") {
+      val days = SpecialDayGenerator.generateSpecialDays()
+
+      client.createCis(days)
+
+      val removalsFuture = days.map(_.id).map(client.removeCi)
+      expectSuccessfulResponses(removalsFuture)
     }
 
     it("should create many releases in batches") {
