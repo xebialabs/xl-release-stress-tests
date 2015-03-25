@@ -1,4 +1,5 @@
 String XLD_URL = System.getenv('XLD_URL')
+String XLD_CONTEXT = new URL(XLD_URL).path
 String XLD_CREDENTIALS = System.getenv('XLD_CREDENTIALS')
 String XLD_USERNAME = XLD_CREDENTIALS.split(':')[0]
 String XLD_PASSWORD = XLD_CREDENTIALS.split(':')[1]
@@ -14,19 +15,19 @@ import groovyx.net.http.RESTClient
 def xld = new RESTClient(XLD_URL)
 xld.auth.basic(XLD_USERNAME, XLD_PASSWORD)
 
-def controlXml = xld.get(path: "/deployit/control/prepare/$CONTROL_ACTION/$CONTROL_CI_ID",
+def controlXml = xld.get(path: "$XLD_CONTEXT/deployit/control/prepare/$CONTROL_ACTION/$CONTROL_CI_ID",
     contentType: TEXT, headers: [Accept : 'application/xml']).data.text
-def taskId = xld.post(path: '/deployit/control', body: controlXml,
+def taskId = xld.post(path: "$XLD_CONTEXT/deployit/control", body: controlXml,
     contentType: TEXT, headers: ['Content-Type' : XML, Accept : JSON]).data.text
 
 println "Starting control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] (task ID: $taskId)"
-xld.post(path: "/deployit/tasks/v2/$taskId/start")
+xld.post(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId/start")
 
 def tries = CONTROL_TASK_TIMEOUT / 2
 while (tries-- > 0) {
   println "Waiting for control task to finish ..."
   Thread.sleep(2000)
-  def state = xld.get(path: "/deployit/tasks/v2/$taskId").data.@state.text()
+  def state = xld.get(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId").data.@state.text()
   if (state != "EXECUTING") {
     if (state == "EXECUTED") {
       println "Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] has successfully finished (task ID: $taskId)"
