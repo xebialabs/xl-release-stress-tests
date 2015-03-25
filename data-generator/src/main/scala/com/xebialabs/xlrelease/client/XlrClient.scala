@@ -1,7 +1,5 @@
 package com.xebialabs.xlrelease.client
 
-import java.io.InputStream
-
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -80,8 +78,8 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
     strictPipeline(Post(s"$apiUrl/fixtures/", cis))
 
   def importTemplate(file: String): Future[HttpResponse] = {
-    val is: InputStream = getClass.getResourceAsStream(file)
-    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val is = getClass.getResourceAsStream(file)
+    val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
     val formFile = FormFile(file, HttpEntity(HttpData(bytes)).asInstanceOf[HttpEntity.NonEmpty])
     val mfd = MultipartFormData(Seq(BodyPart(formFile, "file")))
 

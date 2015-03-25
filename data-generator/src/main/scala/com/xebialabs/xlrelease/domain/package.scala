@@ -43,9 +43,7 @@ package object domain {
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED"
                   ) extends PlanItem {
-    def toGate: Task = {
-      copy(`type` = "xlrelease.GateTask")
-    }
+    def toGate = copy(`type` = "xlrelease.GateTask")
   }
 
   case class Dependency(id: String,
