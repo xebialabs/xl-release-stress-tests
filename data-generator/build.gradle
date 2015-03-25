@@ -32,7 +32,12 @@ def applicationJvmArgs = []
   }
 }
 
+def mainClass = "com.xebialabs.xlrelease.Main"
+
 run {
   jvmArgs applicationJvmArgs
-  main "com.xebialabs.xlrelease.Main"
+  main mainClass
 }
+
+// Required for the startScript task
+mainClassName = mainClass
