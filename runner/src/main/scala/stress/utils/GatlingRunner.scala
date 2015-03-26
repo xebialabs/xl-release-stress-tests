@@ -17,12 +17,12 @@ object GatlingRunner extends App with LazyLogging {
 
   private val simulationProvValue = Option(System.getProperty(simulationPropKey))
 
-  private val simulationClassOpt = simulationProvValue.map(Class.forName)
+  private val simulationClassOpt = simulationProvValue.map(_.split(",").map(Class.forName))
 
   val simulationsToRun = simulationClassOpt match {
-    case Some(simulation) =>
+    case Some(simulations) =>
       logger.info(s"Simulation has been specified explicitly: $simulationClassOpt")
-      Seq(simulation)
+      simulations.toSeq
     case None =>
       logger.info("Searching for all simulations on the classpath.")
       val classes = ClassFinder().getClasses().toIterator
