@@ -73,6 +73,12 @@ It uses the following optional parameters :
 - **Server URL**: The URL of the XL Release server instance
     - Syntax : -PbaseUrl=http://url.to.server:5516
     - The default value is http://localhost:5516
+- **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to view all data
+    - Syntax : -Pusername=admin
+    - The default value is 'admin'
+- **Password**: The password of the user account that will be used to connect to the server instance.
+    - Syntax : -Ppassword=password
+    - The default value is 'admin'
 - **Simulation**: The simulations to execute (separated by a comma). If it is empty then all simulations will be run.
     - Syntax :
         - -Psimulation=RealisticSimulation or
@@ -92,12 +98,6 @@ It uses the following optional parameters :
 - **Release Managers**: The number of "ops" users that will be running the *stress.OpsSimulation*
     - Syntax : -PreleaseManagers=20
     - The default value is 20
-- **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to view all data
-    - Syntax : -Pusername=admin
-    - The default value is 'admin'
-- **Password**: The password of the user account that will be used to connect to the server instance.
-    - Syntax : -Ppassword=password
-    - The default value is 'admin'
 
 Example :
 
