@@ -32,7 +32,7 @@ It uses the following optional parameters :
 - **Server URL**: The URL of the XL Release server instance
     - Syntax : -Pserver-url=http://url.to.server:5516
     - The default value is http://localhost:5516
-- **Username**: The username that will be used to to connect to the server instance. This username needs "admin" permissions in order to populate data
+- **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to populate data
     - Syntax : -Pusername=admin
     - The default value is 'admin'
 - **Password**: The password of the user account that will be used to connect to the server instance.
@@ -73,15 +73,15 @@ It uses the following optional parameters :
 - **Server URL**: The URL of the XL Release server instance
     - Syntax : -PbaseUrl=http://url.to.server:5516
     - The default value is http://localhost:5516
-- **Simulation**: The simulations to execute (separated by a comma), if empty all simulations will be run.
+- **Simulation**: The simulations to execute (separated by a comma). If it is empty then all simulations will be run.
     - Syntax :
         - -Psimulation=RealisticSimulation or
         - -Psimulation=stress.DevelopmentTeamSimulation,stress.OpsSimulation
     - The possible values are :
-        - stress.DevelopmentTeamSimulation :  X development teams commit code which triggers new releases. Each teams consists of ~10 developers.
-        - stress.OpsSimulation : X ops people are working with XL Release
+        - stress.DevelopmentTeamSimulation : several development teams commit code which triggers new releases. Each teams consists of ~10 developers.
+        - stress.OpsSimulation : several ops people are working with XL Release
+        - stress.ReleaseManagerSimulation : several release managers are working with XL Release
         - stress.RealisticSimulation : A simulation which combines several roles of people working with XL Release in one realistic usage scenario.
-        - stress.ReleaseManagerSimulation : X release managers are working with XL Release
     - The default value is stress.RealisticSimulation
 - **Teams**: The number of development teams that will be running the *stress.DevelopmentTeamSimulation*
     - Syntax : -Pteams=10
@@ -90,9 +90,9 @@ It uses the following optional parameters :
     - Syntax : -Pops=20
     - The default value is 20
 - **Release Managers**: The number of "ops" users that will be running the *stress.OpsSimulation*
-    - Syntax : -releaseManagers=20
+    - Syntax : -PreleaseManagers=20
     - The default value is 20
-- **Username**: The username that will be used to to connect to the server instance. This username needs "admin" permissions in order to view all data data
+- **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to view all data
     - Syntax : -Pusername=admin
     - The default value is 'admin'
 - **Password**: The password of the user account that will be used to connect to the server instance.
@@ -101,10 +101,8 @@ It uses the following optional parameters :
 
 Example :
 
-    ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=RealisticSimulation -Pusername=admin -Ppassword=password
+    ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=stress.RealisticSimulation -Pusername=admin -Ppassword=password
 
 ## Performances Reports
 
-The performance reports are generated in the **runner/reports** directory.
-
-Each simulation execution will generate a separate report
+The performance reports are generated in the **runner/reports** directory. Each simulation execution will generate a separate report folder, you can browse there and open file `index.html` to view the Gatling report.
