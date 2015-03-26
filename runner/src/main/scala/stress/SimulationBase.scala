@@ -11,17 +11,13 @@ abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulati
   def this(scenario: ScenarioBuilder) = this(List(scenario))
 
   setUp(
-    scenarios.map(if (!devMode) {
+    scenarios.map(
       _.inject(
         atOnceUsers(1),
         nothingFor(20 seconds),
         rampUsers(nbUsers) over rampUpPeriod
       )
-    } else {
-      _.inject(
-        rampUsers(nbUsers) over rampUpPeriod
-      )
-    })
+    )
   ).protocols(httpProtocol)
 
 }
