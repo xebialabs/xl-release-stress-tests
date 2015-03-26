@@ -14,12 +14,15 @@ package object stress {
   val nbOps = Integer.getInteger("ops", 20)
   val nbReleaseManagers = Integer.getInteger("releaseManagers", 20)
 
+  val username = Option(System.getProperty("username")).getOrElse("admin")
+  val password = Option(System.getProperty("password")).getOrElse("admin")
+
   val rampUpPeriod = 1 minute
 
   val httpProtocol = http
     .baseURL(baseUrl)
     .acceptHeader("application/json")
-    .authorizationHeader("Basic YWRtaW46YWRtaW4=")
+    .basicAuth(username, password)
     .contentTypeHeader("application/json; charset=UTF-8")
 
 }
