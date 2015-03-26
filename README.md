@@ -102,3 +102,9 @@ It uses the following optional parameters :
 Example :
 
     ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=RealisticSimulation -Pusername=admin -Ppassword=password
+
+## Performances Reports
+
+The performance reports are generated in the **runner/reports** directory.
+
+Each simulation execution will generate a separate report
