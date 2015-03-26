@@ -3,7 +3,7 @@ package stress.utils
 import com.typesafe.scalalogging.LazyLogging
 import io.gatling.app.Gatling
 import io.gatling.core.scenario.Simulation
-import org.clapper.classutil.ClassFinder
+import stress.RealisticSimulation
 
 import scala.util.{Failure, Success, Try}
 
@@ -18,6 +18,11 @@ object GatlingRunner extends App with LazyLogging {
   logger.info("Starting XL stress tests suite.")
 
   private val simulationProvValue = Option(System.getProperty(simulationPropKey))
+    .getOrElse(classOf[RealisticSimulation].getCanonicalName)
+
+  private val simulationsToRun = simulationProvValue
+    .split(",")
+    .map(simulationClassByName)
 
   private def simulationClassByName(className: String): Class[_] = {
     Try(Class.forName(className)) match {
@@ -28,24 +33,7 @@ object GatlingRunner extends App with LazyLogging {
     }
   }
 
-  private val simulationClassesOpt = simulationProvValue
-    .map(_.split(","))
-    .map(_.map(simulationClassByName))
-
-  val simulationsToRun = simulationClassesOpt match {
-    case Some(simulations) =>
-      logger.info(s"Simulation has been specified explicitly: $simulations")
-      simulations.toSeq
-    case None =>
-      logger.info("Searching for all simulations on the classpath.")
-      val classes = ClassFinder().getClasses().toIterator
-      val simulations = ClassFinder.concreteSubclasses(classOf[Simulation].getName, classes).map({
-        classInfo => Class.forName(classInfo.name)
-      }).toList
-      logger.info(s"Found following simulations to run: $simulations")
-      simulations
-  }
-
+  logger.info(s"Running following simulations: ${simulationsToRun.map(_.getCanonicalName).mkString(", ")}")
 
   simulationsToRun.foreach {
     case simulation =>

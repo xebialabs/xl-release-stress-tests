@@ -79,9 +79,9 @@ It uses the following optional parameters :
 - **Password**: The password of the user account that will be used to connect to the server instance.
     - Syntax : -Ppassword=password
     - The default value is 'admin'
-- **Simulation**: The simulations to execute (separated by a comma). If it is empty then all simulations will be run.
+- **Simulation**: The simulations to execute (separated by a comma). If it is empty then RealisticSimulation will run.
     - Syntax :
-        - -Psimulation=RealisticSimulation or
+        - -Psimulation=stress.RealisticSimulation or
         - -Psimulation=stress.DevelopmentTeamSimulation,stress.OpsSimulation
     - The possible values are :
         - stress.DevelopmentTeamSimulation : several development teams commit code which triggers new releases. Each teams consists of ~10 developers.
