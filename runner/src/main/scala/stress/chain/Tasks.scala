@@ -80,7 +80,7 @@ object Tasks {
   }
 
   private implicit class SessionEnhancedByTasks(session: Session) {
-    def taskIds: Vector[String] = session("taskIds").as[Vector[String]]
+    def taskIds: Vector[String] = session("taskIds").asOption[Vector[String]].getOrElse(Vector())
   }
 
 }

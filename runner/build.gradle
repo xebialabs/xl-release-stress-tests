@@ -20,6 +20,7 @@ dependencies {
   compile "io.gatling:gatling-jdbc:${GATLING_VERSION}"
   compile "io.gatling:gatling-recorder:${GATLING_VERSION}"
   compile 'joda-time:joda-time:2.1'
+  compile 'org.joda:joda-convert:1.2'
 
   compile 'org.scalatest:scalatest_2.11:2.2.4'
   compile 'org.clapper:classutil_2.11:1.0.5'

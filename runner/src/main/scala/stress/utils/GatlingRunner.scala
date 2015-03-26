@@ -5,6 +5,8 @@ import io.gatling.app.Gatling
 import io.gatling.core.scenario.Simulation
 import org.clapper.classutil.ClassFinder
 
+import scala.util.{Failure, Success, Try}
+
 /**
  * This runner allows to find and execute simulations from the same classpath as the runner itself.
  * Simplifies build logic.
@@ -17,11 +19,22 @@ object GatlingRunner extends App with LazyLogging {
 
   private val simulationProvValue = Option(System.getProperty(simulationPropKey))
 
-  private val simulationClassOpt = simulationProvValue.map(_.split(",").map(Class.forName))
+  private def simulationClassByName(className: String): Class[_] = {
+    Try(Class.forName(className)) match {
+      case Success(c) => c
+      case Failure(e) =>
+        logger.error(s"Can not find simulation $className.")
+        throw e
+    }
+  }
 
-  val simulationsToRun = simulationClassOpt match {
+  private val simulationClassesOpt = simulationProvValue
+    .map(_.split(","))
+    .map(_.map(simulationClassByName))
+
+  val simulationsToRun = simulationClassesOpt match {
     case Some(simulations) =>
-      logger.info(s"Simulation has been specified explicitly: $simulationClassOpt")
+      logger.info(s"Simulation has been specified explicitly: $simulations")
       simulations.toSeq
     case None =>
       logger.info("Searching for all simulations on the classpath.")
