@@ -31,6 +31,9 @@ while (tries-- > 0) {
   if (state != "EXECUTING") {
     if (state == "EXECUTED") {
       println "Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] has successfully finished (task ID: $taskId)"
+
+      xld.post(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId/archive")
+
       return
     } else {
       throw new RuntimeException("Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] failed with state $state, " +
