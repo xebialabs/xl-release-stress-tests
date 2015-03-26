@@ -1,52 +1,57 @@
+# XL Release Stress tests
+
+There are two projects in this repository :
+
+- Data Generator : an application that populates an XL Release instance with active, completed releases and templates.
+- Runner : an application that connects to an XL Release instance and performs stress tests.
+
 # Data Generator
 
-The data generator is a java application that populates an XL Release instance with active and completed releases and templates.
+## Requirements
 
-## Installing the data generator
 
-Unzip/Untar the distribution archive :
-
-    unzip data-generator.zip
-
-or
-
-    tar xvf data-generator.zip
-
-This will create a **data-generator** directory
+- Java 7 SDK
+- XL Release 4.0.x or greater
 
 
 ## Running the data generator
 
-The application can be started using the startup scripts in the **data-generator/bin** directory :
+The data generator should **not** be run on a production environment, as it will generate many active, completed and template releases.
 
-- **data-generator** : Unix startup script
-- **data-generator.bat** : Windows startup script
+It should be run only once a newly installed XL Release instance, running it several times on the same XL Release instance will result in errors.
 
+The application can be started with the following command :
 
-The application uses the following optional JVM parameters :
+    ./gradlew :data-generator:run
+
+or on windows
+
+    gradlew :data-generator:run
+
+It uses the following optional parameters :
 
 - **Server URL**: The URL of the XL Release server instance
-    - Syntax : -Dxl.data-generator.server-url=http://url.to.server:5516
+    - Syntax : -Pserver-url=http://url.to.server:5516
     - The default value is http://localhost:5516
 - **Username**: The username that will be used to to connect to the server instance. This username needs "admin" permissions in order to populate data
-    - Syntax : -Dxl.data-generator.username=admin
+    - Syntax : -Pusername=admin
     - The default value is 'admin'
 - **Password**: The password of the user account that will be used to connect to the server instance.
-    - Syntax : -Dxl.data-generator.password=password
+    - Syntax : -Ppassword=password
     - The default value is 'admin'
 - **Active Releases count**: The number of active releases that should be created.
-    - Syntax : -Dxl.data-generator.active-releases=100
+    - Syntax : -Pactive-releases=100
     - The default value is 10
 - **Completed Releases count**: The number of active releases that should be created.
-    - Syntax : -Dxl.data-generator.completed-releases=500
+    - Syntax : -Pcompleted-releases=500
     - The default value is 10
 - **Templates count**: The number of templates that should be created.
-    - Syntax : -Dxl.data-generator.templates=100
+    - Syntax : -Ptemplates=100
     - The default value is 10
 
-The parameters have to be specified in the DATA_GENERATOR_OPTS variable
+Example :
 
-    export DATA_GENERATOR_OPTS="-Dxl.data-generator.server-url=http://url.to.server:5516 -Dxl.data-generator.templates=100 -Dxl.data-generator.active-releases=100"
+    ./gradlew :data-generator:run -Pserver-url=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20
 
 # Runner
 
