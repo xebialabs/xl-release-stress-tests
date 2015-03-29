@@ -58,6 +58,8 @@ package object domain {
 
   case class Directory(id: String, `type`: String = "core.Directory") extends Ci
 
+  case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
+
   object Release {
     def build(title: String): Release = {
       if (!title.startsWith("Release"))

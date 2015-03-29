@@ -78,7 +78,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create special days") {
       val days = SpecialDayGenerator.generateSpecialDays()
 
-      client.createCis(days)
+      expectSuccessfulResponse(client.createCis(days))
 
       val removalsFuture = days.map(_.id).map(client.removeCi)
       expectSuccessfulResponses(removalsFuture)
@@ -136,6 +136,17 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val response = new HttpResponse(StatusCodes.OK, HttpEntity("Great success."))
       val changedFuture = failNonSuccessfulResponses(Future.successful(response))
       changedFuture.futureValue shouldBe response
+    }
+
+    it("should create server configurations") {
+      val directory = Directory("Configuration/Custom")
+      val server = HttpConnection(s"${directory.id}/ConfigurationJenkins", "Jenkins", "jenkins.Server")
+      val cis = Seq(directory, server)
+
+      expectSuccessfulResponse(client.createCis(cis))
+
+      val removalsFuture = cis.map(_.id).map(client.removeCi)
+      expectSuccessfulResponses(removalsFuture)
     }
   }
 

@@ -75,7 +75,7 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
     strictPipeline(Delete(s"$apiUrl/repository/ci/$id"))
 
   def createCis(cis: Seq[Ci]): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/fixtures/", cis))
+    strictPipeline(Put(s"$apiUrl/fixtures/", cis))
 
   def importTemplate(file: String): Future[HttpResponse] = {
     val is = getClass.getResourceAsStream(file)
