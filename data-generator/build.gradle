@@ -1,5 +1,10 @@
+plugins {
+  id "com.jfrog.bintray" version "1.1"
+}
+
 apply plugin: 'scala'
-apply plugin:'application'
+apply plugin: 'application'
+apply plugin: 'maven-publish'
 
 repositories {
   mavenCentral()
@@ -37,3 +42,59 @@ run {
 }
 
 mainClassName = "com.xebialabs.xlrelease.Main"
+
+
+/* Project publication details */
+
+def pomConfig = {
+  name 'XL Release Data Generator'
+  url project_url
+  scm { url project_scm }
+
+  organization {
+    name 'XebiaLabs'
+    url 'http://www.xebialabs.com'
+  }
+}
+
+publishing {
+  publications {
+    projectJar(MavenPublication) {
+      from components.java
+//      artifact sourcesJar
+//      artifact javadocJar
+
+      groupId project_group_id
+      artifactId project_artifact_id
+
+      pom.withXml {
+        asNode().appendNode('description', project_description)
+        asNode().children().last() + pomConfig
+      }
+    }
+  }
+}
+
+bintray {
+  user = bintrayUsername
+  key = bintrayApiKey
+
+  publications = ['projectJar']
+  dryRun = false
+  publish = false
+  pkg {
+    repo = 'maven'
+    userOrg = 'xebialabs'
+    name = project_artifact_id
+    desc = project_description
+    websiteUrl = project_url
+    issueTrackerUrl = project_issues_url
+    vcsUrl = project_scm
+    licenses = ['Apache-2.0']
+    labels = ['xlrelease', 'release', 'xebialabs', 'xl', 'continuous delivery', 'cd']
+    publicDownloadNumbers = true
+//    version {
+//      vcsTag = "$project_name-${project.version}"
+//    }
+  }
+}
