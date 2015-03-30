@@ -38,7 +38,7 @@ object XlrClient {
 class XlrClient(apiUrl: String, username: String = "admin", password: String = "admin") extends XlrJsonProtocol with AdditionalFormats with LazyLogging {
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val timeout: Timeout = Timeout(60.minutes)
+  implicit val timeout: Timeout = Timeout(30 days)
 
   private val strictPipeline = (req: HttpRequest) => {
     val loggingResp = (i: HttpResponse) => logger.debug(i.toString)

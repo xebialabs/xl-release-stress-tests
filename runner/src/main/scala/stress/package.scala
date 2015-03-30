@@ -1,7 +1,6 @@
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
-import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 package object stress {
@@ -16,8 +15,6 @@ package object stress {
 
   val username = Option(System.getProperty("username")).getOrElse("admin")
   val password = Option(System.getProperty("password")).getOrElse("admin")
-
-  val rampUpPeriod = 1 minute
 
   val httpProtocol = http
     .baseURL(baseUrl)

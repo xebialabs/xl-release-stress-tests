@@ -117,7 +117,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should import template from a file") {
-      val createResponseFuture = client.importTemplate("/20-automated-tasks.xlr")
+      val createResponseFuture = client.importTemplate("/many-automated-tasks.xlr")
       expectSuccessfulResponse(createResponseFuture)
     }
 

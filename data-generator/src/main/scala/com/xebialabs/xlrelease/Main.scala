@@ -28,7 +28,7 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.username"),
     config.getString("xl.data-generator.password"))
 
-  val importTemplateFuture = client.importTemplate("/20-automated-tasks.xlr")
+  val importTemplateFuture = client.importTemplate("/many-automated-tasks.xlr")
 
   val specialDaysFuture = client.createCis(SpecialDayGenerator.generateSpecialDays())
 
@@ -36,20 +36,20 @@ object Main extends App with LazyLogging {
   val dependantReleaseFuture = client.createCis(releaseGenerator.generateDependentRelease())
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
-    val createCompletedReleasesFutures = releaseGenerator
-      .generateCompletedReleases(completedReleasesAmount)
-      .map(client.createCis)
     val createTemplateReleasesFutures = releaseGenerator
       .generateTemplateReleases(templatesAmount)
       .map(client.createCis)
     val createActiveReleasesFutures = releaseGenerator
       .generateActiveReleases(activeReleasesAmount)
       .map(client.createCis)
+    val createCompletedReleasesFutures = releaseGenerator
+      .generateCompletedReleases(completedReleasesAmount)
+      .map(client.createCis)
 
     Future.sequence(
-      createCompletedReleasesFutures ++
-        createTemplateReleasesFutures ++
-        createActiveReleasesFutures)
+      createTemplateReleasesFutures ++
+         createActiveReleasesFutures ++
+         createCompletedReleasesFutures)
   })
 
   val allResponses = Future.sequence(

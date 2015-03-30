@@ -15,7 +15,7 @@ abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulati
       _.inject(
         atOnceUsers(1),
         nothingFor(20 seconds),
-        rampUsers(nbUsers) over rampUpPeriod
+        rampUsers(nbUsers) over (1 minute)
       )
     )
   ).protocols(httpProtocol)

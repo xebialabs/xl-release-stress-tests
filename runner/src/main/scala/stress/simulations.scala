@@ -5,7 +5,8 @@ import stress.chain.Releases
 import stress.utils.Scenarios
 import stress.utils.Scenarios._
 
-import scala.language.postfixOps
+import scala.concurrent.duration._
+import scala.language.{implicitConversions, postfixOps}
 
 /**
  * X users open calendar page on a given month
@@ -62,24 +63,26 @@ class PipelineSimulation extends SimulationBase(queryPipelinesScenario)
  * in one realistic usage scenario.
  */
 class RealisticSimulation extends Simulation {
+  val rampUpPeriod = 10 minutes
+  val repeats = 3
   setUp(
-    releaseManagerScenario.inject(rampUsers(nbReleaseManagers) over rampUpPeriod),
-    opsScenario.inject(rampUsers(nbOps) over rampUpPeriod),
-    developmentTeamScenario.inject(rampUsers(nbTeams) over rampUpPeriod)
+    releaseManagerScenario(repeats).inject(rampUsers(nbReleaseManagers) over rampUpPeriod),
+    opsScenario(repeats).inject(rampUsers(nbOps) over rampUpPeriod),
+    developmentTeamScenario(repeats).inject(rampUsers(nbTeams) over rampUpPeriod)
   ).protocols(httpProtocol)
 }
 
 /**
  * X release managers are working with XL Release
  */
-class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario)
+class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario(1))
 
 /**
  * X ops people are working with XL Release
  */
-class OpsSimulation extends SimulationBase(opsScenario)
+class OpsSimulation extends SimulationBase(opsScenario(1))
 
 /**
  * X development teams commit code which triggers new releases. Each teams consists of ~10 developers.
  */
-class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario)
+class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario(1))

@@ -37,26 +37,32 @@ object Scenarios {
   val queryTemplatesScenario = scenario("Template overview")
     .exec(Templates.open)
 
-  val releaseManagerScenario = scenario("Release manager")
-    .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
-    .pause(4 minutes, 6 minutes)
-    .exec(Calendar.open)
-    .pause(4 minutes, 6 minutes)
+  def releaseManagerScenario(repeats: Int) = scenario("Release manager")
+    .repeat(repeats)(
+      exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+      .pause(4 minutes, 6 minutes)
+      .exec(Calendar.open)
+      .pause(4 minutes, 6 minutes)
+    )
 
-  val opsScenario = scenario("Ops person")
-    .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 4 minutes))
-    .exec(Calendar.open)
-    .pause(0.5 minute, 1.5 minutes)
-    .exec(Tasks.commentOnRandomTask())
-    .pause(0.5 minute, 1.5 minutes)
-    .exec(Tasks.changeTeamAssignmentOfRandomTask())
-    .pause(0.5 minute, 1.5 minutes)
-    .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 3 minutes))
+  def opsScenario(repeats: Int) = scenario("Ops person")
+    .repeat(repeats)(
+      exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 4 minutes))
+      .exec(Calendar.open)
+      .pause(0.5 minute, 1.5 minutes)
+      .exec(Tasks.commentOnRandomTask())
+      .pause(0.5 minute, 1.5 minutes)
+      .exec(Tasks.changeTeamAssignmentOfRandomTask())
+      .pause(0.5 minute, 1.5 minutes)
+      .exec(Tasks.openAndPoll(Tasks.MY_TASKS_FILTER, 3 minutes))
+    )
 
-  val developmentTeamScenario = scenario("Team of developers")
-    .repeat(2) {
-      exec(Releases.createFromTemplate("create-release-20-automated-tasks.json", "20 automated tasks"))
-      .pause(5 minutes)
-    }
+  def developmentTeamScenario(repeats: Int) = scenario("Team of developers")
+    .repeat(repeats)(
+      repeat(2) {
+        exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
+        .pause(5 minutes)
+      }
+    )
 
 }
