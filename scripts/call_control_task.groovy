@@ -23,10 +23,10 @@ def taskId = xld.post(path: "$XLD_CONTEXT/deployit/control", body: controlXml,
 println "Starting control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] (task ID: $taskId)"
 xld.post(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId/start")
 
-def tries = CONTROL_TASK_TIMEOUT / 2
+def tries = CONTROL_TASK_TIMEOUT / 5
 while (tries-- > 0) {
   println "Waiting for control task to finish ..."
-  Thread.sleep(2000)
+  Thread.sleep(5000)
   def state = xld.get(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId").data.@state.text()
   if (state != "EXECUTING") {
     if (state == "EXECUTED") {
