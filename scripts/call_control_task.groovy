@@ -5,7 +5,7 @@ String XLD_USERNAME = XLD_CREDENTIALS.split(':')[0]
 String XLD_PASSWORD = XLD_CREDENTIALS.split(':')[1]
 String CONTROL_CI_ID = System.getenv('CONTROL_CI_ID')
 String CONTROL_ACTION = System.getenv('CONTROL_ACTION')
-int CONTROL_TASK_TIMEOUT = 120
+int CONTROL_TASK_TIMEOUT = 300
 
 
 @Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.6' )
