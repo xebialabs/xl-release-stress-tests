@@ -11,6 +11,7 @@ int CONTROL_TASK_TIMEOUT = 300
 @Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.6' )
 import static groovyx.net.http.ContentType.*
 import groovyx.net.http.RESTClient
+import org.apache.http.client.ClientProtocolException
 
 def xld = new RESTClient(XLD_URL)
 xld.auth.basic(XLD_USERNAME, XLD_PASSWORD)
@@ -27,18 +28,22 @@ def tries = CONTROL_TASK_TIMEOUT / 5
 while (tries-- > 0) {
   println "Waiting for control task to finish ..."
   Thread.sleep(5000)
-  def state = xld.get(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId").data.@state.text()
-  if (state != "EXECUTING") {
-    if (state == "EXECUTED") {
-      println "Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] has successfully finished (task ID: $taskId)"
+  try {
+    def state = xld.get(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId").data.@state.text()
+    if (state != "EXECUTING") {
+      if (state == "EXECUTED") {
+        println "Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] has successfully finished (task ID: $taskId)"
 
-      xld.post(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId/archive")
+        xld.post(path: "$XLD_CONTEXT/deployit/tasks/v2/$taskId/archive")
 
-      return
-    } else {
-      throw new RuntimeException("Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] failed with state $state, " +
-          "please check XL Deploy log files (task ID: $taskId)")
+        return
+      } else {
+        throw new RuntimeException("Control task '$CONTROL_ACTION' of CI [$CONTROL_CI_ID] failed with state $state, " +
+            "please check XL Deploy log files (task ID: $taskId)")
+      }
     }
+  } catch (ClientProtocolException e) {
+    println "Failed to call XL Deploy, will retry: ${e.getMessage()}"
   }
 }
 
