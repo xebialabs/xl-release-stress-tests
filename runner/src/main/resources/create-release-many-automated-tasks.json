@@ -32,7 +32,7 @@
       "key": "${ssh_host}",
       "password": null,
       "type": "DEFAULT",
-      "value": "xlr-ssh-remote-test"
+      "value": "xlr-ssh-remote-test.xebialabs.com"
     },
     {
       "key": "${ssh_password}",
