@@ -61,8 +61,6 @@ publishing {
   publications {
     projectJar(MavenPublication) {
       from components.java
-//      artifact sourcesJar
-//      artifact javadocJar
 
       groupId project_group_id
       artifactId project_artifact_id
@@ -93,8 +91,5 @@ bintray {
     licenses = ['Apache-2.0']
     labels = ['xlrelease', 'release', 'xebialabs', 'xl', 'continuous delivery', 'cd']
     publicDownloadNumbers = true
-//    version {
-//      vcsTag = "$project_name-${project.version}"
-//    }
   }
 }
