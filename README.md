@@ -89,13 +89,13 @@ It uses the following optional parameters :
         - `stress.ReleaseManagerSimulation` : several release managers are working with XL Release
         - `stress.RealisticSimulation` : A simulation which combines several roles of people working with XL Release in one realistic usage scenario.
     - The default value is `stress.RealisticSimulation`
-- **Teams**: The number of development teams that will be running the *stress.DevelopmentTeamSimulation*
+- **Teams**: The number of development teams that will be running the `stress.DevelopmentTeamSimulation`
     - Syntax : `-Pteams=10`
     - The default value is `10`
-- **Ops**: The number of "ops" users that will be running the *stress.OpsSimulation*
+- **Ops**: The number of "ops" users that will be running the `stress.OpsSimulation`
     - Syntax : `-Pops=20`
     - The default value is `20`
-- **Release Managers**: The number of "ops" users that will be running the *stress.OpsSimulation*
+- **Release Managers**: The number of "ops" users that will be running the `stress.ReleaseManagerSimulation`
     - Syntax : `-PreleaseManagers=20`
     - The default value is `20`
 
