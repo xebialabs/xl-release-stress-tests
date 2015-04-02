@@ -2,7 +2,6 @@ package stress
 
 import io.gatling.core.Predef._
 import stress.chain.Releases
-import stress.utils.Scenarios
 import stress.utils.Scenarios._
 
 import scala.concurrent.duration._
@@ -16,9 +15,7 @@ class CalendarSimulation extends SimulationBase(openCalendarScenario)
 /**
  * X concurrent users create releases (without template and tasks) simultaneously and get task definitions.
  */
-class CreateReleaseSimulation extends SimulationBase(
-  Scenarios.createReleaseScenario
-)
+class CreateReleaseSimulation extends SimulationBase(createReleaseScenario)
 
 /**
  * X concurrent users are opening tasks overview page
