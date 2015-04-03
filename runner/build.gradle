@@ -1,5 +1,5 @@
 apply plugin: 'scala'
-apply plugin:'application'
+apply plugin: 'application'
 
 repositories {
   maven { url "http://repository.excilys.com/content/groups/public" }
