@@ -51,6 +51,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       val release = releaseOfBatch(cis)
       release.status should be("COMPLETED")
       release.queryableEndDate.isAfter(release.queryableStartDate) should be(right = true)
+      release.endDate.get.isAfter(release.queryableStartDate) should be(right = true)
       release.dueDate.isAfter(release.scheduledStartDate) should be(right = true)
 
       phasesAndTasksOfBatch(cis).foreach( ci => {
@@ -74,6 +75,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
 
       val release = releaseOfBatch(cis)
       release.status should be("IN_PROGRESS")
+      release.endDate shouldBe None
 
       val activePhases = phasesOfBatch(cis).filter(_.status == "IN_PROGRESS")
       activePhases should have size 1

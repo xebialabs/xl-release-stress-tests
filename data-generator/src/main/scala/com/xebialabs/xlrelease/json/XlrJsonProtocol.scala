@@ -5,7 +5,7 @@ import spray.json._
 trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with ZonedDateTimeProtocol {
   this: ProductFormatsInstances =>
 
-  implicit val releaseFormat = jsonFormat8(Release.apply)
+  implicit val releaseFormat = jsonFormat9(Release.apply)
   implicit val phaseFormat = jsonFormat5(Phase.apply)
   implicit val taskFormat = jsonFormat4(Task.apply)
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)

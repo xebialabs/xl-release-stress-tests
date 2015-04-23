@@ -30,6 +30,7 @@ package object domain {
                       dueDate: ZonedDateTime,
                       queryableStartDate: ZonedDateTime,
                       queryableEndDate: ZonedDateTime,
+                      endDate: Option[ZonedDateTime],
                       `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
@@ -85,7 +86,8 @@ package object domain {
         scheduledStartDate = start,
         dueDate = end,
         queryableStartDate = start,
-        queryableEndDate = end)
+        queryableEndDate = end,
+        endDate = if (status == "COMPLETED") Some(end) else None)
     }
 
   }
