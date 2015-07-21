@@ -41,7 +41,7 @@ It uses the following optional parameters :
 - **Active Releases count**: The number of active releases that should be created.
     - Syntax : `-Pactive-releases=100`
     - The default value is `10`
-- **Completed Releases count**: The number of active releases that should be created.
+- **Completed Releases count**: The number of completed releases that should be created.
     - Syntax : `-Pcompleted-releases=500`
     - The default value is `10`
 - **Templates count**: The number of templates that should be created.
