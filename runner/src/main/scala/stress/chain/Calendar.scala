@@ -13,7 +13,7 @@ object Calendar {
       .body(StringBody(s"""{
             "active":true,
             "planned":true,
-            "completed":true,
+            "completed":false,
             "onlyMine":false,
             "onlyFlagged":false,
             "filter":"",
