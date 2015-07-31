@@ -1,8 +1,11 @@
 package com.xebialabs.xlrelease.client
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import com.xebialabs.xlrelease.client.XlrClient._
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.json.XlrJsonProtocol
 import spray.client.pipelining._
@@ -15,7 +18,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import XlrClient._
 
 object XlrClient {
 
@@ -27,7 +29,7 @@ object XlrClient {
   /**
    * Returns a failed [[Future]] for all the non-successful responses.
    */
-  private [client] def failNonSuccessfulResponses(responseFuture: Future[HttpResponse]) = responseFuture.flatMap {
+  private[client] def failNonSuccessfulResponses(responseFuture: Future[HttpResponse]) = responseFuture.flatMap {
     case response if response.status.isFailure =>
       Future.failed(new XlrClientException(response.entity.data.asString))
     case _ =>
@@ -39,10 +41,17 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val timeout: Timeout = Timeout(30 days)
+  val requestCounter = new AtomicInteger(0)
 
   private val strictPipeline = (req: HttpRequest) => {
-    val loggingResp = (i: HttpResponse) => logger.debug(i.toString)
-    val loggingReq = (i: HttpRequest) => logger.debug(i.toString)
+    val requestNum = requestCounter.getAndIncrement()
+    val loggingReq = (i: HttpRequest) => {
+      logger.debug(i.toString)
+    }
+    val loggingResp = (i: HttpResponse) => {
+      logger.info(s"Request $requestNum execution done with ${i.status}")
+      logger.debug(i.toString)
+    }
 
     val pipeline = logRequest(loggingReq) ~>
       addCredentials(BasicHttpCredentials(username, password)) ~>
