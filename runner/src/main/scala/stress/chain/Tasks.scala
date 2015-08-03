@@ -22,7 +22,7 @@ object Tasks {
       .asJSON
       .check(
         jsonPath("$['releaseTasks'][*]['tasks'][*]['id']")
-          .findAll
+          .findAll.optional
           .saveAs("taskIds")
       )
   )
