@@ -3,6 +3,8 @@ package com.xebialabs.xlrelease.generator
 import com.xebialabs.xlrelease.domain._
 import ReleaseGenerator._
 
+import scala.util.Random
+
 object ReleaseGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
@@ -12,6 +14,7 @@ object ReleaseGenerator {
 class ReleasesGenerator {
   
   var idCounter = 0
+  val transaction = Math.abs(Random.nextInt())
 
   private def incrementCounterAndGet(): Int = {
     idCounter += 1
@@ -38,7 +41,7 @@ class ReleasesGenerator {
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String): Seq[Seq[Ci]] = {
     val releases = (1 to amount).map(n => {
       val releaseNumber = incrementCounterAndGet()
-      Release.build(s"Applications/Release$releaseNumber", titleGenerator(n), status, n, amount)
+      Release.build(s"Applications/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
     })
 
     releases.map(release => createReleaseContent(release) :+ release)
