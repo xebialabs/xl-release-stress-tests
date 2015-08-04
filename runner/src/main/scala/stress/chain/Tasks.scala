@@ -15,8 +15,8 @@ object Tasks {
   val MY_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
   val NOT_EXISTING_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}"""
 
-  def open(filter: Body) = exec(
-    http("Get list of tasks")
+  def open(httpName: String, filter: Body) = exec(
+    http(httpName)
       .post("/tasks/search?limitTasksHint=100")
       .body(filter)
       .asJSON
@@ -26,7 +26,7 @@ object Tasks {
           .saveAs("taskIds")
       )
   )
-  def open(filter: String): ChainBuilder = open(StringBody(filter))
+  def open(httpName: String, filter: String): ChainBuilder = open(httpName, StringBody(filter))
 
   def pollManyTasks = exec(
     http("Poll tasks")
@@ -38,7 +38,7 @@ object Tasks {
       }]}""")).asJSON
   )
 
-  def openAndPoll(filter: String, pollDuration: Duration) = open(filter)
+  def openAndPoll(httpName: String, filter: String, pollDuration: Duration) = open(httpName, filter)
     .exec(session => {
       session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
     })
@@ -52,7 +52,7 @@ object Tasks {
       .pause(2 seconds)
     }
 
-  def commentOnRandomTask() = open(ALL_TASKS_FILTER)
+  def commentOnRandomTask() = open("Get list of all tasks", ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
         .post("/tasks/${taskIds.random()}/comments")
@@ -60,7 +60,7 @@ object Tasks {
         .asJSON
     )
 
-  def changeTeamAssignmentOfRandomTask() = open(ALL_TASKS_FILTER)
+  def changeTeamAssignmentOfRandomTask() = open("Get list of all tasks", ALL_TASKS_FILTER)
     .randomSwitch(
       50d -> setTeamOnRandomTask(Some("Release Admin")),
       50d -> setTeamOnRandomTask(None)
