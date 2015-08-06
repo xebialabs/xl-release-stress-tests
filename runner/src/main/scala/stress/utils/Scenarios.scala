@@ -12,10 +12,10 @@ object Scenarios {
 
   val minReleaseManagerDur: FiniteDuration = 4 minutes
   val maxReleaseManagerDur: FiniteDuration = 6 minutes
-  val maxOpsDur: FiniteDuration = 1.5 minutes
-  val minOpsDur: FiniteDuration = 0.5 minute
+  val maxOpsDur: FiniteDuration = 1 minutes
+  val minOpsDur: FiniteDuration = 0.3 minute
   val devDuration: FiniteDuration = 3 minutes
-  val taskPollDuration: FiniteDuration = 3.5 minutes
+  val taskPollDuration: FiniteDuration = 3 minutes
 
   val createReleaseScenario = scenario("Create release")
     .exec(Releases.create(RawFileBody("create-release-body.json")))
@@ -63,7 +63,7 @@ object Scenarios {
           .pause(minOpsDur, maxOpsDur)
           .exec(Tasks.changeTeamAssignmentOfRandomTask())
           .pause(minOpsDur, maxOpsDur)
-          .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration))
+          .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7))
       )
   }
 
