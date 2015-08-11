@@ -3,6 +3,7 @@ package stress.chain
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
+import stress.config.RunnerConfig
 
 object Pipeline {
 
@@ -10,7 +11,7 @@ object Pipeline {
         http("Get pipeline releases")
           .post("/releases/search")
           .body(filter)
-          .queryParam("numberbypage", "15")
+          .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
           .queryParam("page", "0")
           .asJSON
           .check(

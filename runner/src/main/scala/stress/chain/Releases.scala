@@ -11,6 +11,7 @@ import io.gatling.core.session._
 import io.gatling.core.validation.Validation
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
+import stress.config.RunnerConfig
 
 object Releases {
 
@@ -22,7 +23,7 @@ object Releases {
   def queryAll = exec(
     http("All releases")
       .post("/releases/search")
-      .queryParam("numberbypage", "15")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .body(RawFileBody("release-search-body.json")).asJSON
   )

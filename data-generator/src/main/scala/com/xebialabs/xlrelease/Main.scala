@@ -24,7 +24,7 @@ object Main extends App with LazyLogging {
   logger.info("Templates: {}", templatesAmount.toString)
 
   val client = new XlrClient(
-    config.getString("xl.data-generator.server-url"),
+    config.getString("xl.data-generator.baseUrl"),
     config.getString("xl.data-generator.username"),
     config.getString("xl.data-generator.password"))
 

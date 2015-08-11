@@ -8,6 +8,7 @@ import stress.utils.TaskIds
 
 import scala.concurrent.duration.{Duration, _}
 import scala.language.postfixOps
+import stress.config.RunnerConfig._
 
 object Tasks {
 
@@ -38,18 +39,18 @@ object Tasks {
       }]}""")).asJSON
   )
 
-  def openAndPoll(httpName: String, filter: String, pollDuration: Duration) = open(httpName, filter)
+  def openAndPoll(httpName: String, filter: String, duration: Duration) = open(httpName, filter)
     .exec(session => {
       session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
     })
-    .during(pollDuration) {
+    .during(duration) {
       exec(
         http("Poll tasks")
           .post("/tasks/poll")
           .body(StringBody("${pollTasksBody}"))
           .asJSON
       )
-      .pause(2 seconds)
+      .pause(taskPollPause)
     }
 
   def commentOnRandomTask() = open("Get list of all tasks", ALL_TASKS_FILTER)
