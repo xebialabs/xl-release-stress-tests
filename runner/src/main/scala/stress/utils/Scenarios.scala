@@ -4,18 +4,11 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
 import stress.chain._
+import stress.config.RunnerConfig._
 
-import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 object Scenarios {
-
-  val minReleaseManagerDur: FiniteDuration = 4 minutes
-  val maxReleaseManagerDur: FiniteDuration = 6 minutes
-  val maxOpsDur: FiniteDuration = 1 minutes
-  val minOpsDur: FiniteDuration = 0.3 minute
-  val devDuration: FiniteDuration = 3 minutes
-  val taskPollDuration: FiniteDuration = 3 minutes
 
   val createReleaseScenario = scenario("Create release")
     .exec(Releases.create(RawFileBody("create-release-body.json")))
@@ -48,7 +41,7 @@ object Scenarios {
     scenario("Release manager")
       .repeat(repeats)(
         exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
-          .pause(minReleaseManagerDur, maxReleaseManagerDur)
+          .pause(releaseManagerPauseMin, releaseManagerPauseMax)
           .exec(Calendar.open)
       )
   }
@@ -58,11 +51,11 @@ object Scenarios {
       .repeat(repeats)(
         exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration))
           .exec(Calendar.open)
-          .pause(minOpsDur, maxOpsDur)
+          .pause(opsPauseMin, opsPauseMax)
           .exec(Tasks.commentOnRandomTask())
-          .pause(minOpsDur, maxOpsDur)
+          .pause(opsPauseMin, opsPauseMax)
           .exec(Tasks.changeTeamAssignmentOfRandomTask())
-          .pause(minOpsDur, maxOpsDur)
+          .pause(opsPauseMin, opsPauseMax)
           .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7))
       )
   }
@@ -71,7 +64,7 @@ object Scenarios {
     .repeat(repeats)(
       repeat(2) {
         exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
-        .pause(devDuration)
+        .pause(devPause)
       }
     )
 

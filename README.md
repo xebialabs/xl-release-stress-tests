@@ -50,7 +50,7 @@ It uses the following optional parameters :
 
 Example :
 
-    ./gradlew :data-generator:run -Pserver-url=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20
+    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20
 
 # Runner
 
@@ -108,3 +108,8 @@ Note that part of `stress.RealisticSimulation` is starting a release which conne
 ## Performances Reports
 
 The performance reports are generated in the **runner/reports** directory. Each simulation execution will generate a separate report folder, you can browse there and open file `index.html` to view the Gatling report.
+
+
+## Advanced configuration parameters
+
+`xl.runner.durationDilation` - multiplies all the durations in the runner configuration by this value. 

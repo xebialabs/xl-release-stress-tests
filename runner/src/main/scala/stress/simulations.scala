@@ -2,9 +2,9 @@ package stress
 
 import io.gatling.core.Predef._
 import stress.chain.Releases
+import stress.config.RunnerConfig
 import stress.utils.Scenarios._
 
-import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 /**
@@ -60,12 +60,14 @@ class PipelineSimulation extends SimulationBase(queryPipelinesScenario)
  * in one realistic usage scenario.
  */
 class RealisticSimulation extends Simulation {
-  val rampUpPeriod = 10 minutes
-  val repeats = 3
+
+  val rampUpPeriod = RunnerConfig.simulations.realistic.rampUpPeriod
+  val repeats = RunnerConfig.simulations.realistic.repeats
+
   setUp(
-    releaseManagerScenario(repeats).inject(rampUsers(nbReleaseManagers) over rampUpPeriod),
-    opsScenario(repeats).inject(rampUsers(nbOps) over rampUpPeriod),
-    developmentTeamScenario(repeats).inject(rampUsers(nbTeams) over rampUpPeriod)
+    releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod),
+    opsScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod),
+    developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod)
   ).protocols(httpProtocol)
 }
 

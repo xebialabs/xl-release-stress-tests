@@ -2,6 +2,7 @@ package stress.chain
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
+import stress.config.RunnerConfig
 
 
 object Templates {
@@ -9,7 +10,7 @@ object Templates {
   def open = exec(
     http("All templates")
       .get("/releases/templates?filter=")
-      .queryParam("numberbypage", "15")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON
   )
@@ -17,7 +18,7 @@ object Templates {
   def findTemplatesByTitle(title: String) = exec(
     http("Find template by title")
       .get(s"/releases/templates?filter=$title")
-      .queryParam("numberbypage", "15")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON
       .check(

@@ -2,8 +2,8 @@ package stress
 
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ScenarioBuilder
+import stress.config.RunnerConfig
 
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulation {
@@ -14,8 +14,8 @@ abstract class SimulationBase(scenarios: List[ScenarioBuilder]) extends Simulati
     scenarios.map(
       _.inject(
         atOnceUsers(1),
-        nothingFor(20 seconds),
-        rampUsers(nbUsers) over (1 minute)
+        nothingFor(RunnerConfig.simulations.postWarmUpPause),
+        rampUsers(RunnerConfig.input.users) over RunnerConfig.simulations.rampUpPeriod
       )
     )
   ).protocols(httpProtocol)
