@@ -42,14 +42,15 @@ object Releases {
           val ids = session("foundTemplateIds").as[Vector[String]]
           session.setAll(
             "releaseTemplateId" -> ids.head,
-            "date" -> new SimpleDateFormat("YYYY-mm-dd").format(new Date())
+            "date" -> new SimpleDateFormat("YYYY-mm-dd").format(new Date()),
+            "sshHost" -> RunnerConfig.input.sshHost
           )
         })
     }
     .exec(
         http("Post release")
           .post("/releases")
-          .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date")))
+          .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date", "sshHost")))
           .asJSON
           .check(
             jsonPath("$['id']")

@@ -98,12 +98,11 @@ It uses the following optional parameters :
 - **Release Managers**: The number of "ops" users that will be running the `stress.ReleaseManagerSimulation`
     - Syntax : `-PreleaseManagers=20`
     - The default value is `20`
+-- **Ssh host**: Some simulations start a release which connects to a host using SSH. If you want these tasks to finish successfully, then you need to specify `-PsshHost=my-working-ssh-host-ip-address`. The provided host should allow to login to `ssh_test` with password `ssh_test`.
 
 Example:
 
     ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=stress.RealisticSimulation -Pusername=admin -Ppassword=password
-
-Note that part of `stress.RealisticSimulation` is starting a release which connects to a host using SSH. If you want these tasks to finish successfully, then you need to reconfigure [create-release-many-automated-tasks.json](runner/src/main/resources/create-release-many-automated-tasks.json) file with an SSH server configuration which works for you. This just affects the time taken by started releases and does not impact Gatling results directly.
 
 ## Performances Reports
 
