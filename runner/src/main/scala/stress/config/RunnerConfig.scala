@@ -28,17 +28,23 @@ object RunnerConfig extends LazyLogging {
 
     val users = rootConfig.getInt("xl.runner.input.users")
 
-    def baseUrls: List[String] = rootConfig.getString("xl.runner.input.baseUrl").split(",").toList
+    def baseUrls: List[String] = runnerConfig.getString("input.baseUrl").split(",").toList
 
-    val username = rootConfig.getString("xl.runner.input.username")
+    val username = runnerConfig.getString("input.username")
 
-    val password = rootConfig.getString("xl.runner.input.password")
+    val password = runnerConfig.getString("input.password")
 
-    val teams = rootConfig.getInt("xl.runner.input.teams")
+    val teams = runnerConfig.getInt("input.teams")
 
-    val ops = rootConfig.getInt("xl.runner.input.ops")
+    val ops = runnerConfig.getInt("input.ops")
 
-    val releaseManagers = rootConfig.getInt("xl.runner.input.releaseManagers")
+    val releaseManagers = runnerConfig.getInt("input.releaseManagers")
+
+    val sshHost = runnerConfig.getString("input.sshHost")
+
+    val sshUser = runnerConfig.getString("input.sshUser")
+
+    val sshPassword = runnerConfig.getString("input.sshPassword")
   }
 
   val releaseManagerPauseMin = duration("releaseManagerPauseMin")

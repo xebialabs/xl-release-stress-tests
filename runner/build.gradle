@@ -40,7 +40,7 @@ def myJvmArgs = [
   "-Dgatling.http.ahc.connectTimeout=${maxResponseSeconds * 1000}"
 ]
 
-['baseUrl', 'simulation', 'users', 'teams', 'ops', 'releaseManagers', 'username', 'password'].each {
+['baseUrl', 'simulation', 'users', 'teams', 'ops', 'releaseManagers', 'username', 'password', 'sshHost', 'sshUser', 'sshPassword'].each {
   if (project.hasProperty(it)) {
     myJvmArgs.add("-D$it=${project.property(it)}")
   }
