@@ -98,7 +98,7 @@ It uses the following optional parameters :
 - **Release Managers**: The number of "ops" users that will be running the `stress.ReleaseManagerSimulation`
     - Syntax : `-PreleaseManagers=20`
     - The default value is `20`
--- **Ssh host**: Some simulations start a release which connects to a host using SSH. If you want these tasks to finish successfully, then you need to specify `-PsshHost=my-working-ssh-host-ip-address`. The provided host should allow to login to `ssh_test` with password `ssh_test`.
+-- **Ssh host**: Some simulations start a release which connects to a host using SSH. If you want these tasks to finish successfully, then you need to specify `-PsshHost=my-working-ssh-host-ip-address -PsshUser=username -PsshPassword=password`. The default value for `sshUser` is `ssh_test` and `sshPassword` is `ssh_test`.
 
 Example:
 

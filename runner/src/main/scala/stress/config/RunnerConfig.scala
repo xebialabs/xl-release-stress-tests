@@ -41,6 +41,10 @@ object RunnerConfig extends LazyLogging {
     val releaseManagers = runnerConfig.getInt("input.releaseManagers")
 
     val sshHost = runnerConfig.getString("input.sshHost")
+
+    val sshUser = runnerConfig.getString("input.sshUser")
+
+    val sshPassword = runnerConfig.getString("input.sshPassword")
   }
 
   val releaseManagerPauseMin = duration("releaseManagerPauseMin")

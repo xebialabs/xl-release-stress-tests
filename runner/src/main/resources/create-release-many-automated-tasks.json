@@ -36,7 +36,7 @@
     },
     {
       "key": "${ssh_password}",
-      "password": "ssh_test",
+      "password": "${sshPassword}",
       "type": "PASSWORD",
       "value": null
     },
@@ -44,7 +44,7 @@
       "key": "${ssh_user}",
       "password": null,
       "type": "DEFAULT",
-      "value": "ssh_test"
+      "value": "${sshUser}"
     }
   ]
 }

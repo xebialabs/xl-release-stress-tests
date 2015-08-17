@@ -43,14 +43,16 @@ object Releases {
           session.setAll(
             "releaseTemplateId" -> ids.head,
             "date" -> new SimpleDateFormat("YYYY-mm-dd").format(new Date()),
-            "sshHost" -> RunnerConfig.input.sshHost
+            "sshHost" -> RunnerConfig.input.sshHost,
+            "sshUser" -> RunnerConfig.input.sshUser,
+            "sshPassword" -> RunnerConfig.input.sshPassword
           )
         })
     }
     .exec(
         http("Post release")
           .post("/releases")
-          .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date", "sshHost")))
+          .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date", "sshHost", "sshUser", "sshPassword")))
           .asJSON
           .check(
             jsonPath("$['id']")
