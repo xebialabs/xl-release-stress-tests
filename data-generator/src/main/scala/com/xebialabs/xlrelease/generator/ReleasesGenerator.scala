@@ -54,12 +54,18 @@ class ReleasesGenerator {
 
     val cis: Seq[Ci] = phases.zip(phaseNumbers).flatMap {
       case (phase, phaseNumber) =>
-        (1 to tasksPerPhase).flatMap(taskNumber =>
-          makeTaskCis(phase, phaseNumber, taskNumber))
+        (1 to tasksPerPhase).flatMap { taskNumber =>
+          val taskCis = makeTaskCis(phase, phaseNumber, taskNumber)
+//          makeCommentCis(taskCis.filter(_.`type` != "xlrelease.Dependency")) ++ taskCis
+          taskCis
+        }
     }
 
     phases ++ cis
   }
+
+  private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =
+    parentIds.zipWithIndex.map { case (p, n) => Comment.buildComment(s"Comment$n", p.id) }
 
   private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int): Seq[Ci] = {
     val task = Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
