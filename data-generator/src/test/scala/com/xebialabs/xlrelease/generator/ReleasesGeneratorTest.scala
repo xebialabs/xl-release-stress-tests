@@ -18,19 +18,19 @@ class ReleasesGeneratorTest extends UnitTestSugar {
   describe("release generator") {
 
     it("should return empty seq if called with 0") {
-      generator.generateCompletedReleases(0).flatten shouldBe 'empty
+      generator.generateCompletedReleases(0)._1.flatten shouldBe 'empty
     }
 
     it("should generate completed releases with default amount of phases and tasks") {
       val amount = 5
-      val cis = generator.generateCompletedReleases(amount).flatten
+      val cis = generator.generateCompletedReleases(amount)._1.flatten
       releasesOfBatch(cis) should have size amount
       phasesOfBatch(cis) should have size amount * phasesPerRelease
       tasksOfBatch(cis) should have size amount * phasesPerRelease * tasksPerPhase
     }
 
     it("should slice CIs according to releases") {
-      val batches = generator.generateCompletedReleases(5)
+      val (batches, _) = generator.generateCompletedReleases(5)
 
       batches should have size 5
 
@@ -46,7 +46,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate completed releases") {
-      val cis = generator.generateCompletedReleases(1).head
+      val cis = generator.generateCompletedReleases(1)._1.head
 
       val release = releaseOfBatch(cis)
       release.status should be("COMPLETED")

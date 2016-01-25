@@ -47,6 +47,13 @@ It uses the following optional parameters :
 - **Templates count**: The number of templates that should be created.
     - Syntax : `-Ptemplates=100`
     - The default value is `10`
+- **Generate releases with dependencies**: Generating one active release per completed release specified with `completed-releases`,
+each of those active releases will have 100 gate tasks with a single dependency on the completed release.
+    - Syntax : `-Pcreate-dependency-releases=true`
+    - The default value is `false`
+- **Generate comments for completed releases**: Generating ~29MB of comments per release
+    - Syntax : `-Pgenerate-comments=true`
+    - The default value is `false`
 
 Example :
 

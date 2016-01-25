@@ -21,33 +21,52 @@ class ReleasesGenerator {
     idCounter
   }
 
-  def generateCompletedReleases(amount: Int): Seq[Seq[Ci]] = {
-    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n")
+  def generateCompletedReleases(amount: Int, genComments: Boolean = false): (Seq[Seq[Ci]], Seq[String]) = {
+    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments)
   }
 
-  def generateTemplateReleases(amount: Int): Seq[Seq[Ci]] = {
-    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n")
+  def generateTemplateReleases(amount: Int, genComments: Boolean = false): Seq[Seq[Ci]] = {
+    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments)._1
   }
 
-  def generateActiveReleases(amount: Int): Seq[Seq[Ci]] = {
-    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n")
+  def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[Seq[Ci]] = {
+    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments)._1
   }
 
   def generateDependentRelease(): Seq[Ci] = {
     val release = Release.build(dependentReleaseId, "Stress test Dependent release", "PLANNED", 1, 1)
-    createReleaseContent(release) :+ release
+    createReleaseContent(release, generateComments = false) :+ release
   }
 
-  def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String): Seq[Seq[Ci]] = {
-    val releases = (1 to amount).map(n => {
+  def generateDepRelease(relIds: Seq[String], numberOfRel: Int): Seq[Seq[Ci]] = {
+    (1 to numberOfRel).zip(relIds).map { case (n, relId) =>
       val releaseNumber = incrementCounterAndGet()
-      Release.build(s"Applications/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
-    })
-
-    releases.map(release => createReleaseContent(release) :+ release)
+      val release = Release.build(s"Applications/Release_${transaction}_$releaseNumber",
+        s"Dependent release #$releaseNumber", "IN_PROGRESS", releaseNumber, numberOfRel)
+      createDepRelContent(release, relId) :+ release
+    }
   }
 
-  private def createReleaseContent(release: Release): Seq[Ci] = {
+  def createDepRelContent(r: Release, depRelId: String): Seq[Ci] = {
+    val status: Boolean => String = b => if (b) "IN_PROGRESS" else "PLANNED"
+    (1 to 10).flatMap { i =>
+      val phase = Phase.build(s"Phase$i", r.id, status(i == 1))
+      (1 to 10).flatMap { j =>
+          val task = Task.buildGate(s"Task$j", phase.id, status(j == 1 && i == 1))
+          Seq(task, Dependency.build("Dependency", task.id, depRelId))
+      } :+ phase
+    }
+  }
+
+  def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
+                       genComments: Boolean): (Seq[Seq[Ci]], Seq[String]) = {
+    val releases = (1 to amount).map { n =>
+      Release.build(s"Applications/Release_${transaction}_${incrementCounterAndGet()}",titleGenerator(n), status, n, amount)
+    }
+    releases.map(release => createReleaseContent(release, genComments) :+ release) -> releases.map(_.id)
+  }
+
+  private def createReleaseContent(release: Release, generateComments: Boolean): Seq[Ci] = {
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>
       Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
@@ -56,8 +75,7 @@ class ReleasesGenerator {
       case (phase, phaseNumber) =>
         (1 to tasksPerPhase).flatMap { taskNumber =>
           val taskCis = makeTaskCis(phase, phaseNumber, taskNumber)
-//          makeCommentCis(taskCis.filter(_.`type` != "xlrelease.Dependency")) ++ taskCis
-          taskCis
+          taskCis ++ (if (generateComments) makeCommentCis(taskCis.filter(_.`type` != "xlrelease.Dependency")) else Nil)
         }
     }
 

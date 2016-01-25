@@ -127,13 +127,10 @@ package object domain {
       else Comment(s"$containerId/$title", generateText())
 
     def generateText(size: Int = 0): String = {
-      // 1 MB -> 1024 kb -> 1048576 byte
-      // 1048576 -> ~524288 chars
+      // 100.000 chars per comment which should be ~291K per comment which is ~29MB per release
       val str = Random.nextString(100)
       val sb = new StringBuilder()
-//      (0 to 1000).foreach(x => sb.append(str))
-      sb.append(str)
-
+      (0 until 1000).foreach(x => sb.append(str))
       sb.toString()
     }
   }
