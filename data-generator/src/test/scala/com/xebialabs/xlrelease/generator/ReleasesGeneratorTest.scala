@@ -1,15 +1,18 @@
 package com.xebialabs.xlrelease.generator
 
+import com.typesafe.config.ConfigFactory
 import com.xebialabs.xlrelease.domain._
+import com.xebialabs.xlrelease.generator.ReleaseGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import ReleaseGenerator._
 
 @RunWith(classOf[JUnitRunner])
 class ReleasesGeneratorTest extends UnitTestSugar {
 
   var generator: ReleasesGenerator = _
+
+  implicit val config = ConfigFactory.load()
 
   override protected def beforeEach(): Unit = {
     generator = new ReleasesGenerator()
@@ -106,6 +109,20 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       dependencies should have size 1
       dependencies.head.id should startWith(gates.head.id)
       dependencies.head.target should be(dependentReleaseId)
+    }
+
+    it("should add one attachment to each release and one attachment to first task of each phase") {
+      val cis = generator.generateActiveReleases(1).head
+
+      val attachments = cis.filter(_.`type` == "xlrelease.Attachment")
+
+      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/static/0/js/xlrelease.js"
+
+      val attachmentNumbers = attachments.map(_.id.replaceAll(".*Attachment", ""))
+      attachmentNumbers shouldEqual (1 to 6).map(_.toString)
+      val task21 = cis.find(_.id.contains("/Phase2/Task1")).get.asInstanceOf[Task]
+      task21.attachments should have size 1
+      task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
   }
 

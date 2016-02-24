@@ -12,7 +12,7 @@ import scala.util.Failure
 
 object Main extends App with LazyLogging {
 
-  val config = parseResources("data-generator.conf")
+  implicit val config = parseResources("data-generator.conf")
     .withFallback(ConfigFactory.load())
 
   private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")

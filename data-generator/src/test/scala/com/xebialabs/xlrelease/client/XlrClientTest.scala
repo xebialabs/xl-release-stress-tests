@@ -60,7 +60,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create tasks and dependencies") {
       val release = Release.build("ReleaseTest104")
       val phase = Phase.build("Phase002", release.id)
-      val task = Task.build("Task002", phase.id).toGate
+      val task = Task.buildGate("Task002", phase.id)
       val dependency = Dependency.build("Dependency", task.id, task.id)
 
       val dependencyResponse = for (

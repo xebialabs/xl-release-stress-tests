@@ -1,6 +1,7 @@
 package com.xebialabs.xlrelease
 
 
+import com.typesafe.config.Config
 import org.threeten.bp.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import scala.language.implicitConversions
@@ -42,10 +43,9 @@ package object domain {
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
-                  status: String = "PLANNED"
-                  ) extends PlanItem {
-    def toGate = copy(`type` = "xlrelease.GateTask")
-  }
+                  status: String = "PLANNED",
+                  attachments: List[String] = List()
+                  ) extends PlanItem
 
   case class Dependency(id: String,
                         target: String,
@@ -60,6 +60,8 @@ package object domain {
   case class Directory(id: String, `type`: String = "core.Directory") extends Ci
 
   case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
+
+  case class Attachment(id: String, fileUri: String, `type`: String = "xlrelease.Attachment") extends Ci
 
   object Release {
     def build(title: String): Release = {
@@ -106,9 +108,9 @@ package object domain {
 
   object Task {
 
-    def build(title: String, containerId: String, status: String = "COMPLETED"): Task = {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List()): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
-      Task(s"$containerId/$title", title, status = status)
+      Task(s"$containerId/$title", title, status = status, attachments = attachments)
     }
 
     def buildGate(title: String, containerId: String, status: String = "COMPLETED"): Task =
@@ -118,6 +120,18 @@ package object domain {
   object Dependency {
     def build(title: String, containerId: String, target: String): Dependency = {
       Dependency(s"$containerId/$title", target)
+    }
+  }
+
+  object Attachment {
+
+    // We generate an attachment content by pointing to 'xlrelease.js' file which is downloadable
+    // from XL Release itself without authentication and takes around 350 Kb.
+    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/js/xlrelease.js"
+
+    def build(title: String, containerId: String)(implicit config: Config): Attachment = {
+      val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
+      Attachment(s"$containerId/$title", xlrAttachmentUrl(attachmentsBaseUrl))
     }
   }
 
