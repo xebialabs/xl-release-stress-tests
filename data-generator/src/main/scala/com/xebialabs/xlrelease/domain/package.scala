@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import org.threeten.bp.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import scala.language.implicitConversions
+import scala.util.Random
 
 package object domain {
 
@@ -46,6 +47,11 @@ package object domain {
                   status: String = "PLANNED",
                   attachments: List[String] = List()
                   ) extends PlanItem
+
+  case class Comment(id: String,
+                     text: String,
+                     `type`: String = "xlrelease.Comment"
+                     ) extends Ci
 
   case class Dependency(id: String,
                         target: String,
@@ -115,6 +121,21 @@ package object domain {
 
     def buildGate(title: String, containerId: String, status: String = "COMPLETED"): Task =
       build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
+  }
+
+  object Comment {
+
+    def buildComment(title: String, containerId: String): Comment =
+      if (!title.startsWith("Comment")) throw new IllegalArgumentException("Comment id/title should start with 'Comment'")
+      else Comment(s"$containerId/$title", generateText())
+
+    def generateText(size: Int = 0): String = {
+      // 100.000 chars per comment which should be ~291K per comment which is ~29MB per release
+      val str = Random.nextString(100)
+      val sb = new StringBuilder()
+      (0 until 1000).foreach(x => sb.append(str))
+      sb.toString()
+    }
   }
 
   object Dependency {

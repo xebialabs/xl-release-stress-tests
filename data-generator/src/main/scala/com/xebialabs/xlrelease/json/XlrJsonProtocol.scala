@@ -11,6 +11,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)
   implicit val specialDayFormat = jsonFormat5(SpecialDay.apply)
   implicit val directoryFormat = jsonFormat2(Directory.apply)
+  implicit val commentFormat = jsonFormat3(Comment.apply)
   implicit val userFormat = jsonFormat5(User)
   implicit val roleFormat = jsonFormat2(Role)
   implicit val puserFormat = jsonFormat2(PUser)
@@ -32,6 +33,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: Dependency => ci.toJson
         case ci: SpecialDay => ci.toJson
         case ci: Directory => ci.toJson
+        case ci: Comment => ci.toJson
         case ci: HttpConnection => ci.toJson
         case ci: Attachment => ci.toJson
         case _ => serializationError(s"Undefined CI type ${ci.getClass}")

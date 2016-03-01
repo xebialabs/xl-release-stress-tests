@@ -4,10 +4,10 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.generator.{SpecialDayGenerator, ReleasesGenerator}
+import com.xebialabs.xlrelease.generator.{ReleasesGenerator, SpecialDayGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.Future.sequence
 import scala.util.Failure
 
 object Main extends App with LazyLogging {
@@ -17,11 +17,15 @@ object Main extends App with LazyLogging {
 
   private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
-  private val templatesAmount: Int = config.getInt("xl.data-generator.templates")
+  private val templatesAmount = config.getInt("xl.data-generator.templates")
+  private val createDepRels = config.getBoolean("xl.data-generator.create-dependency-releases")
+  private val generateComments = config.getBoolean("xl.data-generator.generate-comments")
 
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
   logger.info("Templates: {}", templatesAmount.toString)
+  if (createDepRels) { logger.info("Creating {} releases with dependencies", completedReleasesAmount.toString) }
+  if (generateComments) { logger.info("Generating releases with comments") }
 
   val client = new XlrClient(
     config.getString("xl.data-generator.baseUrl"),
@@ -42,18 +46,22 @@ object Main extends App with LazyLogging {
     val createActiveReleasesFutures = releaseGenerator
       .generateActiveReleases(activeReleasesAmount)
       .map(client.createCis)
-    val createCompletedReleasesFutures = releaseGenerator
-      .generateCompletedReleases(completedReleasesAmount)
-      .map(client.createCis)
+    val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
+    val createCompletedReleasesFutures = cis.map(client.createCis)
 
-    Future.sequence(
+    sequence(
       createTemplateReleasesFutures ++
-         createActiveReleasesFutures ++
-         createCompletedReleasesFutures)
-  })
+        createActiveReleasesFutures ++
+        createCompletedReleasesFutures)
+      .map(f => f -> completedIds)
+    })
+    val allRelsWDeps = if (createDepRels) {
+      allReleasesFuture.flatMap { case (f, ids) =>
+        sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
+      }
+    } else allReleasesFuture
 
-  val allResponses = Future.sequence(
-    Seq(importTemplateFuture, allReleasesFuture, specialDaysFuture))
+  val allResponses = sequence(Seq(importTemplateFuture, allRelsWDeps, specialDaysFuture))
 
   allResponses.andThen {
     case Failure(ex) =>
