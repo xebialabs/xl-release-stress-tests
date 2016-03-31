@@ -29,8 +29,8 @@ or on windows
 
 It uses the following optional parameters :
 
-- **Server URL**: The URL of the XL Release server instance
-    - Syntax : `-Pserver-url=http://url.to.server:5516`
+- **Base URL**: The URL of the XL Release server instance
+    - Syntax : `-PbaseUrl=http://url.to.server:5516`
     - The default value is `http://localhost:5516`
 - **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to populate data
     - Syntax : `-Pusername=admin`
@@ -77,7 +77,7 @@ or on windows
 
 It uses the following optional parameters :
 
-- **Server URL**: The URL of the XL Release server instance
+- **Base URL**: The URL of the XL Release server instance
     - Syntax : `-PbaseUrl=http://url.to.server:5516`
     - The default value is `http://localhost:5516`
 - **Username**: The username that will be used to connect to the server instance. This username needs "admin" permissions in order to view all data
