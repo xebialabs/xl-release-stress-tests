@@ -34,10 +34,10 @@ object Main extends App with LazyLogging {
 
   val importTemplateFuture = client.importTemplate("/many-automated-tasks.xlr")
 
-  val specialDaysFuture = client.createCis(SpecialDayGenerator.generateSpecialDays())
+  val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
   val releaseGenerator = new ReleasesGenerator()
-  val dependantReleaseFuture = client.createCis(releaseGenerator.generateDependentRelease())
+  val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
     val createTemplateReleasesFutures = releaseGenerator

@@ -84,6 +84,9 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
     strictPipeline(Delete(s"$apiUrl/repository/ci/$id"))
 
   def createCis(cis: Seq[Ci]): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/fixtures/", cis))
+
+  def createOrUpdateCis(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Put(s"$apiUrl/fixtures/", cis))
 
   def importTemplate(file: String): Future[HttpResponse] = {
