@@ -21,7 +21,7 @@ allprojects { Project p ->
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
 
-    p.tasks.release.dependsOn p.tasks.uploadArchives
+    rootProject.tasks.release.dependsOn p.tasks.uploadArchives
 
     uploadArchives {
       repositories.mavenDeployer {
