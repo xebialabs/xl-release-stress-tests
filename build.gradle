@@ -35,5 +35,13 @@ allprojects { Project p ->
         }
       }
     }
+
+    // Avoid publication of zip and tar archives
+    p.afterEvaluate {
+      p.configurations.archives.with {
+        artifacts.remove artifacts.find { it.archiveTask.is p.tasks.distZip }
+        artifacts.remove artifacts.find { it.archiveTask.is p.tasks.distTar }
+      }
+    }
   }
 }
