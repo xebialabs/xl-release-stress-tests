@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects { Project p ->
-  group = "com.xebialabs.xlrelease"
+  group = "com.xebialabs.xlrelease.stresstests"
 
   apply plugin: "eclipse"
   apply plugin: "idea"
