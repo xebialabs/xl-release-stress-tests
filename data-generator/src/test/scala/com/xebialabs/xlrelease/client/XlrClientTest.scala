@@ -139,9 +139,8 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create server configurations") {
-      val directory = Directory("Configuration/Custom")
-      val server = HttpConnection(s"${directory.id}/ConfigurationJenkins", "Jenkins", "jenkins.Server")
-      val cis = Seq(directory, server)
+      val server = HttpConnection(s"Configuration/Custom/ConfigurationJenkins", "Jenkins", "jenkins.Server")
+      val cis = Seq(server)
 
       expectSuccessfulResponse(client.createCis(cis))
 
