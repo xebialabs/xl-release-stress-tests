@@ -1,9 +1,6 @@
 plugins {
   id 'nebula.nebula-release' version '2.2.5'
 }
-release {
-  defaultVersionStrategy = nebula.plugin.release.NetflixOssStrategies.SNAPSHOT
-}
 
 allprojects { Project p ->
   group = "com.xebialabs.xlrelease"
@@ -12,9 +9,19 @@ allprojects { Project p ->
   apply plugin: "idea"
   apply plugin: "maven"
 
+  apply plugin: "nebula.nebula-release"
+  p.release {
+    defaultVersionStrategy = nebula.plugin.release.NetflixOssStrategies.SNAPSHOT
+  }
+  if (!p.hasProperty('release.scope')) {
+    p.ext['release.scope'] = 'patch'
+  }
+
   p.plugins.withType(JavaPlugin) {
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
+
+    p.tasks.release.dependsOn p.tasks.uploadArchives
 
     uploadArchives {
       repositories.mavenDeployer {
