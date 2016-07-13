@@ -1,12 +1,30 @@
+plugins {
+  id 'nebula.nebula-release' version '2.2.5'
+}
+release {
+  defaultVersionStrategy = nebula.plugin.release.NetflixOssStrategies.SNAPSHOT
+}
 
 allprojects { Project p ->
   group = "com.xebialabs.xlrelease"
 
   apply plugin: "eclipse"
   apply plugin: "idea"
+  apply plugin: "maven"
 
   p.plugins.withType(JavaPlugin) {
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
+
+    uploadArchives {
+      repositories.mavenDeployer {
+        repository(url: "${project.property("nexusBaseUrl")}/repositories/releases") {
+          authentication(userName: "${project.property("nexusUserName")}", password: "${project.property("nexusPassword")}")
+        }
+        snapshotRepository(url: "${project.property("nexusBaseUrl")}/repositories/snapshots") {
+          authentication(userName: "${project.property("nexusUserName")}", password: "${project.property("nexusPassword")}")
+        }
+      }
+    }
   }
 }
