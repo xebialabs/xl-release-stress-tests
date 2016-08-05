@@ -19,6 +19,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val permissionFormat = jsonFormat2(Permission)
   implicit val httpConnectionFormat = jsonFormat3(HttpConnection.apply)
   implicit val attachmentFormat = jsonFormat3(Attachment.apply)
+  implicit val activityLogEntryFormat = jsonFormat6(ActivityLogEntry.apply)
 
   implicit object CiProtocol extends RootJsonFormat[Ci] {
     def read(json: JsValue): Ci = {
@@ -36,6 +37,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: Comment => ci.toJson
         case ci: HttpConnection => ci.toJson
         case ci: Attachment => ci.toJson
+        case ci: ActivityLogEntry => ci.toJson
         case _ => serializationError(s"Undefined CI type ${ci.getClass}")
       }
     }

@@ -79,6 +79,12 @@ class ReleasesGenerator {
     for (_ <- 1 to amount) yield Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
   }
 
+  def generateActivityLogs(amount: Int, releaseId: String) : Seq[Ci] = {
+    val directory = ActivityLogDirectory.build(releaseId)
+    val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
+    List(directory) ++ entries
+  }
+
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>
@@ -93,8 +99,10 @@ class ReleasesGenerator {
     }
 
     val releaseAttachments: Seq[Ci] = generateAttachments(1, release.id)
+    val activityLogs = generateActivityLogs(10, release.id)
 
-    phases ++ cis ++ releaseAttachments
+
+    phases ++ cis  ++ releaseAttachments ++ activityLogs
   }
 
   private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =

@@ -69,6 +69,8 @@ package object domain {
 
   case class Attachment(id: String, fileUri: String, `type`: String = "xlrelease.Attachment") extends Ci
 
+  case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends Ci
+
   object Release {
     def build(title: String): Release = {
       if (!title.startsWith("Release"))
@@ -98,6 +100,23 @@ package object domain {
         endDate = if (status == "COMPLETED") Some(end) else None)
     }
 
+  }
+
+  object ActivityLogDirectory {
+    def build(releaseId: String): Directory = {
+      Directory(s"Applications/ActivityLogs/${releaseId.substring(releaseId.indexOf("/") + 1)}")
+    }
+  }
+
+  object ActivityLogEntry {
+    def build(directoryId: String,
+              username: String = "admin",
+              activityType: String = "IMPORTANT",
+              message: String = "Did some activity",
+              eventTime: String = LocalDateTime.now.toString): ActivityLogEntry = {
+
+      ActivityLogEntry(directoryId + s"/Activity${System.currentTimeMillis + Random.nextInt}", username, activityType, message, eventTime)
+    }
   }
 
   object Phase {
