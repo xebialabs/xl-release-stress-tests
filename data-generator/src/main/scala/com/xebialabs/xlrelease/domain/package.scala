@@ -32,6 +32,7 @@ package object domain {
                       dueDate: ZonedDateTime,
                       queryableStartDate: ZonedDateTime,
                       queryableEndDate: ZonedDateTime,
+                      startDate: ZonedDateTime,
                       endDate: Option[ZonedDateTime],
                       `type`: String = "xlrelease.Release") extends PlanItem
 
@@ -97,6 +98,7 @@ package object domain {
         dueDate = end,
         queryableStartDate = start,
         queryableEndDate = end,
+        startDate = start,
         endDate = if (status == "COMPLETED") Some(end) else None)
     }
 
