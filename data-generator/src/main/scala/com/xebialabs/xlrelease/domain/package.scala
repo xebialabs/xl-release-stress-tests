@@ -72,6 +72,11 @@ package object domain {
 
   case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends Ci
 
+  case class Folder(id: String,
+                    title: String,
+                    uid: String,
+                    `type`: String = "xlrelease.Folder") extends Ci
+
   object Release {
     def build(title: String): Release = {
       if (!title.startsWith("Release"))
@@ -174,6 +179,13 @@ package object domain {
     def build(title: String, containerId: String)(implicit config: Config): Attachment = {
       val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
       Attachment(s"$containerId/$title", xlrAttachmentUrl(attachmentsBaseUrl))
+    }
+  }
+
+  object Folder {
+
+    def build(folderNumber: Int): Folder = {
+      Folder(s"Folders/Root/Folder$folderNumber", s"Folder $folderNumber", java.util.UUID.randomUUID.toString)
     }
   }
 

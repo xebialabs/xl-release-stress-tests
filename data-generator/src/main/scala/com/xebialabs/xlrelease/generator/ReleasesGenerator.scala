@@ -85,6 +85,10 @@ class ReleasesGenerator {
     List(directory) ++ entries
   }
 
+  def generateFolders(amount: Int): Seq[Ci] = {
+    for (i <- 1 to amount) yield Folder.build(i)
+  }
+
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>

@@ -20,10 +20,13 @@ object Main extends App with LazyLogging {
   private val templatesAmount = config.getInt("xl.data-generator.templates")
   private val createDepRels = config.getBoolean("xl.data-generator.create-dependency-releases")
   private val generateComments = config.getBoolean("xl.data-generator.generate-comments")
+  private val foldersAmount = config.getInt("xl.data-generator.folders")
 
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
   logger.info("Templates: {}", templatesAmount.toString)
+  logger.info("Folders: {}", foldersAmount.toString)
+
   if (createDepRels) { logger.info("Creating {} releases with dependencies", completedReleasesAmount.toString) }
   if (generateComments) { logger.info("Generating releases with comments") }
 
@@ -49,10 +52,15 @@ object Main extends App with LazyLogging {
     val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
     val createCompletedReleasesFutures = cis.map(client.createCis)
 
+
+    val folders = releaseGenerator.generateFolders(foldersAmount).map(client.createCi)
+
     sequence(
       createTemplateReleasesFutures ++
         createActiveReleasesFutures ++
-        createCompletedReleasesFutures)
+        createCompletedReleasesFutures ++
+        folders
+        )
       .map(f => f -> completedIds)
     })
     val allRelsWDeps = if (createDepRels) {

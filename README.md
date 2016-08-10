@@ -2,7 +2,7 @@
 
 There are two projects in this repository :
 
-- Data Generator : an application that populates an XL Release instance with active, completed releases and templates.
+- Data Generator : an application that populates an XL Release instance with active, completed releases, templates and folders
 - Runner : an application that connects to an XL Release instance and performs stress tests.
 
 ## Requirements
@@ -54,10 +54,13 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Generate comments for completed releases**: Generating ~29MB of comments per release
     - Syntax : `-Pgenerate-comments=true`
     - The default value is `false`
+- **Folders**: The number of folders to be created in the root directory.\
+    - Syntax : `-Pfolders=100`
+    - The default value is `10`
 
 Example :
 
-    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20
+    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20 -Pfolders=10
 
 # Runner
 
