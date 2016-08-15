@@ -85,8 +85,26 @@ class ReleasesGenerator {
     List(directory) ++ entries
   }
 
-  def generateFolders(amount: Int): Seq[Ci] = {
-    for (i <- 1 to amount) yield Folder.build(i)
+  def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
+
+    def createFolders(parent: String, amount: Int, level: Int): Seq[Ci] = {
+      if (level == 0) Seq.empty
+      else {
+        val folderSequences = for (i <- 1 to amount) yield {
+          val rootFolder = s"${parent}_$i"
+          val folderName = fixFolderName(rootFolder)
+          val childFolders = createFolders(s"$rootFolder/$folderName", amount, level-1)
+          Seq(Folder.build(rootFolder, folderName)) ++ childFolders
+        }
+        folderSequences.flatten
+      }
+    }
+
+    def fixFolderName(rootFolder: String): String = {
+      if (rootFolder.contains("/")) rootFolder.substring(rootFolder.lastIndexOf("/")+1, rootFolder.length)
+      else rootFolder
+    }
+    createFolders("Folders/Root/Folder", amount, levels).sortBy((ci) => ci.id)
   }
 
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {

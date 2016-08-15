@@ -54,13 +54,16 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Generate comments for completed releases**: Generating ~29MB of comments per release
     - Syntax : `-Pgenerate-comments=true`
     - The default value is `false`
-- **Folders**: The number of folders to be created in the root directory.\
+- **Folders**: The number of folders to be created in each folder level.\
     - Syntax : `-Pfolders=100`
     - The default value is `10`
+- **Folders**: The number of folders level that should be created.\
+    - Syntax : `-Pfolders-level=1`
+    - The default value is `2`
 
 Example :
 
-    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20 -Pfolders=10
+    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20 -Pfolders=10 -Pfolders-level=1
 
 # Runner
 

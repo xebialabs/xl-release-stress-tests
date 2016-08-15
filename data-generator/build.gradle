@@ -26,7 +26,7 @@ dependencies {
 }
 
 def applicationJvmArgs = []
-['baseUrl', 'username', 'password', 'active-releases', 'completed-releases', 'templates', 'create-dependency-releases', 'generate-comments', 'folders'].each {
+['baseUrl', 'username', 'password', 'active-releases', 'completed-releases', 'templates', 'create-dependency-releases', 'generate-comments', 'folders', 'folders-level'].each {
   if (project.hasProperty(it)) {
     applicationJvmArgs.add("-Dxl.data-generator.$it=${project.property(it)}")
   }

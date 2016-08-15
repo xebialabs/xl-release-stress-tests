@@ -34,6 +34,7 @@ package object domain {
                       queryableEndDate: ZonedDateTime,
                       startDate: ZonedDateTime,
                       endDate: Option[ZonedDateTime],
+                      folderUid: String,
                       `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
@@ -89,7 +90,8 @@ package object domain {
               title: String,
               status: String,
               releaseNumber: Double,
-              releasesCount: Double): Release = {
+              releasesCount: Double,
+              folderUid: String): Release = {
       if (!id.startsWith("Applications/Release"))
         throw new IllegalArgumentException("Release id should start with 'Applications/Release'")
 
@@ -104,7 +106,16 @@ package object domain {
         queryableStartDate = start,
         queryableEndDate = end,
         startDate = start,
-        endDate = if (status == "COMPLETED") Some(end) else None)
+        endDate = if (status == "COMPLETED") Some(end) else None,
+        folderUid)
+    }
+
+    def build(id: String,
+              title: String,
+              status: String,
+              releaseNumber: Double,
+              releasesCount: Double): Release = {
+      build(id, title, status, releaseNumber, releasesCount, "")
     }
 
   }
@@ -184,8 +195,8 @@ package object domain {
 
   object Folder {
 
-    def build(folderNumber: Int): Folder = {
-      Folder(s"Folders/Root/Folder$folderNumber", s"Folder $folderNumber", java.util.UUID.randomUUID.toString)
+    def build(id: String, title: String): Folder = {
+      Folder(id, title, java.util.UUID.randomUUID.toString)
     }
   }
 
