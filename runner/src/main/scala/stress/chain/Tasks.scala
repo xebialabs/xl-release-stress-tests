@@ -39,7 +39,7 @@ object Tasks {
       }]}""")).asJSON
   )
 
-  def openAndPoll(httpName: String, filter: String, duration: Duration) = open(httpName, filter)
+  def openAndPoll(httpName: String, filter: String, duration: Duration, taskPollPause: Duration) = open(httpName, filter)
     .exec(session => {
       session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
     })

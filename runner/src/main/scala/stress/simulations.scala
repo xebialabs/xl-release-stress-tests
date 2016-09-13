@@ -5,6 +5,7 @@ import stress.chain.Releases
 import stress.config.RunnerConfig
 import stress.utils.Scenarios._
 
+import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 /**
@@ -68,6 +69,17 @@ class RealisticSimulation extends Simulation {
     releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod),
     opsScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod),
     developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod)
+  ).protocols(httpProtocol)
+}
+
+/**
+  * A simulation which combines several roles of people working with XL Release
+  * in one realistic usage scenario.
+  */
+class SequentialSimulation extends Simulation {
+
+  setUp(
+    sequentialScenario(1).inject(rampUsers(RunnerConfig.input.users) over (1 seconds))
   ).protocols(httpProtocol)
 }
 
