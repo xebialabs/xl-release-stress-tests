@@ -29,8 +29,12 @@ object Main extends App with LazyLogging {
   logger.info("Folders: {}", foldersAmount.toString)
   logger.info("Folder levels: {}", foldersLevel.toString)
 
-  if (createDepRels) { logger.info("Creating {} releases with dependencies", completedReleasesAmount.toString) }
-  if (generateComments) { logger.info("Generating releases with comments") }
+  if (createDepRels) {
+    logger.info("Creating {} releases with dependencies", completedReleasesAmount.toString)
+  }
+  if (generateComments) {
+    logger.info("Generating releases with comments")
+  }
 
   val client = new XlrClient(
     config.getString("xl.data-generator.baseUrl"),
@@ -42,41 +46,40 @@ object Main extends App with LazyLogging {
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
   val releaseGenerator = new ReleasesGenerator()
-  val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
-  //TODO: foldersFuture must be executed before dependantReleaseFuture
+
   val folders = releaseGenerator.generateFolders(foldersAmount, foldersLevel)
-  val foldersFuture = folders.map(client.createCi)
+  val foldersFuture = client.createOrUpdateCis(folders)
 
+  val allFoldersAndReleasesFuture = foldersFuture.flatMap(_ => {
+    val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
 
-  val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
-    // Creating some content to increase repository size
+    dependantReleaseFuture.flatMap(_ => {
+      // Creating some content to increase repository size
 
-    val createTemplateReleasesFutures = releaseGenerator
-      .generateTemplateReleases(templatesAmount, folders)
-      .map(client.createCis)
-    val createActiveReleasesFutures = releaseGenerator
-      .generateActiveReleases(activeReleasesAmount, folders)
-      .map(client.createCis)
-    val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, folders, generateComments)
-    val createCompletedReleasesFutures = cis.map(client.createCis)
+      val createTemplateReleasesFutures = releaseGenerator
+        .generateTemplateReleases(templatesAmount, folders)
+        .map(client.createCis)
+      val createActiveReleasesFutures = releaseGenerator
+        .generateActiveReleases(activeReleasesAmount, folders)
+        .map(client.createCis)
+      val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, folders, generateComments)
+      val createCompletedReleasesFutures = cis.map(client.createCis)
 
-    sequence(
-      createTemplateReleasesFutures ++
-        createActiveReleasesFutures ++
-        createCompletedReleasesFutures ++
-        foldersFuture
-        )
-      .map(f => f -> completedIds)
-    }
-  )
+      sequence(
+        createTemplateReleasesFutures ++
+          createActiveReleasesFutures ++
+          createCompletedReleasesFutures
+      ).map(f => f -> completedIds)
+    })
+  })
 
-  val allRelsWDeps = if (createDepRels) {
-    allReleasesFuture.flatMap { case (f, ids) =>
+  val allFoldersAndReleasesWithDependencies = if (createDepRels) {
+    allFoldersAndReleasesFuture.flatMap { case (f, ids) =>
       sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
     }
-  } else allReleasesFuture
+  } else allFoldersAndReleasesFuture
 
-  val allResponses = sequence(Seq(importTemplateFuture, allRelsWDeps, specialDaysFuture))
+  val allResponses = sequence(Seq(importTemplateFuture, allFoldersAndReleasesWithDependencies, specialDaysFuture))
 
   allResponses.andThen {
     case Failure(ex) =>

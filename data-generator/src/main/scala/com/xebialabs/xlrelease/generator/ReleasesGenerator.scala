@@ -28,15 +28,15 @@ class ReleasesGenerator {
     attachmentIdCounter
   }
 
-  def generateCompletedReleases(amount: Int, folders: Seq[Ci], genComments: Boolean = false)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
+  def generateCompletedReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments, folders)
   }
 
-  def generateTemplateReleases(amount: Int, folders: Seq[Ci], genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
+  def generateTemplateReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
     generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments, folders)._1
   }
 
-  def generateActiveReleases(amount: Int, folders: Seq[Ci], genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
+  def generateActiveReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
     generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments, folders)._1
   }
 
@@ -69,7 +69,13 @@ class ReleasesGenerator {
                        genComments: Boolean, folders: Seq[Ci])(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     val releases = (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
-      Release.build(s"${folders(releaseNumber % folders.size).id}/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
+      val folderId = if (folders.isEmpty) {
+        "Applications"
+      } else {
+        folders(releaseNumber % folders.size).id
+      }
+
+      Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
     }
 
     releases.map(release => createReleaseContent(release, genComments) :+ release) -> releases.map(_.id)

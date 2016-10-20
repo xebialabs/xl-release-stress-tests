@@ -126,9 +126,27 @@ class ReleasesGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate 2 folder levels and 10 folders") {
-      val folders: Seq[Ci] = generator.generateFolders(10, 2)
-      //TODO ...
-      folders should have size 110
+      val amountPerLevel: Int = 2
+      val levels: Int = 2
+
+      val folderCis = generator.generateFolders(amountPerLevel, levels)
+
+      folderCis should have size amountPerLevel * (1 + amountPerLevel) * 2
+
+      val (activityLogs, folders) = folderCis
+        .sortWith((f1, f2) => f2.id.compareTo(f1.id) > 0)
+        .partition(f => f.id.contains("/ActivityLogs"))
+
+      folders.map(_.id) shouldBe Seq(
+        "Applications/Folder_1",
+        "Applications/Folder_1/Folder_1_1",
+        "Applications/Folder_1/Folder_1_2",
+        "Applications/Folder_2",
+        "Applications/Folder_2/Folder_2_1",
+        "Applications/Folder_2/Folder_2_2"
+      )
+
+      activityLogs.map(_.id) shouldBe folders.map(_.id.replace("Applications/", "Applications/ActivityLogs"))
     }
   }
 

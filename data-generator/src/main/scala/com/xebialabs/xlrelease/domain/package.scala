@@ -89,7 +89,7 @@ package object domain {
               status: String,
               releaseNumber: Double,
               releasesCount: Double): Release = {
-      if (!id.matches("^Applications/Folder.*/Release.*$"))
+      if (!id.matches("^Applications/(Folder.*/)?Release.*$"))
         throw new IllegalArgumentException(s"Release id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
 
       val firstDayOfYear = ZonedDateTime.of(LocalDateTime.of(2015, 1, 1, 9, 0), ZoneId.systemDefault)
