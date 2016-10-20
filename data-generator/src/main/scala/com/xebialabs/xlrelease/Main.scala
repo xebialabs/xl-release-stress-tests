@@ -43,33 +43,38 @@ object Main extends App with LazyLogging {
 
   val releaseGenerator = new ReleasesGenerator()
   val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
+  //TODO: foldersFuture must be executed before dependantReleaseFuture
+  val folders = releaseGenerator.generateFolders(foldersAmount, foldersLevel)
+  val foldersFuture = folders.map(client.createCi)
+
+
   val allReleasesFuture = dependantReleaseFuture.flatMap(_ => {
     // Creating some content to increase repository size
+
     val createTemplateReleasesFutures = releaseGenerator
-      .generateTemplateReleases(templatesAmount)
+      .generateTemplateReleases(templatesAmount, folders)
       .map(client.createCis)
     val createActiveReleasesFutures = releaseGenerator
-      .generateActiveReleases(activeReleasesAmount)
+      .generateActiveReleases(activeReleasesAmount, folders)
       .map(client.createCis)
-    val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
+    val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, folders, generateComments)
     val createCompletedReleasesFutures = cis.map(client.createCis)
-
-
-    val folders = releaseGenerator.generateFolders(foldersAmount, foldersLevel).map(client.createCi)
 
     sequence(
       createTemplateReleasesFutures ++
         createActiveReleasesFutures ++
         createCompletedReleasesFutures ++
-        folders
+        foldersFuture
         )
       .map(f => f -> completedIds)
-    })
-    val allRelsWDeps = if (createDepRels) {
-      allReleasesFuture.flatMap { case (f, ids) =>
-        sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
-      }
-    } else allReleasesFuture
+    }
+  )
+
+  val allRelsWDeps = if (createDepRels) {
+    allReleasesFuture.flatMap { case (f, ids) =>
+      sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
+    }
+  } else allReleasesFuture
 
   val allResponses = sequence(Seq(importTemplateFuture, allRelsWDeps, specialDaysFuture))
 

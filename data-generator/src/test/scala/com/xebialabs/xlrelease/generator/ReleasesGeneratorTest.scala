@@ -124,6 +124,12 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       task21.attachments should have size 1
       task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
+
+    it("should generate 2 folder levels and 10 folders") {
+      val folders: Seq[Ci] = generator.generateFolders(10, 2)
+      //TODO ...
+      folders should have size 110
+    }
   }
 
   def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {

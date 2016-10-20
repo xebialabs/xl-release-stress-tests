@@ -57,7 +57,7 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Folders**: The number of folders to be created in each folder level.\
     - Syntax : `-Pfolders=100`
     - The default value is `10`
-- **Folders**: The number of folders level that should be created.\
+- **Folders levels**: The number of folders level that should be created.\
     - Syntax : `-Pfolders-level=1`
     - The default value is `2`
 

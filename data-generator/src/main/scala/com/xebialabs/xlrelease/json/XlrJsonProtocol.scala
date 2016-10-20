@@ -5,7 +5,7 @@ import spray.json._
 trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with ZonedDateTimeProtocol {
   this: ProductFormatsInstances =>
 
-  implicit val releaseFormat = jsonFormat11(Release.apply)
+  implicit val releaseFormat = jsonFormat10(Release.apply)
   implicit val phaseFormat = jsonFormat5(Phase.apply)
   implicit val taskFormat = jsonFormat5(Task.apply)
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)
@@ -20,7 +20,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val httpConnectionFormat = jsonFormat3(HttpConnection.apply)
   implicit val attachmentFormat = jsonFormat3(Attachment.apply)
   implicit val activityLogEntryFormat = jsonFormat6(ActivityLogEntry.apply)
-  implicit val folderFormat = jsonFormat4(Folder.apply)
+  implicit val folderFormat = jsonFormat3(Folder.apply)
 
   implicit object CiProtocol extends RootJsonFormat[Ci] {
     def read(json: JsValue): Ci = {
