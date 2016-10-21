@@ -18,7 +18,7 @@ class CisGeneratorTest extends UnitTestSugar {
     generator = new CisGenerator()
   }
 
-  describe("release generator") {
+  describe("generator of releases and templates") {
 
     it("should return empty seq if called with 0") {
       generator.generateCompletedReleases(0)._1.flatten shouldBe 'empty
@@ -37,12 +37,12 @@ class CisGeneratorTest extends UnitTestSugar {
 
       batches should have size 5
 
-      batches.foreach( batch => {
+      batches.foreach(batch => {
         releasesOfBatch(batch) should have size 1
 
         val release = releaseOfBatch(batch)
 
-        phasesAndTasksOfBatch(batch).foreach( ci => {
+        phasesAndTasksOfBatch(batch).foreach(ci => {
           ci.id should startWith(release.id)
         })
       })
@@ -57,7 +57,7 @@ class CisGeneratorTest extends UnitTestSugar {
       release.endDate.get.isAfter(release.queryableStartDate) should be(right = true)
       release.dueDate.isAfter(release.scheduledStartDate) should be(right = true)
 
-      phasesAndTasksOfBatch(cis).foreach( ci => {
+      phasesAndTasksOfBatch(cis).foreach(ci => {
         ci.status should be("COMPLETED")
       })
     }
@@ -68,7 +68,7 @@ class CisGeneratorTest extends UnitTestSugar {
       val release = releaseOfBatch(cis)
       release.status should be("TEMPLATE")
 
-      phasesAndTasksOfBatch(cis).foreach( ci => {
+      phasesAndTasksOfBatch(cis).foreach(ci => {
         ci.status should be("PLANNED")
       })
     }
@@ -94,7 +94,7 @@ class CisGeneratorTest extends UnitTestSugar {
       release.id should be(dependentReleaseId)
       release.status should be("PLANNED")
 
-      phasesAndTasksOfBatch(cis).foreach( ci => {
+      phasesAndTasksOfBatch(cis).foreach(ci => {
         ci.status should be("PLANNED")
       })
     }
@@ -125,11 +125,12 @@ class CisGeneratorTest extends UnitTestSugar {
       task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
 
-    it("should generate n folder levels and m folders") {
-      val amountPerLevel: Int = 2
-      val levels: Int = 2
+  }
 
-      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(amountPerLevel, levels)
+  describe("generator of folders") {
+
+    it("should generate n folder levels and m folders") {
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
 
       val folders = foldersAndRelatedCis.filter(f => f.id.matches("Applications(/Folder[_\\d]+)+"))
       folders.map(_.id) shouldBe Seq(
@@ -140,6 +141,10 @@ class CisGeneratorTest extends UnitTestSugar {
         "Applications/Folder_2/Folder_2_1",
         "Applications/Folder_2/Folder_2_2"
       )
+    }
+
+    it("should generate activity logs directory for each folder") {
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
 
       val activityLogs = foldersAndRelatedCis.filter(f => f.id.contains("/ActivityLogs/"))
       activityLogs.map(_.id) shouldBe Seq(
@@ -151,6 +156,19 @@ class CisGeneratorTest extends UnitTestSugar {
         "Applications/ActivityLogs/Folder_2/Folder_2_2"
       )
     }
+
+    it("should generate a viewers team in each folder with viewer user in it and view permissions") {
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
+
+      val teams = foldersAndRelatedCis.filter(f => f.id.contains("/Team"))
+
+      teams should have size 2 * (2 + 1)
+      teams.head.id shouldBe "Applications/Folder_1/TeamViewers"
+      teams.last.id shouldBe "Applications/Folder_2/Folder_2_2/TeamViewers"
+      teams.head.asInstanceOf[Team].members shouldBe Seq("viewer")
+      teams.head.asInstanceOf[Team].permissions shouldBe Seq("folder#view", "release#view", "template#view")
+    }
+
   }
 
   def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {

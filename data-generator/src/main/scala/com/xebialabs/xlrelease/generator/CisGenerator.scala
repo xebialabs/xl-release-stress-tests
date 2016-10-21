@@ -127,8 +127,9 @@ class CisGenerator {
     val folders: Seq[Ci] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
 
     val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
+    val teams = folders.map(f => Team.build(f.id))
 
-    folders ++ activityLogs
+    folders ++ activityLogs ++ teams
   }
 
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {

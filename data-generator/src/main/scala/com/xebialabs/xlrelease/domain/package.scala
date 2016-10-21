@@ -11,30 +11,36 @@ package object domain {
 
   trait Ci {
     def id: String
+
     def `type`: String
   }
 
   trait PlanItem extends Ci {
     def title: String
+
     def status: String
   }
 
-  case class User(password: String, username: String, email: String = "", fullName: String ="", loginAllowed: Boolean = true)
+  case class User(password: String, username: String, email: String = "", fullName: String = "", loginAllowed: Boolean = true)
+
   case class Permission(role: Role, permissions: Seq[String])
+
   case class Role(id: Option[Int] = None, name: String)
+
   case class PUser(username: String, fullName: String = "")
+
   case class Principal(role: Role, principals: Seq[PUser])
 
   case class Release(id: String,
-                      title: String,
-                      status: String,
-                      scheduledStartDate: ZonedDateTime,
-                      dueDate: ZonedDateTime,
-                      queryableStartDate: ZonedDateTime,
-                      queryableEndDate: ZonedDateTime,
-                      startDate: ZonedDateTime,
-                      endDate: Option[ZonedDateTime],
-                      `type`: String = "xlrelease.Release") extends PlanItem
+                     title: String,
+                     status: String,
+                     scheduledStartDate: ZonedDateTime,
+                     dueDate: ZonedDateTime,
+                     queryableStartDate: ZonedDateTime,
+                     queryableEndDate: ZonedDateTime,
+                     startDate: ZonedDateTime,
+                     endDate: Option[ZonedDateTime],
+                     `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
                    title: String,
@@ -47,12 +53,12 @@ package object domain {
                   `type`: String = "xlrelease.Task",
                   status: String = "PLANNED",
                   attachments: List[String] = List()
-                  ) extends PlanItem
+                 ) extends PlanItem
 
   case class Comment(id: String,
                      text: String,
                      `type`: String = "xlrelease.Comment"
-                     ) extends Ci
+                    ) extends Ci
 
   case class Dependency(id: String,
                         target: String,
@@ -61,7 +67,7 @@ package object domain {
   case class SpecialDay(id: String,
                         label: String,
                         date: String,
-                        color: String= "#c3d4ef",
+                        color: String = "#c3d4ef",
                         `type`: String = "xlrelease.SpecialDay") extends Ci
 
   case class Directory(id: String, `type`: String = "core.Directory") extends Ci
@@ -75,6 +81,12 @@ package object domain {
   case class Folder(id: String,
                     title: String,
                     `type`: String = "xlrelease.Folder") extends Ci
+
+  case class Team(id: String,
+                  teamName: String,
+                  members: Seq[String],
+                  permissions: Seq[String],
+                  `type`: String = "xlrelease.Team") extends Ci
 
   object Release {
     def build(title: String): Release = {
@@ -110,7 +122,7 @@ package object domain {
 
   object ActivityLogDirectory {
     def build(containerId: String): Directory = {
-      Directory(containerId.replace("Applications/","Applications/ActivityLogs/"))
+      Directory(containerId.replace("Applications/", "Applications/ActivityLogs/"))
     }
   }
 
@@ -182,9 +194,14 @@ package object domain {
   }
 
   object Folder {
-
     def build(id: String, title: String): Folder = {
       Folder(id, title)
+    }
+  }
+
+  object Team {
+    def build(containerId: String): Team = {
+      Team(s"$containerId/TeamViewers", "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
     }
   }
 
