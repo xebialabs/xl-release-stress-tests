@@ -89,8 +89,8 @@ package object domain {
               status: String,
               releaseNumber: Double,
               releasesCount: Double): Release = {
-      if (!id.matches("^Applications/(Folder.*/)?Release.*$"))
-        throw new IllegalArgumentException(s"Release id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
+      if (!id.matches("^Applications/(Folder.*/|ActivityLogs.*/)?Release.*$"))
+        throw new IllegalArgumentException(s"Container id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
 
       val firstDayOfYear = ZonedDateTime.of(LocalDateTime.of(2015, 1, 1, 9, 0), ZoneId.systemDefault)
       val offset = Math.floor(365.0 * releaseNumber / releasesCount).toInt % 365
@@ -109,8 +109,8 @@ package object domain {
   }
 
   object ActivityLogDirectory {
-    def build(releaseId: String): Directory = {
-      Directory(s"Applications/ActivityLogs/${releaseId.substring(releaseId.indexOf("/") + 1)}")
+    def build(containerId: String): Directory = {
+      Directory(containerId.replace("Applications/","Applications/ActivityLogs/"))
     }
   }
 

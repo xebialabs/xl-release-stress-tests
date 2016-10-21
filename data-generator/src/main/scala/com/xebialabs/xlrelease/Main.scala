@@ -47,8 +47,8 @@ object Main extends App with LazyLogging {
 
   val releaseGenerator = new ReleasesGenerator()
 
-  val folders = releaseGenerator.generateFolders(foldersAmount, foldersLevel)
-  val foldersFuture = client.createOrUpdateCis(folders)
+  val (folders, activityLogs) = releaseGenerator.generateFoldersAndActivityLogs(foldersAmount, foldersLevel)
+  val foldersFuture = client.createOrUpdateCis(folders ++ activityLogs)
 
   val allFoldersAndReleasesFuture = foldersFuture.flatMap(_ => {
     val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())

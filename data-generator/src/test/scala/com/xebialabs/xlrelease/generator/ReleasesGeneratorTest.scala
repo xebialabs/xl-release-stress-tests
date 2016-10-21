@@ -125,17 +125,13 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
 
-    it("should generate 2 folder levels and 10 folders") {
+    it("should generate n folder levels and m folders") {
       val amountPerLevel: Int = 2
       val levels: Int = 2
 
-      val folderCis = generator.generateFolders(amountPerLevel, levels)
+      val (folders, activityLogs) = generator.generateFoldersAndActivityLogs(amountPerLevel, levels)
 
-      folderCis should have size amountPerLevel * (1 + amountPerLevel) * 2
-
-      val (activityLogs, folders) = folderCis
-        .sortWith((f1, f2) => f2.id.compareTo(f1.id) > 0)
-        .partition(f => f.id.contains("/ActivityLogs"))
+      folders should have size amountPerLevel * (1 + amountPerLevel)
 
       folders.map(_.id) shouldBe Seq(
         "Applications/Folder_1",
@@ -146,7 +142,7 @@ class ReleasesGeneratorTest extends UnitTestSugar {
         "Applications/Folder_2/Folder_2_2"
       )
 
-      activityLogs.map(_.id) shouldBe folders.map(_.id.replace("Applications/", "Applications/ActivityLogs"))
+      activityLogs.map(_.id) shouldBe folders.map(_.id.replace("Applications/", "Applications/ActivityLogs/"))
     }
   }
 

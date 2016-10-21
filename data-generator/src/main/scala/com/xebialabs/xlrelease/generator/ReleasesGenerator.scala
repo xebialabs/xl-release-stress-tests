@@ -91,7 +91,7 @@ class ReleasesGenerator {
     List(directory) ++ entries
   }
 
-  def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
+  def generateFoldersAndActivityLogs(amount: Int, levels: Int): (Seq[Ci], Seq[Ci])= {
 
     def createFolders(parent: String, amount: Int, level: Int): Seq[Ci] = {
       if (level == 0) Seq.empty
@@ -100,9 +100,8 @@ class ReleasesGenerator {
         val folderSequences = for (i <- 1 to amount) yield {
           val rootFolder = s"${parent}_$i"
           val folderName = fixFolderName(rootFolder)
-          val childFolders = createFolders(s"$rootFolder/$folderName", amount, level-1)
-          //TODO check this code
-          Seq(Folder.build(rootFolder, folderName), ActivityLogDirectory.build(folderName))  ++ childFolders
+          val childFolders = createFolders(s"$rootFolder/$folderName", amount, level - 1)
+          Seq(Folder.build(rootFolder, folderName)) ++ childFolders
         }
         folderSequences.flatten
       }
@@ -112,7 +111,10 @@ class ReleasesGenerator {
       if (rootFolder.contains("/")) rootFolder.substring(rootFolder.lastIndexOf("/")+1, rootFolder.length)
       else rootFolder
     }
-    createFolders("Applications/Folder", amount, levels).sortBy((ci) => ci.id)
+    val folderSeq: Seq[Ci] = createFolders("Applications/Folder", amount, levels).sortBy((ci) => ci.id)
+    val activityLogSeq = folderSeq.map( f => ActivityLogDirectory.build(f.id))
+    (folderSeq, activityLogSeq)
+
   }
 
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
