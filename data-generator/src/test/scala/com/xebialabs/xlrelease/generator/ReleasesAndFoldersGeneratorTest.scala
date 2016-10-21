@@ -2,20 +2,20 @@ package com.xebialabs.xlrelease.generator
 
 import com.typesafe.config.ConfigFactory
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.CisGenerator._
+import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class CisGeneratorTest extends UnitTestSugar {
+class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
-  var generator: CisGenerator = _
+  var generator: ReleasesAndFoldersGenerator = _
 
   implicit val config = ConfigFactory.load()
 
   override protected def beforeEach(): Unit = {
-    generator = new CisGenerator()
+    generator = new ReleasesAndFoldersGenerator()
   }
 
   describe("generator of releases and templates") {

@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.generator.{CisGenerator, SpecialDayGenerator}
+import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.sequence
@@ -45,7 +45,7 @@ object Main extends App with LazyLogging {
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
-  val releaseGenerator = new CisGenerator()
+  val releaseGenerator = new ReleasesAndFoldersGenerator()
 
   val foldersAndRelatedCis = releaseGenerator.generateFolders(foldersAmount, foldersLevel)
   val foldersFuture = client.createOrUpdateCis(foldersAndRelatedCis)

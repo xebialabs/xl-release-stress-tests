@@ -2,18 +2,18 @@ package com.xebialabs.xlrelease.generator
 
 import com.typesafe.config.Config
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.CisGenerator._
+import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 
 import scala.annotation.tailrec
 import scala.util.Random
 
-object CisGenerator {
+object ReleasesAndFoldersGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
   val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
-class CisGenerator {
+class ReleasesAndFoldersGenerator {
 
   var releaseIdCounter = 0
   var attachmentIdCounter = 0
