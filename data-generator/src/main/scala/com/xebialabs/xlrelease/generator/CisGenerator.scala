@@ -127,7 +127,7 @@ class CisGenerator {
     val folders: Seq[Ci] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
 
     val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
-    val teams = folders.map(f => Team.build(f.id))
+    val teams = folders.filter(_.id.matches("Applications/Folder_\\d+")).map(f => Team.build(f.id))
 
     folders ++ activityLogs ++ teams
   }

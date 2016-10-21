@@ -162,9 +162,9 @@ class CisGeneratorTest extends UnitTestSugar {
 
       val teams = foldersAndRelatedCis.filter(f => f.id.contains("/Team"))
 
-      teams should have size 2 * (2 + 1)
+      teams should have size 2
       teams.head.id shouldBe "Applications/Folder_1/TeamViewers"
-      teams.last.id shouldBe "Applications/Folder_2/Folder_2_2/TeamViewers"
+      teams.last.id shouldBe "Applications/Folder_2/TeamViewers"
       teams.head.asInstanceOf[Team].members shouldBe Seq("viewer")
       teams.head.asInstanceOf[Team].permissions shouldBe Seq("folder#view", "release#view", "template#view")
     }
