@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.generator.{ReleasesGenerator, SpecialDayGenerator}
+import com.xebialabs.xlrelease.generator.{CisGenerator, SpecialDayGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.sequence
@@ -45,24 +45,23 @@ object Main extends App with LazyLogging {
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
-  val releaseGenerator = new ReleasesGenerator()
+  val releaseGenerator = new CisGenerator()
 
-  val (folders, activityLogs) = releaseGenerator.generateFoldersAndActivityLogs(foldersAmount, foldersLevel)
-  val foldersFuture = client.createOrUpdateCis(folders ++ activityLogs)
+  val foldersAndRelatedCis = releaseGenerator.generateFolders(foldersAmount, foldersLevel)
+  val foldersFuture = client.createOrUpdateCis(foldersAndRelatedCis)
 
   val allFoldersAndReleasesFuture = foldersFuture.flatMap(_ => {
     val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
 
     dependantReleaseFuture.flatMap(_ => {
-      // Creating some content to increase repository size
 
       val createTemplateReleasesFutures = releaseGenerator
-        .generateTemplateReleases(templatesAmount, folders)
+        .generateTemplateReleases(templatesAmount)
         .map(client.createCis)
       val createActiveReleasesFutures = releaseGenerator
-        .generateActiveReleases(activeReleasesAmount, folders)
+        .generateActiveReleases(activeReleasesAmount)
         .map(client.createCis)
-      val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, folders, generateComments)
+      val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
       val createCompletedReleasesFutures = cis.map(client.createCis)
 
       sequence(

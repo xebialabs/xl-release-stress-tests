@@ -2,21 +2,23 @@ package com.xebialabs.xlrelease.generator
 
 import com.typesafe.config.Config
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.ReleaseGenerator._
+import com.xebialabs.xlrelease.generator.CisGenerator._
 
+import scala.annotation.tailrec
 import scala.util.Random
 
-object ReleaseGenerator {
+object CisGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
-  val dependentReleaseId = "Applications/Folder_1/ReleaseDependent"
+  val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
-class ReleasesGenerator {
-  
+class CisGenerator {
+
   var releaseIdCounter = 0
   var attachmentIdCounter = 0
   val transaction = Math.abs(Random.nextInt())
+  var createdFolderIds: Seq[String] = Seq()
 
   private def incrementReleaseIdCounterAndGet(): Int = {
     releaseIdCounter += 1
@@ -28,16 +30,16 @@ class ReleasesGenerator {
     attachmentIdCounter
   }
 
-  def generateCompletedReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
-    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments, folders)
+  def generateCompletedReleases(amount: Int, genComments: Boolean = false)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
+    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments)
   }
 
-  def generateTemplateReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
-    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments, folders)._1
+  def generateTemplateReleases(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
+    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments)._1
   }
 
-  def generateActiveReleases(amount: Int, folders: Seq[Ci] = Seq(), genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
-    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments, folders)._1
+  def generateActiveReleases(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
+    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments)._1
   }
 
   def generateDependentRelease()(implicit config: Config): Seq[Ci] = {
@@ -66,13 +68,13 @@ class ReleasesGenerator {
   }
 
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
-                       genComments: Boolean, folders: Seq[Ci])(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
+                       genComments: Boolean)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     val releases = (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
-      val folderId = if (folders.isEmpty) {
+      val folderId = if (createdFolderIds.isEmpty) {
         "Applications"
       } else {
-        folders(releaseNumber % folders.size).id
+        createdFolderIds(releaseNumber % createdFolderIds.size)
       }
 
       Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
@@ -85,36 +87,48 @@ class ReleasesGenerator {
     for (_ <- 1 to amount) yield Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
   }
 
-  def generateActivityLogs(amount: Int, releaseId: String) : Seq[Ci] = {
+  def generateActivityLogs(amount: Int, releaseId: String): Seq[Ci] = {
     val directory = ActivityLogDirectory.build(releaseId)
     val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
     List(directory) ++ entries
   }
 
-  def generateFoldersAndActivityLogs(amount: Int, levels: Int): (Seq[Ci], Seq[Ci])= {
+  def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
 
-    def createFolders(parent: String, amount: Int, level: Int): Seq[Ci] = {
-      if (level == 0) Seq.empty
-      else {
+    @tailrec
+    def createFolders(parentIds: Seq[String], amount: Int, level: Int, allCreatedFolders: Seq[Folder] = Seq()): Seq[Folder] = {
+      if (level == 0) {
+        allCreatedFolders
+      } else {
 
-        val folderSequences = for (i <- 1 to amount) yield {
-          val rootFolder = s"${parent}_$i"
-          val folderName = fixFolderName(rootFolder)
-          val childFolders = createFolders(s"$rootFolder/$folderName", amount, level - 1)
-          Seq(Folder.build(rootFolder, folderName)) ++ childFolders
+        val foldersOnGivenLevel = for (i <- 1 to amount; parentId <- parentIds) yield {
+          val folderName = s"${getFolderName(parentId)}_$i"
+          val folderId = s"$parentId/$folderName"
+          Folder.build(folderId, folderName)
         }
-        folderSequences.flatten
+
+        val idsOnGivenLevel = foldersOnGivenLevel.map(_.id)
+        createdFolderIds = createdFolderIds ++ idsOnGivenLevel
+
+        createFolders(idsOnGivenLevel, amount, level - 1, allCreatedFolders ++ foldersOnGivenLevel)
       }
     }
 
-    def fixFolderName(rootFolder: String): String = {
-      if (rootFolder.contains("/")) rootFolder.substring(rootFolder.lastIndexOf("/")+1, rootFolder.length)
-      else rootFolder
+    def getFolderName(folderId: String): String = {
+      if (folderId == "Applications") {
+        "Folder"
+      } else if (folderId.contains("/")) {
+        folderId.substring(folderId.lastIndexOf("/") + 1, folderId.length)
+      } else {
+        folderId
+      }
     }
-    val folderSeq: Seq[Ci] = createFolders("Applications/Folder", amount, levels).sortBy((ci) => ci.id)
-    val activityLogSeq = folderSeq.map( f => ActivityLogDirectory.build(f.id))
-    (folderSeq, activityLogSeq)
 
+    val folders: Seq[Ci] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
+
+    val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
+
+    folders ++ activityLogs
   }
 
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
@@ -134,7 +148,7 @@ class ReleasesGenerator {
     val activityLogs = generateActivityLogs(10, release.id)
 
 
-    phases ++ cis  ++ releaseAttachments ++ activityLogs
+    phases ++ cis ++ releaseAttachments ++ activityLogs
   }
 
   private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =
@@ -165,14 +179,14 @@ class ReleasesGenerator {
   private def phaseStatus(release: Release, phaseNumber: Int): String = {
     release.status match {
       case "TEMPLATE" => "PLANNED"
-      case "IN_PROGRESS" => if (phaseNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case "IN_PROGRESS" => if (phaseNumber == 1) "IN_PROGRESS" else "PLANNED"
       case _ => release.status
     }
   }
 
   private def taskStatus(phase: Phase, taskNumber: Int): String = {
     phase.status match {
-      case "IN_PROGRESS" => if (taskNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case "IN_PROGRESS" => if (taskNumber == 1) "IN_PROGRESS" else "PLANNED"
       case _ => phase.status
     }
   }

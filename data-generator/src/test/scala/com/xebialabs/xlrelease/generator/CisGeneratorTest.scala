@@ -2,20 +2,20 @@ package com.xebialabs.xlrelease.generator
 
 import com.typesafe.config.ConfigFactory
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.ReleaseGenerator._
+import com.xebialabs.xlrelease.generator.CisGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class ReleasesGeneratorTest extends UnitTestSugar {
+class CisGeneratorTest extends UnitTestSugar {
 
-  var generator: ReleasesGenerator = _
+  var generator: CisGenerator = _
 
   implicit val config = ConfigFactory.load()
 
   override protected def beforeEach(): Unit = {
-    generator = new ReleasesGenerator()
+    generator = new CisGenerator()
   }
 
   describe("release generator") {
@@ -129,10 +129,9 @@ class ReleasesGeneratorTest extends UnitTestSugar {
       val amountPerLevel: Int = 2
       val levels: Int = 2
 
-      val (folders, activityLogs) = generator.generateFoldersAndActivityLogs(amountPerLevel, levels)
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(amountPerLevel, levels)
 
-      folders should have size amountPerLevel * (1 + amountPerLevel)
-
+      val folders = foldersAndRelatedCis.filter(f => f.id.matches("Applications(/Folder[_\\d]+)+"))
       folders.map(_.id) shouldBe Seq(
         "Applications/Folder_1",
         "Applications/Folder_1/Folder_1_1",
@@ -142,7 +141,15 @@ class ReleasesGeneratorTest extends UnitTestSugar {
         "Applications/Folder_2/Folder_2_2"
       )
 
-      activityLogs.map(_.id) shouldBe folders.map(_.id.replace("Applications/", "Applications/ActivityLogs/"))
+      val activityLogs = foldersAndRelatedCis.filter(f => f.id.contains("/ActivityLogs/"))
+      activityLogs.map(_.id) shouldBe Seq(
+        "Applications/ActivityLogs/Folder_1",
+        "Applications/ActivityLogs/Folder_1/Folder_1_1",
+        "Applications/ActivityLogs/Folder_1/Folder_1_2",
+        "Applications/ActivityLogs/Folder_2",
+        "Applications/ActivityLogs/Folder_2/Folder_2_1",
+        "Applications/ActivityLogs/Folder_2/Folder_2_2"
+      )
     }
   }
 
