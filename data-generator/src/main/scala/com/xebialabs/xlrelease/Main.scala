@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
+import com.xebialabs.xlrelease.domain.User
 import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -44,6 +45,10 @@ object Main extends App with LazyLogging {
   val importTemplateFuture = client.importTemplate("/many-automated-tasks.xlr")
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
+  val usersFuture = sequence(Seq(
+    client.createUser(User("viewer", "viewer","","Viewer has access to folders")),
+    client.createUser(User("noViewer", "noViewer","","No Viewer user has no access to folders")))
+  )
 
   val releaseGenerator = new ReleasesAndFoldersGenerator()
 
@@ -78,7 +83,7 @@ object Main extends App with LazyLogging {
     }
   } else allFoldersAndReleasesFuture
 
-  val allResponses = sequence(Seq(importTemplateFuture, allFoldersAndReleasesWithDependencies, specialDaysFuture))
+  val allResponses = sequence(Seq(importTemplateFuture, allFoldersAndReleasesWithDependencies, specialDaysFuture, usersFuture))
 
   allResponses.andThen {
     case Failure(ex) =>
