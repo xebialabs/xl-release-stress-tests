@@ -20,12 +20,20 @@ object Releases {
       .exec(http("Post release").post("/releases").body(body).asJSON)
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
-  def queryAll = exec(
+  def queryAllActive = exec(
     http("All releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(RawFileBody("release-search-body.json")).asJSON
+      .body(RawFileBody("release-search-active-body.json")).asJSON
+  )
+
+  def queryAllCompleted = exec(
+    http("All releases")
+      .post("/releases/search")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
 
   def flow(release: String) =
