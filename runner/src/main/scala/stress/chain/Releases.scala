@@ -21,7 +21,7 @@ object Releases {
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
   def queryAllActive = exec(
-    http("All releases")
+    http("All active releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
@@ -29,7 +29,7 @@ object Releases {
   )
 
   def queryAllCompleted = exec(
-    http("All releases")
+    http("All completed releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
