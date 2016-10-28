@@ -9,7 +9,7 @@ object Calendar {
 
   def open = exec(
     http("Get calendar releases")
-      .post("/releases/searchAll")
+      .post("/releases/search?depth=10&numberbypage=20")
       .body(StringBody(s"""{
             "active":true,
             "planned":true,
@@ -22,17 +22,15 @@ object Calendar {
           }"""))
       .asJSON
       .check(
-        jsonPath("$[*]['id']")
+        jsonPath("$['cis'][*]['id']")
           .findAll
           .saveAs("releaseIds")
       ))
-    .execGetDependencies("calendar")
     .exec(
       http("Get special days for calendar")
         .get("/calendar/specialDays")
         .queryParam("from", "20141228")
         .queryParam("to", "20150207")
-        .body(StringBody("${dependenciesBody}"))
         .asJSON
     )
 
