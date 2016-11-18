@@ -37,7 +37,7 @@ class PollingSimulation extends SimulationBase(pollingScenario)
  * X users are looking at release overview
  */
 class ReleasesOverviewSimulation extends SimulationBase(
-  scenario("Release overview").exec(Releases.queryAll)
+  scenario("Release overview").exec(Releases.queryAllActive)
 )
 
 /**
@@ -97,3 +97,17 @@ class OpsSimulation extends SimulationBase(opsScenario(1))
  * X development teams commit code which triggers new releases. Each teams consists of ~10 developers.
  */
 class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario(1))
+
+
+/**
+  * X release managers open folders and their releases and templates.
+  */
+class FoldersSimulation extends Simulation {
+  val rampUpPeriod = RunnerConfig.simulations.realistic.rampUpPeriod
+  val repeats = RunnerConfig.simulations.realistic.repeats
+
+  setUp(
+    folderScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod)
+  ).protocols(httpProtocol)
+
+}

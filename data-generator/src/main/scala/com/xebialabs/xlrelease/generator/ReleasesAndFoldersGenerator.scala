@@ -2,21 +2,23 @@ package com.xebialabs.xlrelease.generator
 
 import com.typesafe.config.Config
 import com.xebialabs.xlrelease.domain._
-import com.xebialabs.xlrelease.generator.ReleaseGenerator._
+import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 
+import scala.annotation.tailrec
 import scala.util.Random
 
-object ReleaseGenerator {
+object ReleasesAndFoldersGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
   val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
-class ReleasesGenerator {
-  
+class ReleasesAndFoldersGenerator {
+
   var releaseIdCounter = 0
   var attachmentIdCounter = 0
   val transaction = Math.abs(Random.nextInt())
+  var createdFolderIds: Seq[String] = Seq()
 
   private def incrementReleaseIdCounterAndGet(): Int = {
     releaseIdCounter += 1
@@ -69,7 +71,13 @@ class ReleasesGenerator {
                        genComments: Boolean)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     val releases = (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
-      Release.build(s"Applications/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
+      val folderId = if (createdFolderIds.isEmpty) {
+        "Applications"
+      } else {
+        createdFolderIds(releaseNumber % createdFolderIds.size)
+      }
+
+      Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
     }
 
     releases.map(release => createReleaseContent(release, genComments) :+ release) -> releases.map(_.id)
@@ -79,10 +87,49 @@ class ReleasesGenerator {
     for (_ <- 1 to amount) yield Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
   }
 
-  def generateActivityLogs(amount: Int, releaseId: String) : Seq[Ci] = {
+  def generateActivityLogs(amount: Int, releaseId: String): Seq[Ci] = {
     val directory = ActivityLogDirectory.build(releaseId)
     val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
     List(directory) ++ entries
+  }
+
+  def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
+
+    @tailrec
+    def createFolders(parentIds: Seq[String], amount: Int, level: Int, allCreatedFolders: Seq[Folder] = Seq()): Seq[Folder] = {
+      if (level == 0) {
+        allCreatedFolders
+      } else {
+
+        val foldersOnGivenLevel = for (i <- 1 to amount; parentId <- parentIds) yield {
+          val folderName = s"${getFolderName(parentId)}_$i"
+          val folderId = s"$parentId/$folderName"
+          Folder.build(folderId, folderName)
+        }
+
+        val idsOnGivenLevel = foldersOnGivenLevel.map(_.id)
+        createdFolderIds = createdFolderIds ++ idsOnGivenLevel
+
+        createFolders(idsOnGivenLevel, amount, level - 1, allCreatedFolders ++ foldersOnGivenLevel)
+      }
+    }
+
+    def getFolderName(folderId: String): String = {
+      if (folderId == "Applications") {
+        "Folder"
+      } else if (folderId.contains("/")) {
+        folderId.substring(folderId.lastIndexOf("/") + 1, folderId.length)
+      } else {
+        folderId
+      }
+    }
+
+    val folders: Seq[Ci] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
+
+    val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
+    val teams = folders.filter(_.id.matches("Applications/Folder_\\d+")).map(f => Team.build(f.id))
+
+    folders ++ activityLogs ++ teams
   }
 
   private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
@@ -102,7 +149,7 @@ class ReleasesGenerator {
     val activityLogs = generateActivityLogs(10, release.id)
 
 
-    phases ++ cis  ++ releaseAttachments ++ activityLogs
+    phases ++ cis ++ releaseAttachments ++ activityLogs
   }
 
   private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =
@@ -133,14 +180,14 @@ class ReleasesGenerator {
   private def phaseStatus(release: Release, phaseNumber: Int): String = {
     release.status match {
       case "TEMPLATE" => "PLANNED"
-      case "IN_PROGRESS" => if (phaseNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case "IN_PROGRESS" => if (phaseNumber == 1) "IN_PROGRESS" else "PLANNED"
       case _ => release.status
     }
   }
 
   private def taskStatus(phase: Phase, taskNumber: Int): String = {
     phase.status match {
-      case "IN_PROGRESS" => if (taskNumber == 1)  "IN_PROGRESS" else "PLANNED"
+      case "IN_PROGRESS" => if (taskNumber == 1) "IN_PROGRESS" else "PLANNED"
       case _ => phase.status
     }
   }

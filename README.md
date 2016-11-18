@@ -2,7 +2,7 @@
 
 There are two projects in this repository :
 
-- Data Generator : an application that populates an XL Release instance with active, completed releases and templates.
+- Data Generator : an application that populates an XL Release instance with active, completed releases, templates and folders
 - Runner : an application that connects to an XL Release instance and performs stress tests.
 
 ## Requirements
@@ -54,10 +54,16 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Generate comments for completed releases**: Generating ~29MB of comments per release
     - Syntax : `-Pgenerate-comments=true`
     - The default value is `false`
+- **Folders**: The number of folders to be created in each folder level.\
+    - Syntax : `-Pfolders=100`
+    - The default value is `10`
+- **Folders levels**: The number of folders level that should be created.\
+    - Syntax : `-Pfolders-level=1`
+    - The default value is `2`
 
 Example :
 
-    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20
+    ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20 -Pfolders=10 -Pfolders-level=1
 
 # Runner
 
@@ -95,6 +101,7 @@ It uses the following optional parameters :
         - `stress.OpsSimulation` : several ops people are working with XL Release
         - `stress.ReleaseManagerSimulation` : several release managers are working with XL Release
         - `stress.RealisticSimulation` : A simulation which combines several roles of people working with XL Release in one realistic usage scenario.
+        - `stress.FoldersSimulation` : several release managers opening folders and their releases and templates.
     - The default value is `stress.RealisticSimulation`
 - **Teams**: The number of development teams that will be running the `stress.DevelopmentTeamSimulation`
     - Syntax : `-Pteams=10`

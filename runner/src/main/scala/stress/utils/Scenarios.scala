@@ -15,7 +15,7 @@ object Scenarios {
     .exec(Releases.create(RawFileBody("create-release-body.json")))
 
   val queryAllReleasesScenario = scenario("Query all releases")
-    .exec(Releases.queryAll)
+    .exec(Releases.queryAllActive)
 
   val queryPipelinesScenario = scenario("Query pipelines")
     .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
@@ -79,6 +79,19 @@ object Scenarios {
       repeat(2) {
         developmentTeamChain(devPause)
       }
+    )
+
+  def folderScenario(repeats: Int) = scenario("Folder scenario")
+    .repeat(repeats)(
+      exec(Folders.open)
+        .exec(Folders.openFolderTemplates)
+        .pause(opsPauseMin, opsPauseMax)
+        .exec(Folders.openFolderReleases)
+        .pause(opsPauseMin, opsPauseMax)
+        .exec(Releases.queryAllActive)
+        .pause(opsPauseMin, opsPauseMax)
+        .exec(Releases.queryAllCompleted)
+        .exec(Templates.open)
     )
 
   def sequentialScenario(repeats: Int) = scenario("Person fulfilling all roles")
