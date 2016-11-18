@@ -19,5 +19,5 @@ object Pipeline {
               .findAll
               .saveAs("releaseIds")
           )
-      ).execGetDependencies("pipeline")
+      )
 }

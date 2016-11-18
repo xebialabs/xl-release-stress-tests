@@ -41,6 +41,7 @@ object Releases {
       .exec(http("Get reports").get("/settings/reports"))
       .exec(http("Get security").get("/security"))
       .exec(http("Get release").get(s"/releases/$release"))
+      .exec(http("Get release dependencies").get(s"/dependencies/$release"))
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
   def createFromTemplate(jsonFilePath: String, templateTitle: String) =
@@ -68,6 +69,7 @@ object Releases {
               .saveAs("createdReleaseId")
           )
       )
+    .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
     .exec(
         http("Start release")
           .post("/releases/${createdReleaseId}/start")
