@@ -24,6 +24,10 @@ object Main extends App with LazyLogging {
   private val foldersAmount = config.getInt("xl.data-generator.folders")
   private val foldersLevel = config.getInt("xl.data-generator.folders-level")
 
+  private val dependencyTreeAmount = config.getInt("xl.data-generator.dependency-trees")
+  private val dependencyTreeDepth = config.getInt("xl.data-generator.dependency-tree-depth")
+  private val dependencyTreeBreadth = config.getInt("xl.data-generator.dependency-tree-breadth")
+
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
   logger.info("Templates: {}", templatesAmount.toString)
@@ -36,6 +40,9 @@ object Main extends App with LazyLogging {
   if (generateComments) {
     logger.info("Generating releases with comments")
   }
+  if (dependencyTreeAmount > 0) {
+    logger.info(s"Dependency trees: $dependencyTreeAmount (depth $dependencyTreeDepth, breadth $dependencyTreeBreadth)")
+  }
 
   val client = new XlrClient(
     config.getString("xl.data-generator.baseUrl"),
@@ -46,8 +53,8 @@ object Main extends App with LazyLogging {
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
   val usersFuture = sequence(Seq(
-    client.createUser(User("viewer", "viewer","","Viewer has access to folders")),
-    client.createUser(User("noViewer", "noViewer","","No Viewer user has no access to folders")))
+    client.createUser(User("viewer", "viewer", "", "Viewer has access to folders")),
+    client.createUser(User("noViewer", "noViewer", "", "No Viewer user has no access to folders")))
   )
 
   val releaseGenerator = new ReleasesAndFoldersGenerator()
@@ -83,7 +90,13 @@ object Main extends App with LazyLogging {
     }
   } else allFoldersAndReleasesFuture
 
-  val allResponses = sequence(Seq(importTemplateFuture, allFoldersAndReleasesWithDependencies, specialDaysFuture, usersFuture))
+  val allWithDependencyTrees = if (dependencyTreeAmount > 0) {
+    allFoldersAndReleasesWithDependencies.flatMap(_ => {
+      sequence(releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth).map(client.createCis))
+    })
+  } else allFoldersAndReleasesWithDependencies
+
+  val allResponses = sequence(Seq(importTemplateFuture, allWithDependencyTrees, specialDaysFuture, usersFuture))
 
   allResponses.andThen {
     case Failure(ex) =>

@@ -14,7 +14,6 @@ object ReleasesAndFoldersGenerator {
 }
 
 class ReleasesAndFoldersGenerator {
-
   var releaseIdCounter = 0
   var attachmentIdCounter = 0
   val transaction = Math.abs(Random.nextInt())
@@ -44,7 +43,7 @@ class ReleasesAndFoldersGenerator {
 
   def generateDependentRelease()(implicit config: Config): Seq[Ci] = {
     val release = Release.build(dependentReleaseId, "Stress test Dependent release", "PLANNED", 1, 1)
-    createReleaseContent(release, generateComments = false) :+ release
+    createReleaseContent(release, generateComments = false, Seq.empty) :+ release
   }
 
   def generateDepRelease(relIds: Seq[String], numberOfRel: Int): Seq[Seq[Ci]] = {
@@ -67,8 +66,36 @@ class ReleasesAndFoldersGenerator {
     }
   }
 
+
+  def generateDependencyTrees(dependencyTreeAmount: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
+                             (implicit config: Config): Seq[Seq[Ci]] = {
+    (1 to dependencyTreeAmount).map { i =>
+      generateDependencyTree(i, 0, dependencyTreeDepth, dependencyTreeBreadth)._1
+    }
+  }
+
+  def generateDependencyTree(currentTree: Int, currentDepth: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
+                            (implicit config: Config): (Seq[Ci], Seq[String]) = {
+    if (currentDepth > dependencyTreeBreadth) {
+      return (Seq.empty, Seq.empty)
+    }
+
+    val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeBreadth, dependencyTreeBreadth)
+
+    val (releaseCis, releaseIds) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "IN_PROGRESS",
+      (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
+      genComments = false,
+      dependsOn = targetCis
+    )
+
+    (childCis ++ releaseCis.flatten, releaseIds)
+  }
+
+
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
-                       genComments: Boolean)(implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
+                       genComments: Boolean,
+                       dependsOn: Seq[String] = Seq(dependentReleaseId))
+                      (implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     val releases = (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
       val folderId = if (createdFolderIds.isEmpty) {
@@ -80,7 +107,7 @@ class ReleasesAndFoldersGenerator {
       Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount)
     }
 
-    releases.map(release => createReleaseContent(release, genComments) :+ release) -> releases.map(_.id)
+    releases.map(release => createReleaseContent(release, genComments, dependsOn) :+ release) -> releases.map(_.id)
   }
 
   def generateAttachments(amount: Int, containerId: String)(implicit config: Config): Seq[Ci] = {
@@ -132,7 +159,7 @@ class ReleasesAndFoldersGenerator {
     folders ++ activityLogs ++ teams
   }
 
-  private def createReleaseContent(release: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
+  private def createReleaseContent(release: Release, generateComments: Boolean, dependsOn: Seq[String])(implicit config: Config): Seq[Ci] = {
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>
       Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))
@@ -140,31 +167,35 @@ class ReleasesAndFoldersGenerator {
     val cis: Seq[Ci] = phases.zip(phaseNumbers).flatMap {
       case (phase, phaseNumber) =>
         (1 to tasksPerPhase).flatMap { taskNumber =>
-          val taskCis = makeTaskCis(phase, phaseNumber, taskNumber, release.id)
-          taskCis ++ (if (generateComments) makeCommentCis(taskCis.filter(_.`type` != "xlrelease.Dependency")) else Nil)
+          val taskCis = makeTaskCis(phase, phaseNumber, taskNumber, release.id, dependsOn)
+          taskCis ++ (if (generateComments) makeCommentCis(taskCis.filter(acceptsComment)) else Nil)
         }
     }
 
     val releaseAttachments: Seq[Ci] = generateAttachments(1, release.id)
     val activityLogs = generateActivityLogs(10, release.id)
 
-
     phases ++ cis ++ releaseAttachments ++ activityLogs
+  }
+
+  private def acceptsComment(ci: Ci): Boolean = {
+    ci.`type` != "xlrelease.Dependency" && ci.`type` != "xlrelease.Attachment"
   }
 
   private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =
     parentIds.zipWithIndex.map { case (p, n) => Comment.buildComment(s"Comment$n", p.id) }
 
 
-  private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int, releaseId: String)(implicit config: Config): Seq[Ci] = {
+  private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int, releaseId: String, dependsOn: Seq[String])(implicit config: Config): Seq[Ci] = {
     if (isFirstTaskOfPhase(taskNumber)) {
       val attachment = generateAttachments(1, releaseId).head
       val task = Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), attachments = List(attachment.id))
       Seq(task, attachment)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = Task.buildGate(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
-      val dependency = Dependency.build("Dependency", task.id, dependentReleaseId)
-      Seq(task, dependency)
+      dependsOn.view.zipWithIndex.map {
+        case (targetId, dependencyIndex) => Dependency.build(s"Dependency$dependencyIndex", task.id, targetId)
+      } :+ task
     } else {
       val task = Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
       Seq(task)
