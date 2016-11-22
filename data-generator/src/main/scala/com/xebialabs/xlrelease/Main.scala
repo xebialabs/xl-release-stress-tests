@@ -8,7 +8,8 @@ import com.xebialabs.xlrelease.domain.User
 import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.sequence
+import scala.concurrent.Future
+import scala.concurrent.Future.{sequence, successful}
 import scala.util.Failure
 
 object Main extends App with LazyLogging {
@@ -94,7 +95,9 @@ object Main extends App with LazyLogging {
 
   val allWithDependencyTrees = if (dependencyTreeAmount > 0) {
     allFoldersAndReleasesWithDependencies.flatMap(_ => {
-      sequence(releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth).map(client.createCis))
+      sequential(releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth)) {
+        client.createCis
+      }
     })
   } else {
     allFoldersAndReleasesWithDependencies
@@ -110,5 +113,13 @@ object Main extends App with LazyLogging {
       logger.debug("Shutting down the actor system after everything has been done.")
       client.system.shutdown()
       client.system.awaitTermination()
+  }
+
+  def sequential[T, U](items: TraversableOnce[T])(fn: T => Future[U]): Future[List[U]] = {
+    items.foldLeft(successful[List[U]](Nil)) {
+      (f, item) => f.flatMap {
+        x => fn(item).map(_ :: x)
+      }
+    } map (_.reverse)
   }
 }
