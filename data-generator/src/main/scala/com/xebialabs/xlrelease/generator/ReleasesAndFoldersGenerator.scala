@@ -76,11 +76,11 @@ class ReleasesAndFoldersGenerator {
 
   def generateDependencyTree(currentTree: Int, currentDepth: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
                             (implicit config: Config): (Seq[Ci], Seq[String]) = {
-    if (currentDepth > dependencyTreeBreadth) {
+    if (currentDepth > dependencyTreeDepth) {
       return (Seq.empty, Seq.empty)
     }
 
-    val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeBreadth, dependencyTreeBreadth)
+    val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeDepth, dependencyTreeBreadth)
 
     val (releaseCis, releaseIds) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "IN_PROGRESS",
       (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
