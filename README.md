@@ -60,6 +60,28 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Folders levels**: The number of folders level that should be created.\
     - Syntax : `-Pfolders-level=1`
     - The default value is `2`
+- **Dependency tree count**: The number of tree structures that should be created.
+    - Syntax: `-Pdependency-trees=5`
+    - The default values is `0`
+    
+    Following structure is created:
+    
+    | r0  |     |     |     |
+    | --- | --- | --- | --- |
+    | r11 | r12 | r13 | r14 |
+    | r21 | r22 | r23 | r24 |
+    | r31 | r32 | r33 | r34 |
+
+    Where `r0` is the root of the tree which has depth `3` and breadth `4`. 
+    Each of the releases from a higher level has dependencies to releases in its succeeding lower level, e.g. `r11` has dependencies onto `r21`, `r22`, `r23` and `r24` as well as `r12`, `r13` and `r14`.
+
+- **Dependency tree depth**: The depth of the tree structures that should be created.
+    - Syntax: `-Pdependency-tree-depth=10`
+    - The default values is `3`
+    
+- **Dependency tree breadth**: The breadth of the tree structures that should be created.
+    - Syntax: `-Pdependency-tree-breadth=10`
+    - The default values is `3`
 
 Example :
 
