@@ -69,28 +69,28 @@ class ReleasesAndFoldersGenerator {
 
   def generateDependencyTrees(dependencyTreeAmount: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
                              (implicit config: Config): Seq[Seq[Ci]] = {
+
+    def generateDependencyTree(currentTree: Int, currentDepth: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
+                              (implicit config: Config): (Seq[Ci], Seq[String]) = {
+      if (currentDepth > dependencyTreeDepth) {
+        (Seq.empty, Seq.empty)
+      } else {
+        val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeDepth, dependencyTreeBreadth)
+
+        val (cis, _) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "IN_PROGRESS",
+          (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
+          genComments = false,
+          dependsOn = targetCis
+        )
+
+        (childCis ++ cis.flatten, cis.flatten.filter(_.`type` == "xlrelease.GateTask").map(_.id))
+      }
+    }
+
     (1 to dependencyTreeAmount).map { i =>
       generateDependencyTree(i, 0, dependencyTreeDepth, dependencyTreeBreadth)._1
     }
   }
-
-  def generateDependencyTree(currentTree: Int, currentDepth: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
-                            (implicit config: Config): (Seq[Ci], Seq[String]) = {
-    if (currentDepth > dependencyTreeDepth) {
-      return (Seq.empty, Seq.empty)
-    }
-
-    val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeDepth, dependencyTreeBreadth)
-
-    val (releaseCis, releaseIds) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "IN_PROGRESS",
-      (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
-      genComments = false,
-      dependsOn = targetCis
-    )
-
-    (childCis ++ releaseCis.flatten, releaseIds)
-  }
-
 
   def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
                        genComments: Boolean,
