@@ -88,13 +88,17 @@ object Main extends App with LazyLogging {
     allFoldersAndReleasesFuture.flatMap { case (f, ids) =>
       sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
     }
-  } else allFoldersAndReleasesFuture
+  } else {
+    allFoldersAndReleasesFuture
+  }
 
   val allWithDependencyTrees = if (dependencyTreeAmount > 0) {
     allFoldersAndReleasesWithDependencies.flatMap(_ => {
       sequence(releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth).map(client.createCis))
     })
-  } else allFoldersAndReleasesWithDependencies
+  } else {
+    allFoldersAndReleasesWithDependencies
+  }
 
   val allResponses = sequence(Seq(importTemplateFuture, allWithDependencyTrees, specialDaysFuture, usersFuture))
 

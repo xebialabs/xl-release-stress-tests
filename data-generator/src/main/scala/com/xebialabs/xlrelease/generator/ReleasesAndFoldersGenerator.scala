@@ -71,7 +71,7 @@ class ReleasesAndFoldersGenerator {
                              (implicit config: Config): Seq[Seq[Ci]] = {
 
     def generateDependencyTree(currentTree: Int, currentDepth: Int, dependencyTreeDepth: Int, dependencyTreeBreadth: Int)
-                              (implicit config: Config): (Seq[Ci], Seq[String]) = {
+                              (implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
       if (currentDepth > dependencyTreeDepth) {
         (Seq.empty, Seq.empty)
       } else {
@@ -83,11 +83,11 @@ class ReleasesAndFoldersGenerator {
           dependsOn = targetCis
         )
 
-        (childCis ++ cis.flatten, cis.flatten.filter(_.`type` == "xlrelease.GateTask").map(_.id))
+        (childCis ++ cis, cis.flatten.filter(_.`type` == "xlrelease.GateTask").map(_.id))
       }
     }
 
-    (1 to dependencyTreeAmount).map { i =>
+    (1 to dependencyTreeAmount).flatMap { i =>
       generateDependencyTree(i, 0, dependencyTreeDepth, dependencyTreeBreadth)._1
     }
   }
