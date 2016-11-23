@@ -98,6 +98,10 @@ class OpsSimulation extends SimulationBase(opsScenario(1))
  */
 class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario(1))
 
+/**
+  * X users interact with dependencies endpoints
+  */
+class DependenciesSimulation extends SimulationBase(dependenciesScenario(RunnerConfig.simulations.realistic.repeats))
 
 /**
   * X release managers open folders and their releases and templates.

@@ -15,6 +15,8 @@ import stress.config.RunnerConfig
 
 object Releases {
 
+  val ACTIVE_TREE_RELEASES_FILTER = """{"active":true, "filter":"Tree"}"""
+
   def create(body: Body) =
     exec(http("Get templates").get("/releases/templates?depth=1"))
       .exec(http("Post release").post("/releases").body(body).asJSON)
@@ -28,6 +30,20 @@ object Releases {
       .body(RawFileBody("release-search-active-body.json")).asJSON
   )
 
+  def queryForTreeReleases = exec(
+    http("All active releases with dependency trees")
+      .post("/releases/search")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .queryParam("filter", "Tree")
+      .body(StringBody(ACTIVE_TREE_RELEASES_FILTER)).asJSON
+      .check(
+        jsonPath("$['cis'][*]['id']")
+          .findAll
+          .saveAs("treeReleaseIds")
+      )
+  )
+
   def queryAllCompleted = exec(
     http("All completed releases")
       .post("/releases/search")
@@ -35,6 +51,12 @@ object Releases {
       .queryParam("page", "0")
       .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
+
+  def getDependencies =
+    exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
+
+  def getDependencyTree =
+    exec(http("Get release dependency tree").get("/dependencies/${releaseId}/tree"))
 
   def flow(release: String) =
     exec(http("Get polling interval").get("/settings/polling-interval"))

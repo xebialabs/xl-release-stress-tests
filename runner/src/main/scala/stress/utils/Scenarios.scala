@@ -1,5 +1,6 @@
 package stress.utils
 
+import com.typesafe.scalalogging.LazyLogging
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
@@ -8,8 +9,9 @@ import stress.config.RunnerConfig._
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
+import scala.util.Random
 
-object Scenarios {
+object Scenarios extends LazyLogging {
 
   val createReleaseScenario = scenario("Create release")
     .exec(Releases.create(RawFileBody("create-release-body.json")))
@@ -93,6 +95,21 @@ object Scenarios {
         .exec(Releases.queryAllCompleted)
         .exec(Templates.open)
     )
+
+  def dependenciesScenario(repeats: Int) = scenario("Dependencies scenario")
+      .repeat(repeats)(
+        exec(Releases.queryForTreeReleases)
+          .exec(session => {
+              val releaseId = Random.shuffle(session.get("treeReleaseIds").as[Seq[String]]).head
+              session.set("releaseId", releaseId)
+            })
+//          .pause(opsPauseMin, opsPauseMax)
+          .exec(Releases.getDependencies)
+//          .pause(opsPauseMin, opsPauseMax)
+          .exec(Releases.getDependencyTree)
+//          .pause(opsPauseMin, opsPauseMax)
+          .exec(Tasks.getDependencyCandidates)
+      )
 
   def sequentialScenario(repeats: Int) = scenario("Person fulfilling all roles")
     .repeat(repeats)(

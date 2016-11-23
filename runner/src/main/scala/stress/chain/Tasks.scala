@@ -67,6 +67,10 @@ object Tasks {
       50d -> setTeamOnRandomTask(None)
     )
 
+  // In our generated dependency tree, the gate task is the last task
+  def getDependencyCandidates =
+    exec(http("Get gate task dependency candidates").get("/gates/${releaseId}-Phase5-Task10/dependency-target-candidates"))
+
   private def setTeamOnRandomTask(team: Option[String]) = {
     val teamJson = team match {
       case Some(t) => s""""$t""""
