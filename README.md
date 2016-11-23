@@ -73,7 +73,9 @@ each of those active releases will have 100 gate tasks with a single dependency 
     | r31 | r32 | r33 | r34 |
 
     Where `r0` is the root of the tree which has depth `3` and breadth `4`. 
-    Each of the releases from a higher level has dependencies to releases in its succeeding lower level, e.g. `r11` has dependencies onto `r21`, `r22`, `r23` and `r24` as well as `r12`, `r13` and `r14`.
+    Each of the releases from a higher level has dependencies to releases in its succeeding lower level, e.g. `r11` has dependencies onto `r21`, `r22`, `r23`, `r24`. 
+    
+    `r12`, `r13` and `r14` have the same dependencies as `r11`.
 
 - **Dependency tree depth**: The depth of the tree structures that should be created.
     - Syntax: `-Pdependency-tree-depth=10`
@@ -124,6 +126,7 @@ It uses the following optional parameters :
         - `stress.ReleaseManagerSimulation` : several release managers are working with XL Release
         - `stress.RealisticSimulation` : A simulation which combines several roles of people working with XL Release in one realistic usage scenario.
         - `stress.FoldersSimulation` : several release managers opening folders and their releases and templates.
+        - `stress.DependenciesSimulation` : several users opening release overview and fetching dependencies for a random release.
     - The default value is `stress.RealisticSimulation`
 - **Teams**: The number of development teams that will be running the `stress.DevelopmentTeamSimulation`
     - Syntax : `-Pteams=10`
@@ -138,7 +141,7 @@ It uses the following optional parameters :
 
 Example:
 
-    ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=stress.RealisticSimulation -Pusername=admin -Ppassword=password
+    ./gradlew :runner:run -PbaseUrl=http://localhost:5516 -Psimulation=stress.RealisticSimulation -Pusername=admin -Ppassword=admin
 
 ## Performances Reports
 
