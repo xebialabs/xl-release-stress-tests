@@ -57,9 +57,9 @@ object RunnerConfig extends LazyLogging {
 
   val devPause = duration("devPause")
 
-  val pauseMin = duration("pauseMin")
+  val userPauseMin = duration("userPauseMin")
 
-  val pauseMax = duration("pauseMax")
+  val userPauseMax = duration("userPauseMax")
 
   val taskPollPause = duration("taskPollPause")
 
@@ -76,6 +76,8 @@ object RunnerConfig extends LazyLogging {
     val postWarmUpPause =  duration("simulations.postWarmUpPause")
 
     val rampUpPeriod = duration("simulations.rampUpPeriod")
+
+    val repeats = runnerConfig.getInt("simulations.repeats")
 
     object realistic {
 

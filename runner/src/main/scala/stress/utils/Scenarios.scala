@@ -9,7 +9,6 @@ import stress.config.RunnerConfig._
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
-import scala.util.Random
 
 object Scenarios extends LazyLogging {
 
@@ -62,6 +61,16 @@ object Scenarios extends LazyLogging {
       .pause(devPause)
   }
 
+  def dependenciesChain(pauseMin: Duration, pauseMax: Duration) = {
+    exec(Releases.getRandomTreeRelease)
+      .pause(pauseMin, pauseMax)
+      .exec(Releases.getDependencies)
+      .pause(pauseMin, pauseMax)
+      .exec(Releases.getDependencyTree)
+      .pause(pauseMin, pauseMax)
+      .exec(Tasks.getDependencyCandidates)
+  }
+
   def releaseManagerScenario(repeats: Int) = {
     scenario("Release manager")
       .repeat(repeats)(
@@ -96,20 +105,12 @@ object Scenarios extends LazyLogging {
         .exec(Templates.open)
     )
 
-  def dependenciesScenario(repeats: Int) = scenario("Dependencies scenario")
+  def dependenciesScenario(repeats: Int) = {
+    scenario("Dependencies scenario")
       .repeat(repeats)(
-        exec(Releases.queryForTreeReleases)
-          .exec(session => {
-              val releaseId = Random.shuffle(session.get("treeReleaseIds").as[Seq[String]]).head
-              session.set("releaseId", releaseId)
-            })
-          .pause(pauseMin, pauseMax)
-          .exec(Releases.getDependencies)
-          .pause(pauseMin, pauseMax)
-          .exec(Releases.getDependencyTree)
-          .pause(pauseMin, pauseMax)
-          .exec(Tasks.getDependencyCandidates)
+        dependenciesChain(userPauseMin, userPauseMax)
       )
+  }
 
   def sequentialScenario(repeats: Int) = scenario("Person fulfilling all roles")
     .repeat(repeats)(

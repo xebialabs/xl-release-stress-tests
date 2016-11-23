@@ -13,6 +13,8 @@ import io.gatling.http.Predef._
 import io.gatling.http.request.Body
 import stress.config.RunnerConfig
 
+import scala.util.Random
+
 object Releases {
 
   val ACTIVE_TREE_RELEASES_FILTER = """{"active":true, "filter":"Tree"}"""
@@ -30,8 +32,8 @@ object Releases {
       .body(RawFileBody("release-search-active-body.json")).asJSON
   )
 
-  def queryForTreeReleases = exec(
-    http("All active releases with dependency trees")
+  def queryAllTreeReleases = exec(
+    http("All active tree releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
@@ -43,6 +45,12 @@ object Releases {
           .saveAs("treeReleaseIds")
       )
   )
+
+  def getRandomTreeRelease = queryAllTreeReleases
+    .exec(session => {
+      val releaseIds = session.get("treeReleaseIds").as[Seq[String]]
+      session.set("releaseId", releaseIds(Random.nextInt(releaseIds.size)))
+    })
 
   def queryAllCompleted = exec(
     http("All completed releases")
@@ -80,7 +88,7 @@ object Releases {
           )
         })
     }
-    .exec(
+      .exec(
         http("Post release")
           .post("/releases")
           .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date", "sshHost", "sshUser", "sshPassword")))
@@ -91,8 +99,8 @@ object Releases {
               .saveAs("createdReleaseId")
           )
       )
-    .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
-    .exec(
+      .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
+      .exec(
         http("Start release")
           .post("/releases/${createdReleaseId}/start")
       )
@@ -101,7 +109,9 @@ object Releases {
   private class ReplacingFileBody(filePath: String, sessionAttributes: Seq[String]) extends Body {
 
     override def setBody(requestBuilder: RequestBuilder, session: Session): Validation[RequestBuilder] = {
-      val content: Validation[String] = Resource.body(filePath).map { _.string(configuration.core.charset) }
+      val content: Validation[String] = Resource.body(filePath).map {
+        _.string(configuration.core.charset)
+      }
       val replacedContent = content.flatMap { contentString =>
         sessionAttributes.foldLeft(contentString) { (text, key) =>
           session(key).asOption[Any] match {
