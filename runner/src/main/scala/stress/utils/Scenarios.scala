@@ -1,6 +1,5 @@
 package stress.utils
 
-import com.typesafe.scalalogging.LazyLogging
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
@@ -10,7 +9,7 @@ import stress.config.RunnerConfig._
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
-object Scenarios extends LazyLogging {
+object Scenarios {
 
   val createReleaseScenario = scenario("Create release")
     .exec(Releases.create(RawFileBody("create-release-body.json")))
