@@ -103,11 +103,11 @@ object Scenarios extends LazyLogging {
               val releaseId = Random.shuffle(session.get("treeReleaseIds").as[Seq[String]]).head
               session.set("releaseId", releaseId)
             })
-//          .pause(opsPauseMin, opsPauseMax)
+          .pause(pauseMin, pauseMax)
           .exec(Releases.getDependencies)
-//          .pause(opsPauseMin, opsPauseMax)
+          .pause(pauseMin, pauseMax)
           .exec(Releases.getDependencyTree)
-//          .pause(opsPauseMin, opsPauseMax)
+          .pause(pauseMin, pauseMax)
           .exec(Tasks.getDependencyCandidates)
       )
 

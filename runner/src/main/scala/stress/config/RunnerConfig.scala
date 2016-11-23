@@ -57,6 +57,10 @@ object RunnerConfig extends LazyLogging {
 
   val devPause = duration("devPause")
 
+  val pauseMin = duration("pauseMin")
+
+  val pauseMax = duration("pauseMax")
+
   val taskPollPause = duration("taskPollPause")
 
   val taskPollDuration = duration("taskPollDuration")
