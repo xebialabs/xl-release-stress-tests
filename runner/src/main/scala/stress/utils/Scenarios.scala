@@ -60,6 +60,16 @@ object Scenarios {
       .pause(devPause)
   }
 
+  def dependenciesChain(pauseMin: Duration, pauseMax: Duration) = {
+    exec(Releases.getRandomTreeRelease)
+      .pause(pauseMin, pauseMax)
+      .exec(Releases.getDependencies)
+      .pause(pauseMin, pauseMax)
+      .exec(Releases.getDependencyTree)
+      .pause(pauseMin, pauseMax)
+      .exec(Tasks.getDependencyCandidates)
+  }
+
   def releaseManagerScenario(repeats: Int) = {
     scenario("Release manager")
       .repeat(repeats)(
@@ -93,6 +103,13 @@ object Scenarios {
         .exec(Releases.queryAllCompleted)
         .exec(Templates.open)
     )
+
+  def dependenciesScenario(repeats: Int) = {
+    scenario("Dependencies scenario")
+      .repeat(repeats)(
+        dependenciesChain(userPauseMin, userPauseMax)
+      )
+  }
 
   def sequentialScenario(repeats: Int) = scenario("Person fulfilling all roles")
     .repeat(repeats)(

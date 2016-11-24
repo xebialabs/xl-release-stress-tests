@@ -13,7 +13,11 @@ import io.gatling.http.Predef._
 import io.gatling.http.request.Body
 import stress.config.RunnerConfig
 
+import scala.util.Random
+
 object Releases {
+
+  val ACTIVE_TREE_RELEASES_FILTER = """{"active":true, "filter":"Tree"}"""
 
   def create(body: Body) =
     exec(http("Get templates").get("/releases/templates?depth=1"))
@@ -28,6 +32,26 @@ object Releases {
       .body(RawFileBody("release-search-active-body.json")).asJSON
   )
 
+  def queryAllTreeReleases = exec(
+    http("All active tree releases")
+      .post("/releases/search")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .queryParam("filter", "Tree")
+      .body(StringBody(ACTIVE_TREE_RELEASES_FILTER)).asJSON
+      .check(
+        jsonPath("$['cis'][*]['id']")
+          .findAll
+          .saveAs("treeReleaseIds")
+      )
+  )
+
+  def getRandomTreeRelease = queryAllTreeReleases
+    .exec(session => {
+      val releaseIds = session.get("treeReleaseIds").as[Seq[String]]
+      session.set("releaseId", releaseIds(Random.nextInt(releaseIds.size)))
+    })
+
   def queryAllCompleted = exec(
     http("All completed releases")
       .post("/releases/search")
@@ -35,6 +59,12 @@ object Releases {
       .queryParam("page", "0")
       .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
+
+  def getDependencies =
+    exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
+
+  def getDependencyTree =
+    exec(http("Get release dependency tree").get("/dependencies/${releaseId}/tree"))
 
   def flow(release: String) =
     exec(http("Get polling interval").get("/settings/polling-interval"))
@@ -58,7 +88,7 @@ object Releases {
           )
         })
     }
-    .exec(
+      .exec(
         http("Post release")
           .post("/releases")
           .body(new ReplacingFileBody(jsonFilePath, Seq("releaseTemplateId", "date", "sshHost", "sshUser", "sshPassword")))
@@ -69,8 +99,8 @@ object Releases {
               .saveAs("createdReleaseId")
           )
       )
-    .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
-    .exec(
+      .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
+      .exec(
         http("Start release")
           .post("/releases/${createdReleaseId}/start")
       )
@@ -79,7 +109,9 @@ object Releases {
   private class ReplacingFileBody(filePath: String, sessionAttributes: Seq[String]) extends Body {
 
     override def setBody(requestBuilder: RequestBuilder, session: Session): Validation[RequestBuilder] = {
-      val content: Validation[String] = Resource.body(filePath).map { _.string(configuration.core.charset) }
+      val content: Validation[String] = Resource.body(filePath).map {
+        _.string(configuration.core.charset)
+      }
       val replacedContent = content.flatMap { contentString =>
         sessionAttributes.foldLeft(contentString) { (text, key) =>
           session(key).asOption[Any] match {

@@ -3,6 +3,7 @@ package stress
 import io.gatling.core.Predef._
 import stress.chain.Releases
 import stress.config.RunnerConfig
+import stress.config.RunnerConfig.simulations
 import stress.utils.Scenarios._
 
 import scala.concurrent.duration._
@@ -62,8 +63,8 @@ class PipelineSimulation extends SimulationBase(queryPipelinesScenario)
  */
 class RealisticSimulation extends Simulation {
 
-  val rampUpPeriod = RunnerConfig.simulations.realistic.rampUpPeriod
-  val repeats = RunnerConfig.simulations.realistic.repeats
+  val rampUpPeriod = simulations.realistic.rampUpPeriod
+  val repeats = simulations.realistic.repeats
 
   setUp(
     releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod),
@@ -98,13 +99,17 @@ class OpsSimulation extends SimulationBase(opsScenario(1))
  */
 class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario(1))
 
+/**
+  * X users interact with dependencies endpoints
+  */
+class DependenciesSimulation extends SimulationBase(dependenciesScenario(simulations.repeats))
 
 /**
   * X release managers open folders and their releases and templates.
   */
 class FoldersSimulation extends Simulation {
-  val rampUpPeriod = RunnerConfig.simulations.realistic.rampUpPeriod
-  val repeats = RunnerConfig.simulations.realistic.repeats
+  val rampUpPeriod = simulations.realistic.rampUpPeriod
+  val repeats = simulations.realistic.repeats
 
   setUp(
     folderScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod)

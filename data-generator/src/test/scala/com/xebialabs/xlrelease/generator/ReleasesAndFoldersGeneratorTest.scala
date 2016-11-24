@@ -171,6 +171,41 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
   }
 
+  describe("generator of dependency trees") {
+    it("should generate tree with specified depth and breadth") {
+      val depth = 4
+      val breadth = 3
+
+      val cis = generator.generateDependencyTrees(1, depth, breadth).flatten
+
+      val releases = releasesOfBatch(cis)
+      releases should have size depth * breadth + 1
+
+      releases.filter(_.title.contains("depth: 1")) should have size breadth
+      releases.filter(_.title.contains("number: 2")) should have size depth
+    }
+
+    it("should generate dependencies between releases in the tree") {
+      val cis = generator.generateDependencyTrees(1, 2, 2).flatten
+
+      val dependencies = dependenciesOfBatch(cis)
+      dependencies should have size 6
+
+      val depth0Targets = dependencies.filter(_.id.matches("Applications/Release_\\d+_5.*")).map(_.target)
+      val depth1Targets = dependencies.filter(_.id.matches("Applications/Release_\\d+_[34].*")).map(_.target)
+
+      depth0Targets should have size 2
+      depth0Targets should contain only(
+        s"Applications/Release_${generator.transaction}_3/Phase5/Task10",
+        s"Applications/Release_${generator.transaction}_4/Phase5/Task10")
+
+      depth1Targets should have size 4
+      depth1Targets.distinct should contain only(
+        s"Applications/Release_${generator.transaction}_1/Phase5/Task10",
+        s"Applications/Release_${generator.transaction}_2/Phase5/Task10")
+    }
+  }
+
   def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {
     cis.filter(_.isInstanceOf[Release]).asInstanceOf[Seq[Release]]
   }
