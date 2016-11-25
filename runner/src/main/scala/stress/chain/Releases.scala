@@ -17,7 +17,7 @@ import scala.util.Random
 
 object Releases {
 
-  val ACTIVE_TREE_RELEASES_FILTER = """{"active":true, "filter":"Tree"}"""
+  val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
 
   def create(body: Body) =
     exec(http("Get templates").get("/releases/templates?depth=1"))
@@ -37,8 +37,7 @@ object Releases {
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .queryParam("filter", "Tree")
-      .body(StringBody(ACTIVE_TREE_RELEASES_FILTER)).asJSON
+      .body(StringBody(TREE_RELEASES_FILTER)).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
