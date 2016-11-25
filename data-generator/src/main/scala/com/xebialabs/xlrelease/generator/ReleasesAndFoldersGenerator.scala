@@ -77,7 +77,7 @@ class ReleasesAndFoldersGenerator {
       } else {
         val (childCis, targetCis) = generateDependencyTree(currentTree, currentDepth + 1, dependencyTreeDepth, dependencyTreeBreadth)
 
-        val (cis, _) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "IN_PROGRESS",
+        val (cis, _) = generateReleases(if (currentDepth == 0) 1 else dependencyTreeBreadth, "PLANNED",
           (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
           genComments = false,
           dependsOn = targetCis
