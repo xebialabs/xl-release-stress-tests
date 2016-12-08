@@ -48,12 +48,28 @@ package object domain {
                    color: String = "#009CDB",
                    status: String = "PLANNED") extends PlanItem
 
+  // TODO maybe change to trait?
+  abstract class AbstractTask(id: String,
+                              title: String,
+                              `type`: String,
+                              status: String = "PLANNED",
+                              attachments: List[String] = List()
+                             ) extends PlanItem
+
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
-                  status: String = "PLANNED",
-                  attachments: List[String] = List()
-                 ) extends PlanItem
+                  status: String,
+                  attachments: List[String]
+                 ) extends AbstractTask(id, title, `type`, status, attachments)
+
+  case class ScriptTask(id: String,
+                        title: String,
+                        `type`: String = "xlrelease.ScriptTask",
+                        status: String = "PLANNED",
+                        attachments: List[String],
+                        engine: String = "jython",
+                        script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status)
 
   case class Comment(id: String,
                      text: String,
@@ -87,6 +103,14 @@ package object domain {
                   members: Seq[String],
                   permissions: Seq[String],
                   `type`: String = "xlrelease.Team") extends Ci
+
+  case class ReleaseTrigger(id: String,
+                            title: String,
+                            `type`: String = "xlrelease.ReleaseTrigger",
+                            pollType: String = "REPEAT",
+                            periodicity: String = "10",
+                            releaseTitle: String,
+                            enabled: Boolean = true) extends Ci
 
   object Release {
     def build(title: String): Release = {
@@ -160,6 +184,17 @@ package object domain {
       build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
   }
 
+  object ScriptTask {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List(), engine: String = "jython", script: String): ScriptTask = {
+      ScriptTask(id = s"$containerId/$title",
+        title = title,
+        status = status,
+        attachments = attachments,
+        engine = engine,
+        script = script)
+    }
+  }
+
   object Comment {
 
     def buildComment(title: String, containerId: String): Comment =
@@ -202,6 +237,12 @@ package object domain {
   object Team {
     def build(containerId: String): Team = {
       Team(s"$containerId/TeamViewers", "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+    }
+  }
+
+  object ReleaseTrigger {
+    def build(containerId: String, title: String, releaseTitle: String, enabled: Boolean = false): ReleaseTrigger = {
+      ReleaseTrigger(id = s"$containerId/$title", title = title, releaseTitle = releaseTitle, enabled = enabled)
     }
   }
 
