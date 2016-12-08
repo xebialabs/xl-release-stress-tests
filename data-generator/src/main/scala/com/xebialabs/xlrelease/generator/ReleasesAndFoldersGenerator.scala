@@ -10,6 +10,7 @@ import scala.util.Random
 object ReleasesAndFoldersGenerator {
   val phasesPerRelease = 5
   val tasksPerPhase = 10
+  val automatedTasksPerPhase = 1
   val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
@@ -18,10 +19,11 @@ class ReleasesAndFoldersGenerator {
   val automatedScript =
     """
 import time
+import uuid
 
-for n in range(0, 10):
-    print "Automated message %d" % (n)
-    time.sleep(1)
+for n in range(0, 100):
+    print "Automated message {}, {}".format(n, str(uuid.uuid4()))
+    time.sleep(0.1)
 
     """
 
@@ -49,7 +51,7 @@ for n in range(0, 10):
 
   def generateAutomatedTemplate(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
     generateBaseReleases(amount, "TEMPLATE", (n) => s"Stress test automated template release $n", automated = true, genComments = genComments).map(template =>
-      Seq(template) ++ createAutomatedTemplateContent(template, genComments, Nil)
+      Seq(template) ++ createAutomatedTemplateContent(template, genComments)
     )
   }
 
@@ -59,7 +61,7 @@ for n in range(0, 10):
 
   def generateDependentRelease()(implicit config: Config): Seq[Ci] = {
     val release = Release.build(dependentReleaseId, "Stress test Dependent release", "PLANNED", 1, 1)
-    createReleaseContent(release, automated = false, generateComments = false, Seq.empty) :+ release
+    createReleaseContent(release, generateComments = false) :+ release
   }
 
   def generateDepRelease(relIds: Seq[String], numberOfRel: Int): Seq[Seq[Ci]] = {
@@ -113,7 +115,7 @@ for n in range(0, 10):
                       (implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
     val releases = generateBaseReleases(amount, status, titleGenerator, automated = false, genComments, dependsOn)
 
-    releases.map(release => createReleaseContent(release, automated = false, genComments, dependsOn) :+ release) -> releases.map(_.id)
+    releases.map(release => createReleaseContent(release, generateComments = genComments, dependsOn = dependsOn) :+ release) -> releases.map(_.id)
   }
 
   def generateAttachments(amount: Int, containerId: String)(implicit config: Config): Seq[Ci] = {
@@ -185,15 +187,17 @@ for n in range(0, 10):
     }
   }
 
-  private def createAutomatedTemplateContent(template: Release, generateComments: Boolean, dependsOn: Seq[String])(implicit config: Config): Seq[Ci] = {
-    val cis = createReleaseContent(template, automated = true, generateComments, dependsOn)
+  private def createAutomatedTemplateContent(template: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
+    val cis = createReleaseContent(template, tasksPerPhase = automatedTasksPerPhase, generateComments = generateComments,  automated = true)
 
-    val releaseTrigger = ReleaseTrigger.build(template.id, "ReleaseTrigger1", s"${template.title} $${triggerTime}", enabled = true, initialFire = true)
+    val releaseTrigger = ReleaseTrigger.build(template.id, "Trigger1", s"${template.title} $${triggerTime}", enabled = true)
 
     cis ++ Seq(releaseTrigger)
   }
 
-  private def createReleaseContent(release: Release, automated: Boolean = false, generateComments: Boolean, dependsOn: Seq[String])(implicit config: Config): Seq[Ci] = {
+  private def createReleaseContent(release: Release, phasesPerRelease: Int = phasesPerRelease,
+                                   tasksPerPhase: Int = tasksPerPhase, generateComments: Boolean,
+                                   dependsOn: Seq[String] = Seq.empty, automated: Boolean = false)(implicit config: Config): Seq[Ci] = {
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>
       Phase.build(s"Phase$n", release.id, phaseStatus(release, n)))

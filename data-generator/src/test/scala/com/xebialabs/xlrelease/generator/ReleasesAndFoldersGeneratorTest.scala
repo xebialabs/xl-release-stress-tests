@@ -136,7 +136,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
         phase.status should be("PLANNED")
       }
 
-      tasksOfBatch(cis).dropRight(1).foreach { task =>
+      tasksOfBatch(cis).foreach { task =>
         task.`type` should be("xlrelease.ScriptTask")
         task.status should be("PLANNED")
       }
@@ -147,7 +147,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       val releaseTrigger = releaseTriggers.head
       releaseTrigger.id should startWith(template.id)
       releaseTrigger.enabled should be(true)
-      releaseTrigger.initialFire should be(true)
+      releaseTrigger.initialFire should be(false)
       releaseTrigger.pollType should be("REPEAT")
       releaseTrigger.periodicity should be("10")
     }
