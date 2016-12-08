@@ -63,6 +63,8 @@ object Scenarios {
   def dependenciesChain(pauseMin: Duration, pauseMax: Duration) = {
     exec(Releases.getRandomTreeRelease)
       .pause(pauseMin, pauseMax)
+      .exec(Releases.getRelease)
+      .pause(pauseMin, pauseMax)
       .exec(Releases.getDependencies)
       .pause(pauseMin, pauseMax)
       .exec(Releases.getDependencyTree)

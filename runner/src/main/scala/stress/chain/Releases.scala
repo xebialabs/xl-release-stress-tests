@@ -59,6 +59,9 @@ object Releases {
       .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
 
+  def getRelease =
+    exec(http("Get release").get("/releases/${releaseId}"))
+
   def getDependencies =
     exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
 
