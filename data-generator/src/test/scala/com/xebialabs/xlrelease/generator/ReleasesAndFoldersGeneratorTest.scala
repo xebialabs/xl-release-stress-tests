@@ -125,6 +125,33 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
 
+    it("should generated automated templates") {
+      val cis = generator.generateAutomatedTemplate(1).head
+
+      val template = releaseOfBatch(cis)
+      template.status should be("TEMPLATE")
+      template.allowConcurrentReleasesFromTrigger should be(false)
+
+      phasesOfBatch(cis).foreach { phase =>
+        phase.status should be("PLANNED")
+      }
+
+      tasksOfBatch(cis).dropRight(1).foreach { task =>
+        task.`type` should be("xlrelease.ScriptTask")
+        task.status should be("PLANNED")
+      }
+
+      val releaseTriggers = releaseTriggersOfBatch(cis)
+      releaseTriggers should have size 1
+
+      val releaseTrigger = releaseTriggers.head
+      releaseTrigger.id should startWith(template.id)
+      releaseTrigger.enabled should be(true)
+      releaseTrigger.initialFire should be(true)
+      releaseTrigger.pollType should be("REPEAT")
+      releaseTrigger.periodicity should be("10")
+    }
+
   }
 
   describe("generator of folders") {
@@ -228,5 +255,9 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
   def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[PlanItem] = {
     batch.filter(x => x.isInstanceOf[Phase] || x.isInstanceOf[Task]).asInstanceOf[Seq[PlanItem]]
+  }
+
+  def releaseTriggersOfBatch(batch: Seq[Ci]): Seq[ReleaseTrigger] = {
+    batch.filter(x => x.isInstanceOf[ReleaseTrigger]).asInstanceOf[Seq[ReleaseTrigger]]
   }
 }

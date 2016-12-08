@@ -40,6 +40,7 @@ package object domain {
                      queryableEndDate: ZonedDateTime,
                      startDate: ZonedDateTime,
                      endDate: Option[ZonedDateTime],
+                     allowConcurrentReleasesFromTrigger: Boolean = true,
                      `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
@@ -48,7 +49,6 @@ package object domain {
                    color: String = "#009CDB",
                    status: String = "PLANNED") extends PlanItem
 
-  // TODO maybe change to trait?
   abstract class AbstractTask(id: String,
                               title: String,
                               `type`: String,
@@ -69,7 +69,7 @@ package object domain {
                         status: String = "PLANNED",
                         attachments: List[String],
                         engine: String = "jython",
-                        script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status)
+                        script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status, attachments)
 
   case class Comment(id: String,
                      text: String,
@@ -106,11 +106,12 @@ package object domain {
 
   case class ReleaseTrigger(id: String,
                             title: String,
-                            `type`: String = "xlrelease.ReleaseTrigger",
+                            `type`: String = "time.Schedule",
                             pollType: String = "REPEAT",
                             periodicity: String = "10",
                             releaseTitle: String,
-                            enabled: Boolean = true) extends Ci
+                            enabled: Boolean = false,
+                            initialFire: Boolean = false) extends Ci
 
   object Release {
     def build(title: String): Release = {
@@ -124,7 +125,8 @@ package object domain {
               title: String,
               status: String,
               releaseNumber: Double,
-              releasesCount: Double): Release = {
+              releasesCount: Double,
+              allowConcurrentReleasesFromTrigger: Boolean = true): Release = {
       if (!id.matches("^Applications/(Folder.*/|ActivityLogs.*/)?Release.*$"))
         throw new IllegalArgumentException(s"Container id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
 
@@ -139,7 +141,9 @@ package object domain {
         queryableStartDate = start,
         queryableEndDate = end,
         startDate = start,
-        endDate = if (status == "COMPLETED") Some(end) else None)
+        endDate = if (status == "COMPLETED") Some(end) else None,
+        allowConcurrentReleasesFromTrigger
+      )
     }
 
   }
@@ -241,8 +245,8 @@ package object domain {
   }
 
   object ReleaseTrigger {
-    def build(containerId: String, title: String, releaseTitle: String, enabled: Boolean = false): ReleaseTrigger = {
-      ReleaseTrigger(id = s"$containerId/$title", title = title, releaseTitle = releaseTitle, enabled = enabled)
+    def build(containerId: String, title: String, releaseTitle: String, enabled: Boolean = false, initialFire: Boolean = false): ReleaseTrigger = {
+      ReleaseTrigger(id = s"$containerId/$title", title = title, releaseTitle = releaseTitle, enabled = enabled, initialFire = initialFire)
     }
   }
 
