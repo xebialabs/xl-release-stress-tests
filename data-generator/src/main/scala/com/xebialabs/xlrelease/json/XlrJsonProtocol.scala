@@ -8,7 +8,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val releaseFormat = jsonFormat11(Release.apply)
   implicit val phaseFormat = jsonFormat5(Phase.apply)
   implicit val taskFormat = jsonFormat5(Task.apply)
-  implicit val scriptTaskFormat = jsonFormat7(ScriptTask.apply)
+  implicit val scriptTaskFormat = jsonFormat6(ScriptTask.apply)
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)
   implicit val specialDayFormat = jsonFormat5(SpecialDay.apply)
   implicit val directoryFormat = jsonFormat2(Directory.apply)

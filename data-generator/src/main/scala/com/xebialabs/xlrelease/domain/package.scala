@@ -68,7 +68,6 @@ package object domain {
                         `type`: String = "xlrelease.ScriptTask",
                         status: String = "PLANNED",
                         attachments: List[String],
-                        engine: String = "jython",
                         script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status, attachments)
 
   case class Comment(id: String,
@@ -189,12 +188,11 @@ package object domain {
   }
 
   object ScriptTask {
-    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List(), engine: String = "jython", script: String): ScriptTask = {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List(), script: String): ScriptTask = {
       ScriptTask(id = s"$containerId/$title",
         title = title,
         status = status,
         attachments = attachments,
-        engine = engine,
         script = script)
     }
   }
