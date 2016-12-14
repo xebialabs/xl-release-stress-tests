@@ -8,6 +8,7 @@ import io.gatling.core.Predef._
 import io.gatling.core.config.GatlingConfiguration._
 import io.gatling.core.config.Resource
 import io.gatling.core.session._
+import io.gatling.core.structure.ChainBuilder
 import io.gatling.core.validation.Validation
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
@@ -18,6 +19,28 @@ import scala.util.Random
 object Releases {
 
   val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
+
+  def open(httpName: String, filter: Body): ChainBuilder = exec(
+    http(httpName)
+      .post("/releases/search")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", 0)
+      .body(filter)
+      .asJSON
+      .check(
+        jsonPath("$.cis[*].id")
+          .findAll
+          .optional
+          .saveAs("releaseIds")
+      )
+  )
+
+  def openRandomRelease() = open("Get list of releases", RawFileBody("release-search-active-body.json"))
+    .exec(
+      http("Open release")
+        .get("/releases/${releaseIds.random()}")
+        .asJSON
+    )
 
   def create(body: Body) =
     exec(http("Get templates").get("/releases/templates?depth=1"))

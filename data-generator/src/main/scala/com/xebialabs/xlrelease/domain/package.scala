@@ -222,7 +222,7 @@ package object domain {
 
     // We generate an attachment content by pointing to 'xlrelease.js' file which is downloadable
     // from XL Release itself without authentication and takes around 350 Kb.
-    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/xlrelease.js"
+    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/js/xlrelease.js"
 
     def build(title: String, containerId: String)(implicit config: Config): Attachment = {
       val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
