@@ -23,7 +23,7 @@ import uuid
 
 for n in range(0, 100):
     print "Automated message {}, {}".format(n, str(uuid.uuid4()))
-    time.sleep(0.2)
+    time.sleep(0.5)
 
     """
 
