@@ -107,7 +107,7 @@ package object domain {
                             title: String,
                             `type`: String = "time.Schedule",
                             pollType: String = "REPEAT",
-                            periodicity: String = "120",
+                            periodicity: String = "300",
                             releaseTitle: String,
                             enabled: Boolean = false,
                             initialFire: Boolean = false) extends Ci
