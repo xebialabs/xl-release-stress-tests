@@ -1,11 +1,10 @@
 package stress.utils
 
 import io.gatling.core.Predef._
-import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
 import stress.chain._
-import stress.config.RunnerConfig.{devPause, opsPauseMax, opsPauseMin, releaseManagerPauseMax, releaseManagerPauseMin, taskPollDuration, taskPollPause, _}
+import stress.config.RunnerConfig._
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -39,20 +38,14 @@ object Scenarios {
   val queryTemplatesScenario = scenario("Template overview")
     .exec(Templates.open)
 
-  def releaseManagerChain(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
-    exec(Releases.openRandomRelease())
-      .pause(releaseManagerPauseMin, releaseManagerPauseMax)
-      .exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+  def releaseManagerChain(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration) = {
+    exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
       .exec(Calendar.open)
-//      .pause(releaseManagerPauseMin, releaseManagerPauseMax)
-//      .exec(Releases.openRandomRelease())
   }
 
-  def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration): ChainBuilder = {
-    exec(Releases.openRandomRelease())
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
+  def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration) = {
+    exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
       .exec(Calendar.open)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.commentOnRandomTask())
@@ -60,17 +53,11 @@ object Scenarios {
       .exec(Tasks.changeTeamAssignmentOfRandomTask())
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
-//      .pause(opsPauseMin, opsPauseMax)
-//      .exec(Releases.openRandomRelease())
   }
 
-  def developmentTeamChain(devPause: Duration): ChainBuilder = {
-    exec(Releases.openRandomRelease())
+  def developmentTeamChain(devPause: Duration) = {
+    exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
       .pause(devPause)
-      .exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
-      .pause(devPause)
-//      .exec(Releases.openRandomRelease())
-//      .pause(devPause)
   }
 
   def dependenciesChain(pauseMin: Duration, pauseMax: Duration) = {
