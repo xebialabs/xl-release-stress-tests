@@ -45,14 +45,14 @@ object Scenarios {
   }
 
   def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration) = {
-    //exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
-      exec(Calendar.open)
+    exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
+      .exec(Calendar.open)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.commentOnRandomTask())
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.changeTeamAssignmentOfRandomTask())
       .pause(opsPauseMin, opsPauseMax)
-      //.exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
+      .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
   }
 
   def developmentTeamChain(devPause: Duration) = {

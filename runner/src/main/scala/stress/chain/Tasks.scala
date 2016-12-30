@@ -12,13 +12,13 @@ import stress.config.RunnerConfig._
 
 object Tasks {
 
-  val ALL_TASKS_FILTER = """{"active":true,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
+  val ALL_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":""}"""
   val MY_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
   val NOT_EXISTING_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}"""
 
   def open(httpName: String, filter: Body) = exec(
     http(httpName)
-      .post("/tasks/search?limitTasksHint=10")
+      .post("/tasks/search?limitTasksHint=100")
       .body(filter)
       .asJSON
       .check(
