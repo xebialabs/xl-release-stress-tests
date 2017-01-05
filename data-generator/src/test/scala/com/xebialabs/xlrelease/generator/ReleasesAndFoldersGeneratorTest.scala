@@ -116,7 +116,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
       val attachments = cis.filter(_.`type` == "xlrelease.Attachment")
 
-      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/static/0/xlrelease.js"
+      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/ui-extensions/js/xlrelease-plugins.js"
 
       val attachmentNumbers = attachments.map(_.id.replaceAll(".*Attachment", ""))
       attachmentNumbers shouldEqual (1 to 6).map(_.toString)
@@ -149,7 +149,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       releaseTrigger.enabled should be(true)
       releaseTrigger.initialFire should be(false)
       releaseTrigger.pollType should be("REPEAT")
-      releaseTrigger.periodicity should be("10")
+      releaseTrigger.periodicity should be("300")
     }
 
   }
