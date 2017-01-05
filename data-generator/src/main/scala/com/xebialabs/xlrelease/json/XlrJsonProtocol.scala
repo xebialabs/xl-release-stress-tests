@@ -5,9 +5,10 @@ import spray.json._
 trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with ZonedDateTimeProtocol {
   this: ProductFormatsInstances =>
 
-  implicit val releaseFormat = jsonFormat10(Release.apply)
+  implicit val releaseFormat = jsonFormat11(Release.apply)
   implicit val phaseFormat = jsonFormat5(Phase.apply)
   implicit val taskFormat = jsonFormat5(Task.apply)
+  implicit val scriptTaskFormat = jsonFormat6(ScriptTask.apply)
   implicit val dependencyFormat = jsonFormat3(Dependency.apply)
   implicit val specialDayFormat = jsonFormat5(SpecialDay.apply)
   implicit val directoryFormat = jsonFormat2(Directory.apply)
@@ -22,6 +23,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val activityLogEntryFormat = jsonFormat6(ActivityLogEntry.apply)
   implicit val folderFormat = jsonFormat3(Folder.apply)
   implicit val teamFormat = jsonFormat5(Team.apply)
+  implicit val releaseTriggerFormat = jsonFormat8(ReleaseTrigger.apply)
 
   implicit object CiProtocol extends RootJsonFormat[Ci] {
     def read(json: JsValue): Ci = {
@@ -33,6 +35,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: Release => ci.toJson
         case ci: Phase => ci.toJson
         case ci: Task => ci.toJson
+        case ci: ScriptTask => ci.toJson
         case ci: Dependency => ci.toJson
         case ci: SpecialDay => ci.toJson
         case ci: Directory => ci.toJson
@@ -42,6 +45,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: ActivityLogEntry => ci.toJson
         case ci: Folder => ci.toJson
         case ci: Team => ci.toJson
+        case ci: ReleaseTrigger => ci.toJson
         case _ => serializationError(s"Undefined CI type ${ci.getClass}")
       }
     }

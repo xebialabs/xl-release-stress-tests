@@ -101,7 +101,7 @@ object Releases {
               .saveAs("createdReleaseId")
           )
       )
-      .exec(http("Get release dependencies").get("/dependencies/${createdReleaseId}"))
+      .exec(flow("${createdReleaseId}"))
       .exec(
         http("Start release")
           .post("/releases/${createdReleaseId}/start")

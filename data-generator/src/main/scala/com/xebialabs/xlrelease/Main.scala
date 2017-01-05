@@ -20,6 +20,7 @@ object Main extends App with LazyLogging {
   private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
   private val templatesAmount = config.getInt("xl.data-generator.templates")
+  private val automatedTemplatesAmount = config.getInt("xl.data-generator.automated-templates")
   private val createDepRels = config.getBoolean("xl.data-generator.create-dependency-releases")
   private val generateComments = config.getBoolean("xl.data-generator.generate-comments")
   private val foldersAmount = config.getInt("xl.data-generator.folders")
@@ -32,6 +33,7 @@ object Main extends App with LazyLogging {
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
   logger.info("Templates: {}", templatesAmount.toString)
+  logger.info("Automated templates: {}", automatedTemplatesAmount.toString)
   logger.info("Folders: {}", foldersAmount.toString)
   logger.info("Folder levels: {}", foldersLevel.toString)
 
@@ -71,14 +73,22 @@ object Main extends App with LazyLogging {
       val createTemplateReleasesFutures = releaseGenerator
         .generateTemplateReleases(templatesAmount)
         .map(client.createCis)
+
+      val createAutomatedTemplatesFutures = releaseGenerator
+        .generateAutomatedTemplates(automatedTemplatesAmount)
+        .map(client.createCis)
+
       val createActiveReleasesFutures = releaseGenerator
         .generateActiveReleases(activeReleasesAmount)
         .map(client.createCis)
+
       val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
+
       val createCompletedReleasesFutures = cis.map(client.createCis)
 
       sequence(
         createTemplateReleasesFutures ++
+          createAutomatedTemplatesFutures ++
           createActiveReleasesFutures ++
           createCompletedReleasesFutures
       ).map(f => f -> completedIds)
@@ -117,9 +127,10 @@ object Main extends App with LazyLogging {
 
   def sequential[T, U](items: TraversableOnce[T])(fn: T => Future[U]): Future[List[U]] = {
     items.foldLeft(successful[List[U]](Nil)) {
-      (f, item) => f.flatMap {
-        x => fn(item).map(_ :: x)
-      }
+      (f, item) =>
+        f.flatMap {
+          x => fn(item).map(_ :: x)
+        }
     } map (_.reverse)
   }
 }

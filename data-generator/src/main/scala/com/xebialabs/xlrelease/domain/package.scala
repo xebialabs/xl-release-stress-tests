@@ -40,6 +40,7 @@ package object domain {
                      queryableEndDate: ZonedDateTime,
                      startDate: ZonedDateTime,
                      endDate: Option[ZonedDateTime],
+                     allowConcurrentReleasesFromTrigger: Boolean = true,
                      `type`: String = "xlrelease.Release") extends PlanItem
 
   case class Phase(id: String,
@@ -48,12 +49,26 @@ package object domain {
                    color: String = "#009CDB",
                    status: String = "PLANNED") extends PlanItem
 
+  abstract class AbstractTask(id: String,
+                              title: String,
+                              `type`: String,
+                              status: String = "PLANNED",
+                              attachments: List[String] = List()
+                             ) extends PlanItem
+
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
-                  status: String = "PLANNED",
-                  attachments: List[String] = List()
-                 ) extends PlanItem
+                  status: String,
+                  attachments: List[String]
+                 ) extends AbstractTask(id, title, `type`, status, attachments)
+
+  case class ScriptTask(id: String,
+                        title: String,
+                        `type`: String = "xlrelease.ScriptTask",
+                        status: String = "PLANNED",
+                        attachments: List[String],
+                        script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status, attachments)
 
   case class Comment(id: String,
                      text: String,
@@ -88,6 +103,15 @@ package object domain {
                   permissions: Seq[String],
                   `type`: String = "xlrelease.Team") extends Ci
 
+  case class ReleaseTrigger(id: String,
+                            title: String,
+                            `type`: String = "time.Schedule",
+                            pollType: String = "REPEAT",
+                            periodicity: String = "300",
+                            releaseTitle: String,
+                            enabled: Boolean = false,
+                            initialFire: Boolean = false) extends Ci
+
   object Release {
     def build(title: String): Release = {
       if (!title.startsWith("Release"))
@@ -100,7 +124,8 @@ package object domain {
               title: String,
               status: String,
               releaseNumber: Double,
-              releasesCount: Double): Release = {
+              releasesCount: Double,
+              allowConcurrentReleasesFromTrigger: Boolean = true): Release = {
       if (!id.matches("^Applications/(Folder.*/|ActivityLogs.*/)?Release.*$"))
         throw new IllegalArgumentException(s"Container id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
 
@@ -115,7 +140,9 @@ package object domain {
         queryableStartDate = start,
         queryableEndDate = end,
         startDate = start,
-        endDate = if (status == "COMPLETED") Some(end) else None)
+        endDate = if (status == "COMPLETED") Some(end) else None,
+        allowConcurrentReleasesFromTrigger
+      )
     }
 
   }
@@ -160,6 +187,16 @@ package object domain {
       build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
   }
 
+  object ScriptTask {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List(), script: String): ScriptTask = {
+      ScriptTask(id = s"$containerId/$title",
+        title = title,
+        status = status,
+        attachments = attachments,
+        script = script)
+    }
+  }
+
   object Comment {
 
     def buildComment(title: String, containerId: String): Comment =
@@ -183,9 +220,9 @@ package object domain {
 
   object Attachment {
 
-    // We generate an attachment content by pointing to 'xlrelease.js' file which is downloadable
-    // from XL Release itself without authentication and takes around 350 Kb.
-    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/xlrelease.js"
+    // We generate an attachment content by pointing to 'xlrelease-plugins.js' file which is downloadable
+    // from XL Release itself without authentication and takes around 150 Kb.
+    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/ui-extensions/js/xlrelease-plugins.js"
 
     def build(title: String, containerId: String)(implicit config: Config): Attachment = {
       val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
@@ -202,6 +239,12 @@ package object domain {
   object Team {
     def build(containerId: String): Team = {
       Team(s"$containerId/TeamViewers", "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+    }
+  }
+
+  object ReleaseTrigger {
+    def build(containerId: String, title: String, releaseTitle: String, enabled: Boolean = false, initialFire: Boolean = false): ReleaseTrigger = {
+      ReleaseTrigger(id = s"$containerId/$title", title = title, releaseTitle = releaseTitle, enabled = enabled, initialFire = initialFire)
     }
   }
 
