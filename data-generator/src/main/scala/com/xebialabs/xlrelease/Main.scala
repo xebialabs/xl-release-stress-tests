@@ -75,7 +75,7 @@ object Main extends App with LazyLogging {
         .map(client.createCis)
 
       val createAutomatedTemplatesFutures = releaseGenerator
-        .generateAutomatedTemplate(automatedTemplatesAmount)
+        .generateAutomatedTemplates(automatedTemplatesAmount)
         .map(client.createCis)
 
       val createActiveReleasesFutures = releaseGenerator

@@ -16,16 +16,6 @@ object ReleasesAndFoldersGenerator {
 
 class ReleasesAndFoldersGenerator {
   val transaction: Int = Math.abs(Random.nextInt())
-  val automatedScript =
-    """
-import time
-import uuid
-
-for n in range(0, 100):
-    print "Automated message {}, {}".format(n, str(uuid.uuid4()))
-    time.sleep(0.5)
-
-    """
 
   var attachmentIdCounter = 0
   var releaseIdCounter = 0
@@ -49,10 +39,12 @@ for n in range(0, 100):
     generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments)._1
   }
 
-  def generateAutomatedTemplate(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
-    generateBaseReleases(amount, "TEMPLATE", (n) => s"Stress test automated template release $n", automated = true, genComments = genComments).map(template =>
-      Seq(template) ++ createAutomatedTemplateContent(template, genComments)
-    )
+  def generateAutomatedTemplates(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
+    createReleases(amount, "TEMPLATE", (n) => s"Stress test automated template release $n", automated = true, genComments = genComments).map { template =>
+      val cis = createReleaseContent(template, tasksPerPhase = automatedTasksPerPhase, generateComments = genComments, automated = true)
+      val releaseTrigger = ReleaseTrigger.build(template.id, "Trigger1", s"${template.title} $${triggerTime}", enabled = true)
+      Seq(template) ++ cis ++ Seq(releaseTrigger)
+    }
   }
 
   def generateActiveReleases(amount: Int, genComments: Boolean = false)(implicit config: Config): Seq[Seq[Ci]] = {
@@ -73,7 +65,7 @@ for n in range(0, 100):
     }
   }
 
-  def createDepRelContent(r: Release, depRelId: String): Seq[Ci] = {
+  private def createDepRelContent(r: Release, depRelId: String): Seq[Ci] = {
     val status: Boolean => String = b => if (b) "IN_PROGRESS" else "PLANNED"
     (1 to 10).flatMap { i =>
       val phase = Phase.build(s"Phase$i", r.id, status(i == 1))
@@ -109,23 +101,13 @@ for n in range(0, 100):
     }
   }
 
-  def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
-                       genComments: Boolean,
-                       dependsOn: Seq[String] = Seq(dependentReleaseId))
-                      (implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
-    val releases = generateBaseReleases(amount, status, titleGenerator, automated = false, genComments, dependsOn)
+  private def generateReleases(amount: Int, status: String, titleGenerator: (Int) => String,
+                               genComments: Boolean,
+                               dependsOn: Seq[String] = Seq(dependentReleaseId))
+                              (implicit config: Config): (Seq[Seq[Ci]], Seq[String]) = {
+    val releases = createReleases(amount, status, titleGenerator, automated = false, genComments, dependsOn)
 
     releases.map(release => createReleaseContent(release, generateComments = genComments, dependsOn = dependsOn) :+ release) -> releases.map(_.id)
-  }
-
-  def generateAttachments(amount: Int, containerId: String)(implicit config: Config): Seq[Ci] = {
-    for (_ <- 1 to amount) yield Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
-  }
-
-  def generateActivityLogs(amount: Int, releaseId: String): Seq[Ci] = {
-    val directory = ActivityLogDirectory.build(releaseId)
-    val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
-    List(directory) ++ entries
   }
 
   def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
@@ -167,13 +149,13 @@ for n in range(0, 100):
     folders ++ activityLogs ++ teams
   }
 
-  private def generateBaseReleases(amount: Int,
-                                   status: String,
-                                   titleGenerator: (Int) => String,
-                                   automated: Boolean,
-                                   genComments: Boolean,
-                                   dependsOn: Seq[String] = Seq(dependentReleaseId))
-                                  (implicit config: Config): (Seq[Release]) = {
+  private def createReleases(amount: Int,
+                             status: String,
+                             titleGenerator: (Int) => String,
+                             automated: Boolean,
+                             genComments: Boolean,
+                             dependsOn: Seq[String] = Seq(dependentReleaseId))
+                            (implicit config: Config): (Seq[Release]) = {
     (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
       val folderId = if (createdFolderIds.isEmpty) {
@@ -182,17 +164,8 @@ for n in range(0, 100):
         createdFolderIds(releaseNumber % createdFolderIds.size)
       }
 
-      Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount,
-        allowConcurrentReleasesFromTrigger = if (automated) false else true)
+      Release.build(s"$folderId/Release_${transaction}_$releaseNumber", titleGenerator(n), status, n, amount, allowConcurrentReleasesFromTrigger = !automated)
     }
-  }
-
-  private def createAutomatedTemplateContent(template: Release, generateComments: Boolean)(implicit config: Config): Seq[Ci] = {
-    val cis = createReleaseContent(template, tasksPerPhase = automatedTasksPerPhase, generateComments = generateComments,  automated = true)
-
-    val releaseTrigger = ReleaseTrigger.build(template.id, "Trigger1", s"${template.title} $${triggerTime}", enabled = true)
-
-    cis ++ Seq(releaseTrigger)
   }
 
   private def createReleaseContent(release: Release, phasesPerRelease: Int = phasesPerRelease,
@@ -210,8 +183,8 @@ for n in range(0, 100):
         }
     }
 
-    val releaseAttachments: Seq[Ci] = generateAttachments(1, release.id)
-    val activityLogs = generateActivityLogs(10, release.id)
+    val releaseAttachments: Seq[Ci] = makeAttachments(1, release.id)
+    val activityLogs = makeActivityLogs(10, release.id)
 
     phases ++ cis ++ releaseAttachments ++ activityLogs
   }
@@ -223,12 +196,11 @@ for n in range(0, 100):
   private def makeCommentCis(parentIds: Seq[Ci]): Seq[Ci] =
     parentIds.zipWithIndex.map { case (p, n) => Comment.buildComment(s"Comment$n", p.id) }
 
-  private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int, automated: Boolean, releaseId: String, dependsOn: Seq[String])(implicit config: Config): Seq[Ci] = {
+  private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int, automated: Boolean, releaseId: String, dependsOn: Seq[String])
+                         (implicit config: Config): Seq[Ci] = {
     if (isFirstTaskOfPhase(taskNumber)) {
-      val attachment = generateAttachments(1, releaseId).head
-      val task =
-        if (!automated) Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), attachments = List(attachment.id))
-        else ScriptTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), attachments = List(attachment.id), script = automatedScript)
+      val attachment = makeAttachments(1, releaseId).head
+      val task = makeTask(phase, taskNumber, automated, List(attachment.id))
       Seq(task, attachment)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = Task.buildGate(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
@@ -236,11 +208,36 @@ for n in range(0, 100):
         case (targetId, dependencyIndex) => Dependency.build(s"Dependency$dependencyIndex", task.id, targetId)
       } :+ task
     } else {
-      val task =
-        if (!automated) Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
-        else ScriptTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), script = automatedScript)
-      Seq(task)
+      Seq(makeTask(phase, taskNumber, automated, List()))
     }
+  }
+
+  private def makeTask(phase: Phase, taskNumber: Int, automated: Boolean, attachments: List[String]): AbstractTask = {
+    val automatedScript =
+      """
+import time
+import uuid
+
+for n in range(0, 100):
+    print "Automated message {}, {}".format(n, str(uuid.uuid4()))
+    time.sleep(0.5)
+
+      """
+    if (automated) {
+      ScriptTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), attachments = attachments, script = automatedScript)
+    } else {
+      Task.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber), attachments = attachments)
+    }
+  }
+
+  private def makeAttachments(amount: Int, containerId: String)(implicit config: Config): Seq[Ci] = {
+    for (_ <- 1 to amount) yield Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
+  }
+
+  private def makeActivityLogs(amount: Int, releaseId: String): Seq[Ci] = {
+    val directory = ActivityLogDirectory.build(releaseId)
+    val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
+    List(directory) ++ entries
   }
 
   private def isFirstTaskOfPhase(taskNumber: Int): Boolean = taskNumber == 1

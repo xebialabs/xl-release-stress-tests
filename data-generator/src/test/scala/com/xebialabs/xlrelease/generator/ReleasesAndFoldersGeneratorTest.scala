@@ -126,7 +126,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
     }
 
     it("should generated automated templates") {
-      val cis = generator.generateAutomatedTemplate(1).head
+      val cis = generator.generateAutomatedTemplates(1).head
 
       val template = releaseOfBatch(cis)
       template.status should be("TEMPLATE")
