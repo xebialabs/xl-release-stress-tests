@@ -84,6 +84,11 @@ each of those active releases will have 100 gate tasks with a single dependency 
 - **Dependency tree breadth**: The breadth of the tree structures that should be created.
     - Syntax: `-Pdependency-tree-breadth=10`
     - The default values is `3`
+    
+- **Automated templates**: The number of "automated" templates that should be created. An automated template contains only script tasks which perform verbose logging - simulating a verbose build script. 
+New releases are created based on a time trigger - every 5 minutes by default.
+    - Syntax: `-Pautomated-templates=10`
+    - The default values is `0`   
 
 Example :
 
