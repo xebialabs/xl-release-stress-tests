@@ -116,7 +116,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
       val attachments = cis.filter(_.`type` == "xlrelease.Attachment")
 
-      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/ui-extensions/js/xlrelease-plugins.js"
+      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/ui-extensions/xlrelease-plugins.js"
 
       val attachmentNumbers = attachments.map(_.id.replaceAll(".*Attachment", ""))
       attachmentNumbers shouldEqual (1 to 6).map(_.toString)
