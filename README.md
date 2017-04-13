@@ -130,7 +130,7 @@ It uses the following optional parameters :
         - `stress.OpsSimulation` : several ops people are working with XL Release
         - `stress.ReleaseManagerSimulation` : several release managers are working with XL Release
         - `stress.RealisticSimulation` : A simulation which combines several roles of people working with XL Release in one realistic usage scenario.
-        - `stress.FoldersSimulation` : several release managers opening folders and their releases and templates.
+        - `stress.RealisticSimulation500` : The realistic simulation which did not contain folders yet.
         - `stress.DependenciesSimulation` : several users opening release overview and fetching dependencies for a random release.
     - The default value is `stress.RealisticSimulation`
 - **Teams**: The number of development teams that will be running the `stress.DevelopmentTeamSimulation`
