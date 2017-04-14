@@ -207,7 +207,7 @@ package object domain {
       // 100.000 chars per comment which should be ~291K per comment which is ~29MB per release
       val str = Random.nextString(100)
       val sb = new StringBuilder()
-      (0 until 1000).foreach(x => sb.append(str))
+      (0 until 1000).foreach(_ => sb.append(str))
       sb.toString()
     }
   }
@@ -220,9 +220,9 @@ package object domain {
 
   object Attachment {
 
-    // We generate an attachment content by pointing to 'xlrelease-plugins.js' file which is downloadable
-    // from XL Release itself without authentication and takes around 150 Kb.
-    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/ui-extensions/xlrelease-plugins.js"
+    // We generate an attachment content by pointing to 'xlrelease.js' file which is downloadable
+    // from XL Release itself without authentication and takes around 500 Kb.
+    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/xlrelease.js"
 
     def build(title: String, containerId: String)(implicit config: Config): Attachment = {
       val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
@@ -237,8 +237,8 @@ package object domain {
   }
 
   object Team {
-    def build(containerId: String): Team = {
-      Team(s"$containerId/TeamViewers", "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+    def build(containerId: String, teamName: String, members: Seq[String], permissions: Seq[String]): Team = {
+      Team(s"$containerId/Team$teamName", teamName, members, permissions)
     }
   }
 

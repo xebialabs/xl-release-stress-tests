@@ -57,7 +57,7 @@ class ReleasesAndFoldersGenerator {
   }
 
   def generateDepRelease(relIds: Seq[String], numberOfRel: Int): Seq[Seq[Ci]] = {
-    (1 to numberOfRel).zip(relIds).map { case (n, relId) =>
+    (1 to numberOfRel).zip(relIds).map { case (_, relId) =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
       val release = Release.build(s"Applications/Release_${transaction}_$releaseNumber",
         s"Dependent release #$releaseNumber", "IN_PROGRESS", releaseNumber, numberOfRel)
@@ -141,13 +141,47 @@ class ReleasesAndFoldersGenerator {
       }
     }
 
-    val folders: Seq[Ci] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
+    val folders: Seq[Folder] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
 
     val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
-    val teams = folders.filter(_.id.matches("Applications/Folder_\\d+")).map(f => Team.build(f.id))
+    val teams = folders
+      .filter(_.id.matches("Applications/Folder_\\d+"))
+      .flatMap(f => Seq(
+        releaseAdminTeam(f.id, Seq("admin", s"user_${f.title}")),
+        templateOwnerTeam(f.id, Seq("admin", s"user_${f.title}")),
+        folderOwnerTeam(f.id, Seq("admin", s"user_${f.title}")),
+        Team.build(f.id, "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+      ))
 
     folders ++ activityLogs ++ teams
   }
+
+  private def releaseAdminTeam(containerId: String, members: Seq[String]) =
+    Team.build(containerId, "Release Admin", members, Seq(
+      "release#view",
+      "release#edit",
+      "release#edit_security",
+      "release#start",
+      "release#abort",
+      "release#edit_task",
+      "release#reassign_task"
+    ))
+
+  private def templateOwnerTeam(containerId: String, members: Seq[String]) =
+    Team.build(containerId, "Template Owner", members, Seq(
+      "template#create_release",
+      "template#view",
+      "template#edit",
+      "template#edit_security",
+      "template#edit_triggers"
+    ))
+
+  private def folderOwnerTeam(containerId: String, members: Seq[String]) =
+    Team.build(containerId, "Folder Owner", members, Seq(
+      "folder#view",
+      "folder#edit",
+      "folder#edit_security"
+    ))
 
   private def createReleases(amount: Int,
                              status: String,

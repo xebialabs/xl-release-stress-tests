@@ -57,7 +57,8 @@ object Main extends App with LazyLogging {
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
   val usersFuture = sequence(Seq(
     client.createUser(User("viewer", "viewer", "", "Viewer has access to folders")),
-    client.createUser(User("noViewer", "noViewer", "", "No Viewer user has no access to folders")))
+    client.createUser(User("noViewer", "noViewer", "", "No Viewer user has no access to folders")),
+    client.createUser(User("user_Folder_1", "user_Folder_1", "", "User with full access to Folder_1")))
   )
 
   val releaseGenerator = new ReleasesAndFoldersGenerator()

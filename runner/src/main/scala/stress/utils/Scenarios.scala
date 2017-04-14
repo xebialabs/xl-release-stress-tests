@@ -39,9 +39,24 @@ object Scenarios {
   val queryTemplatesScenario: ScenarioBuilder = scenario("Template overview")
     .exec(Templates.open)
 
-  def releaseManagerChain(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
+  def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
     exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
+      .exec(Calendar.open)
+  }
+
+  def releaseManagerChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder = {
+    exec(Folders.open)
+      .exec(Folders.openFolderTemplates)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Folders.openFolderReleases)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllActive)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllCompleted)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Templates.open)
+      .pause(opsPauseMin, opsPauseMax)
       .exec(Calendar.open)
   }
 
@@ -56,9 +71,9 @@ object Scenarios {
       .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
   }
 
-  def developmentTeamChain(devPause: Duration): ChainBuilder = {
+  def developmentTeamChain(devPause: Duration, opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder = {
     exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
-      .pause(devPause)
+      .pause(opsPauseMin, opsPauseMax)
       .exec(PublicApi.getTemplates)
       .pause(devPause)
   }
@@ -78,7 +93,7 @@ object Scenarios {
   def releaseManagerScenario(repeats: Int): ScenarioBuilder = {
     scenario("Release manager")
       .repeat(repeats)(
-        releaseManagerChain(releaseManagerPauseMin, releaseManagerPauseMax)
+        releaseManagerChain500(releaseManagerPauseMin, releaseManagerPauseMax)
       )
   }
 
@@ -99,7 +114,7 @@ object Scenarios {
 
   def developmentTeamScenario(repeats: Int): ScenarioBuilder = scenario("Team of developers")
     .repeat(repeats)(
-      developmentTeamChain(devPause)
+      developmentTeamChain(devPause, opsPauseMin, opsPauseMax)
     )
 
   def folderScenario(repeats: Int): ScenarioBuilder = scenario("Folder scenario")
@@ -124,7 +139,11 @@ object Scenarios {
 
   def sequentialScenario(repeats: Int): ScenarioBuilder = scenario("Person fulfilling all roles")
     .repeat(repeats)(
-      exec(releaseManagerChain(1 seconds, 1 seconds), developmentTeamChain(1 seconds), opsChain(1 seconds, 1 seconds, 1 seconds, 1 seconds))
+      exec(
+        releaseManagerChain500(1 second, 1 second),
+        developmentTeamChain(1 second, 1 second, 1 second),
+        opsChain(1 second, 1 second, 1 second, 1 second)
+      )
     )
 
 }

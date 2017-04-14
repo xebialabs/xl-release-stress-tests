@@ -30,7 +30,7 @@ object XlrClient {
    * Returns a failed [[Future]] for all the non-successful responses.
    */
   private[client] def failNonSuccessfulResponses(responseFuture: Future[HttpResponse]) = responseFuture.flatMap {
-    case response if response.status.isFailure =>
+    case response if response.status.isFailure && response.status != StatusCodes.Conflict =>
       Future.failed(new XlrClientException(response.entity.data.asString))
     case _ =>
       responseFuture
@@ -71,7 +71,7 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
       case Right(r) =>
         val roles = r.fields("rolePermissions").asInstanceOf[JsArray]
         roles.elements.find(r => r.asJsObject.fields("role").asJsObject.fields("name").asInstanceOf[JsString].value == roleName).get.convertTo[Permission]
-      case Left(v) => null
+      case Left(_) => null
     }
   })
 

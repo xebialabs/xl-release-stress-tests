@@ -12,7 +12,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
   var generator: ReleasesAndFoldersGenerator = _
 
-  implicit val config = ConfigFactory.load()
+  private implicit val config = ConfigFactory.load()
 
   override protected def beforeEach(): Unit = {
     generator = new ReleasesAndFoldersGenerator()
@@ -53,9 +53,9 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
       val release = releaseOfBatch(cis)
       release.status should be("COMPLETED")
-      release.queryableEndDate.isAfter(release.queryableStartDate) should be(right = true)
-      release.endDate.get.isAfter(release.queryableStartDate) should be(right = true)
-      release.dueDate.isAfter(release.scheduledStartDate) should be(right = true)
+      release.queryableEndDate.isAfter(release.queryableStartDate) shouldBe true
+      release.endDate.get.isAfter(release.queryableStartDate) shouldBe true
+      release.dueDate.isAfter(release.scheduledStartDate) shouldBe true
 
       phasesAndTasksOfBatch(cis).foreach(ci => {
         ci.status should be("COMPLETED")
@@ -184,16 +184,16 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       )
     }
 
-    it("should generate a viewers team in each folder with viewer user in it and view permissions") {
+    it("should generate three default teams and a viewers team in each top level folder") {
       val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
 
       val teams = foldersAndRelatedCis.filter(f => f.id.contains("/Team"))
 
-      teams should have size 2
-      teams.head.id shouldBe "Applications/Folder_1/TeamViewers"
-      teams.last.id shouldBe "Applications/Folder_2/TeamViewers"
-      teams.head.asInstanceOf[Team].members shouldBe Seq("viewer")
-      teams.head.asInstanceOf[Team].permissions shouldBe Seq("folder#view", "release#view", "template#view")
+      val folder1viewers = teams.find(_.id == "Applications/Folder_1/TeamViewers").get.asInstanceOf[Team]
+      folder1viewers.members shouldBe Seq("viewer")
+      folder1viewers.permissions shouldBe Seq("folder#view", "release#view", "template#view")
+      teams.filter(_.id.startsWith("Applications/Folder_1/")).map(_.asInstanceOf[Team].teamName) should contain theSameElementsAs
+        Set("Release Admin", "Template Owner", "Folder Owner", "Viewers")
     }
 
   }

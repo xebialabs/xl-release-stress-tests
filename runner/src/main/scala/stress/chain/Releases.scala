@@ -28,6 +28,7 @@ object Releases {
   def queryAllActive: ChainBuilder = exec(
     http("All active releases")
       .post("/releases/search")
+      .queryParam("depth", "2")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .body(RawFileBody("release-search-active-body.json")).asJSON
