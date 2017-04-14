@@ -1,13 +1,14 @@
 package stress.chain
 
 import io.gatling.core.Predef._
+import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import org.joda.time.LocalDateTime
 
 
 object Calendar {
 
-  def open = exec(
+  def open: ChainBuilder = exec(
     http("Get calendar releases")
       .post("/releases/search?depth=10&numberbypage=20")
       .body(StringBody(s"""{

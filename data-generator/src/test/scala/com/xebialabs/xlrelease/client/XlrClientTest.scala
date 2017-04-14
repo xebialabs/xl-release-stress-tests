@@ -33,7 +33,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val phase = Phase.build("Phase002", release.id)
 
       val phaseResponse = for (
-        releaseResponse <- client.createCi(release);
+        _ <- client.createCi(release);
         phaseResponse <- client.createCi(phase)
       ) yield phaseResponse
 
@@ -47,8 +47,8 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val phase = Phase.build("Phase002", release.id)
 
       val taskResponse = for (
-        releaseResponse <- client.createCi(release);
-        phaseResponse <- client.createCi(phase);
+        _ <- client.createCi(release);
+        _ <- client.createCi(phase);
         taskResponse <- client.createCi(Task.build("Task002", phase.id))
       ) yield taskResponse
 
@@ -64,9 +64,9 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val dependency = Dependency.build("Dependency", task.id, task.id)
 
       val dependencyResponse = for (
-        releaseResponse <- client.createCi(release);
-        phaseResponse <- client.createCi(phase);
-        taskResponse <- client.createCi(task);
+        _ <- client.createCi(release);
+        _ <- client.createCi(phase);
+        _ <- client.createCi(task);
         dependencyResponse <- client.createCi(dependency)
       ) yield dependencyResponse
 
@@ -92,7 +92,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       val groups = releases.grouped(100).toSeq
 
       val releaseResponsesFutures = groups.map {
-        case group: Seq[Release] => client.createCis(group.toSeq)
+        group: Seq[Release] => client.createCis(group)
       }
       expectSuccessfulResponses(releaseResponsesFutures)
 
@@ -123,17 +123,15 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
     it("should fail future of non-successful responses") {
 
-      val response = new HttpResponse(StatusCodes.BadRequest, HttpEntity("Some bad thing has happened."))
+      val response = HttpResponse(StatusCodes.BadRequest, HttpEntity("Some bad thing has happened."))
 
       val changedFuture = failNonSuccessfulResponses(Future.successful(response))
 
-      whenReady(changedFuture.failed) {
-        case ex => ex.getMessage shouldBe "Some bad thing has happened."
-      }
+      whenReady(changedFuture.failed)(ex => ex.getMessage shouldBe "Some bad thing has happened.")
     }
 
     it("should not modify the future with successful response") {
-      val response = new HttpResponse(StatusCodes.OK, HttpEntity("Great success."))
+      val response = HttpResponse(StatusCodes.OK, HttpEntity("Great success."))
       val changedFuture = failNonSuccessfulResponses(Future.successful(response))
       changedFuture.futureValue shouldBe response
     }

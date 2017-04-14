@@ -96,7 +96,7 @@ object Main extends App with LazyLogging {
   })
 
   val allFoldersAndReleasesWithDependencies = if (createDepRels) {
-    allFoldersAndReleasesFuture.flatMap { case (f, ids) =>
+    allFoldersAndReleasesFuture.flatMap { case (_, ids) =>
       sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
     }
   } else {

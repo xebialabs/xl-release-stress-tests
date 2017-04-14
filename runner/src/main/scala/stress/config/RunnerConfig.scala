@@ -26,64 +26,64 @@ object RunnerConfig extends LazyLogging {
    */
   object input {
 
-    val users = rootConfig.getInt("xl.runner.input.users")
+    val users: Int = rootConfig.getInt("xl.runner.input.users")
 
     def baseUrls: List[String] = runnerConfig.getString("input.baseUrl").split(",").toList
 
-    val username = runnerConfig.getString("input.username")
+    val username: String = runnerConfig.getString("input.username")
 
-    val password = runnerConfig.getString("input.password")
+    val password: String = runnerConfig.getString("input.password")
 
-    val teams = runnerConfig.getInt("input.teams")
+    val teams: Int = runnerConfig.getInt("input.teams")
 
-    val ops = runnerConfig.getInt("input.ops")
+    val ops: Int = runnerConfig.getInt("input.ops")
 
-    val releaseManagers = runnerConfig.getInt("input.releaseManagers")
+    val releaseManagers: Int = runnerConfig.getInt("input.releaseManagers")
 
-    val sshHost = runnerConfig.getString("input.sshHost")
+    val sshHost: String = runnerConfig.getString("input.sshHost")
 
-    val sshUser = runnerConfig.getString("input.sshUser")
+    val sshUser: String = runnerConfig.getString("input.sshUser")
 
-    val sshPassword = runnerConfig.getString("input.sshPassword")
+    val sshPassword: String = runnerConfig.getString("input.sshPassword")
   }
 
-  val releaseManagerPauseMin = duration("releaseManagerPauseMin")
+  val releaseManagerPauseMin: FiniteDuration = duration("releaseManagerPauseMin")
 
-  val releaseManagerPauseMax = duration("releaseManagerPauseMax")
+  val releaseManagerPauseMax: FiniteDuration = duration("releaseManagerPauseMax")
 
-  val opsPauseMin = duration("opsPauseMin")
+  val opsPauseMin: FiniteDuration = duration("opsPauseMin")
 
-  val opsPauseMax = duration("opsPauseMax")
+  val opsPauseMax: FiniteDuration = duration("opsPauseMax")
 
-  val devPause = duration("devPause")
+  val devPause: FiniteDuration = duration("devPause")
 
-  val userPauseMin = duration("userPauseMin")
+  val userPauseMin: FiniteDuration = duration("userPauseMin")
 
-  val userPauseMax = duration("userPauseMax")
+  val userPauseMax: FiniteDuration = duration("userPauseMax")
 
-  val taskPollPause = duration("taskPollPause")
+  val taskPollPause: FiniteDuration = duration("taskPollPause")
 
-  val taskPollDuration = duration("taskPollDuration")
+  val taskPollDuration: FiniteDuration = duration("taskPollDuration")
 
   object queries {
     object search {
-      val numberByPage = runnerConfig.getInt("queries.search.numberByPage")
+      val numberByPage: Int = runnerConfig.getInt("queries.search.numberByPage")
     }
   }
 
   object simulations {
 
-    val postWarmUpPause =  duration("simulations.postWarmUpPause")
+    val postWarmUpPause: FiniteDuration =  duration("simulations.postWarmUpPause")
 
-    val rampUpPeriod = duration("simulations.rampUpPeriod")
+    val rampUpPeriod: FiniteDuration = duration("simulations.rampUpPeriod")
 
-    val repeats = runnerConfig.getInt("simulations.repeats")
+    val repeats: Int = runnerConfig.getInt("simulations.repeats")
 
     object realistic {
 
-      val rampUpPeriod = duration("simulations.realistic.rampUpPeriod")
+      val rampUpPeriod: FiniteDuration = duration("simulations.realistic.rampUpPeriod")
 
-      val repeats = runnerConfig.getInt("simulations.realistic.repeats")
+      val repeats: Int = runnerConfig.getInt("simulations.realistic.repeats")
 
     }
   }

@@ -8,6 +8,7 @@ import io.gatling.core.Predef._
 import io.gatling.core.config.GatlingConfiguration._
 import io.gatling.core.config.Resource
 import io.gatling.core.session._
+import io.gatling.core.structure.ChainBuilder
 import io.gatling.core.validation.Validation
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
@@ -19,12 +20,12 @@ object Releases {
 
   val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
 
-  def create(body: Body) =
+  def create(body: Body): ChainBuilder =
     exec(http("Get templates").get("/releases/templates?depth=1"))
       .exec(http("Post release").post("/releases").body(body).asJSON)
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
-  def queryAllActive = exec(
+  def queryAllActive: ChainBuilder = exec(
     http("All active releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
@@ -32,7 +33,7 @@ object Releases {
       .body(RawFileBody("release-search-active-body.json")).asJSON
   )
 
-  def queryAllTreeReleases = exec(
+  def queryAllTreeReleases: ChainBuilder = exec(
     http("All active tree releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
@@ -45,13 +46,13 @@ object Releases {
       )
   )
 
-  def getRandomTreeRelease = queryAllTreeReleases
+  def getRandomTreeRelease: ChainBuilder = queryAllTreeReleases
     .exec(session => {
       val releaseIds = session.get("treeReleaseIds").as[Seq[String]]
       session.set("releaseId", releaseIds(Random.nextInt(releaseIds.size)))
     })
 
-  def queryAllCompleted = exec(
+  def queryAllCompleted: ChainBuilder = exec(
     http("All completed releases")
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
@@ -59,16 +60,16 @@ object Releases {
       .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
 
-  def getRelease =
+  def getRelease: ChainBuilder =
     exec(http("Get release").get("/releases/${releaseId}"))
 
-  def getDependencies =
+  def getDependencies: ChainBuilder =
     exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
 
-  def getDependencyTree =
+  def getDependencyTree: ChainBuilder =
     exec(http("Get release dependency tree").get("/dependencies/${releaseId}/tree"))
 
-  def flow(release: String) =
+  def flow(release: String): ChainBuilder =
     exec(http("Get polling interval").get("/settings/polling-interval"))
       .exec(http("Get reports").get("/settings/reports"))
       .exec(http("Get security").get("/security"))
@@ -76,7 +77,7 @@ object Releases {
       .exec(http("Get release dependencies").get(s"/dependencies/$release"))
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
-  def createFromTemplate(jsonFilePath: String, templateTitle: String) =
+  def createFromTemplate(jsonFilePath: String, templateTitle: String): ChainBuilder =
     doIf(!_.attributes.isDefinedAt("releaseTemplateId")) {
       Templates.findTemplatesByTitle(templateTitle)
         .exec(session => {

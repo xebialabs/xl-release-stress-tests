@@ -7,7 +7,7 @@ import spray.json._
 private [json] trait ZonedDateTimeProtocol extends DefaultJsonProtocol {
   implicit object ZonedDateTimeProtocol extends RootJsonFormat[ZonedDateTime] {
 
-    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.systemDefault)
+    private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.systemDefault)
 
     def write(obj: ZonedDateTime): JsValue = {
       JsString(formatter.format(obj))

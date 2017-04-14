@@ -6,9 +6,8 @@ import io.gatling.http.Predef._
 import io.gatling.http.request.Body
 import stress.utils.TaskIds
 
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration.Duration
 import scala.language.postfixOps
-import stress.config.RunnerConfig._
 
 object Tasks {
 
@@ -16,7 +15,7 @@ object Tasks {
   val MY_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
   val NOT_EXISTING_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}"""
 
-  def open(httpName: String, filter: Body) = exec(
+  def open(httpName: String, filter: Body): ChainBuilder = exec(
     http(httpName)
       .post("/tasks/search?limitTasksHint=100")
       .body(filter)
@@ -29,7 +28,7 @@ object Tasks {
   )
   def open(httpName: String, filter: String): ChainBuilder = open(httpName, StringBody(filter))
 
-  def pollManyTasks = exec(
+  def pollManyTasks: ChainBuilder = exec(
     http("Poll tasks")
       .post("/tasks/poll")
       .body(StringBody(
@@ -39,7 +38,7 @@ object Tasks {
       }]}""")).asJSON
   )
 
-  def openAndPoll(httpName: String, filter: String, duration: Duration, taskPollPause: Duration) = open(httpName, filter)
+  def openAndPoll(httpName: String, filter: String, duration: Duration, taskPollPause: Duration): ChainBuilder = open(httpName, filter)
     .exec(session => {
       session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
     })
@@ -53,7 +52,7 @@ object Tasks {
       .pause(taskPollPause)
     }
 
-  def commentOnRandomTask() = open("Get list of all tasks", ALL_TASKS_FILTER)
+  def commentOnRandomTask(): ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
         .post("/tasks/${taskIds.random()}/comments")
@@ -61,14 +60,14 @@ object Tasks {
         .asJSON
     )
 
-  def changeTeamAssignmentOfRandomTask() = open("Get list of all tasks", ALL_TASKS_FILTER)
+  def changeTeamAssignmentOfRandomTask(): ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
     .randomSwitch(
       50d -> setTeamOnRandomTask(Some("Release Admin")),
       50d -> setTeamOnRandomTask(None)
     )
 
   // In our generated dependency tree, the gate task is the last task
-  def getDependencyCandidates =
+  def getDependencyCandidates: ChainBuilder =
     exec(http("Get gate task dependency candidates").get("/gates/${releaseId}-Phase5-Task10/dependency-target-candidates"))
 
   private def setTeamOnRandomTask(team: Option[String]) = {
