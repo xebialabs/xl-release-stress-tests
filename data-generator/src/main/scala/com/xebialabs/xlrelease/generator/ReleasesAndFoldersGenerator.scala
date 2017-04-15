@@ -146,12 +146,15 @@ class ReleasesAndFoldersGenerator {
     val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
     val teams = folders
       .filter(_.id.matches("Applications/Folder_\\d+"))
-      .flatMap(f => Seq(
-        releaseAdminTeam(f.id, Seq("admin", s"user_${f.title}")),
-        templateOwnerTeam(f.id, Seq("admin", s"user_${f.title}")),
-        folderOwnerTeam(f.id, Seq("admin", s"user_${f.title}")),
-        Team.build(f.id, "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
-      ))
+      .flatMap(f => {
+        val folderIndex = f.id.substring(f.id.lastIndexOf("_") + 1)
+        Seq(
+          releaseAdminTeam(f.id, Seq("admin", s"user$folderIndex")),
+          templateOwnerTeam(f.id, Seq("admin", s"user$folderIndex")),
+          folderOwnerTeam(f.id, Seq("admin", s"user$folderIndex")),
+          Team.build(f.id, "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+        )
+      })
 
     folders ++ activityLogs ++ teams
   }

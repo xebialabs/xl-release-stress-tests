@@ -4,8 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.domain.User
-import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator}
+import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator, UsersAndRolesGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -21,7 +20,7 @@ object Main extends App with LazyLogging {
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
   private val templatesAmount = config.getInt("xl.data-generator.templates")
   private val automatedTemplatesAmount = config.getInt("xl.data-generator.automated-templates")
-  private val createDepRels = config.getBoolean("xl.data-generator.create-dependency-releases")
+  private val createDependencyReleases = config.getBoolean("xl.data-generator.create-dependency-releases")
   private val generateComments = config.getBoolean("xl.data-generator.generate-comments")
   private val foldersAmount = config.getInt("xl.data-generator.folders")
   private val foldersLevel = config.getInt("xl.data-generator.folders-level")
@@ -37,7 +36,7 @@ object Main extends App with LazyLogging {
   logger.info("Folders: {}", foldersAmount.toString)
   logger.info("Folder levels: {}", foldersLevel.toString)
 
-  if (createDepRels) {
+  if (createDependencyReleases) {
     logger.info("Creating {} releases with dependencies", completedReleasesAmount.toString)
   }
   if (generateComments) {
@@ -55,11 +54,18 @@ object Main extends App with LazyLogging {
   val importTemplateFuture = client.importTemplate("/many-automated-tasks.xlr")
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
-  val usersFuture = sequence(Seq(
-    client.createUser(User("viewer", "viewer", "", "Viewer has access to folders")),
-    client.createUser(User("noViewer", "noViewer", "", "No Viewer user has no access to folders")),
-    client.createUser(User("user_Folder_1", "user_Folder_1", "", "User with full access to Folder_1")))
-  )
+
+  private val usersAndRolesGenerator = new UsersAndRolesGenerator()
+  val users = usersAndRolesGenerator.generateUsers(foldersAmount)
+  val roles = usersAndRolesGenerator.generateRoles(users)
+  val permissions = usersAndRolesGenerator.generatePermissions(roles)
+
+  val usersAndRolesFuture =
+    sequential(users)(client.createUser).flatMap { _ =>
+      client.setRoles(roles)
+    }.flatMap { _ =>
+      client.setPermissions(permissions)
+    }
 
   val releaseGenerator = new ReleasesAndFoldersGenerator()
 
@@ -96,7 +102,7 @@ object Main extends App with LazyLogging {
     })
   })
 
-  val allFoldersAndReleasesWithDependencies = if (createDepRels) {
+  val allFoldersAndReleasesWithDependencies = if (createDependencyReleases) {
     allFoldersAndReleasesFuture.flatMap { case (_, ids) =>
       sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
     }
@@ -114,7 +120,12 @@ object Main extends App with LazyLogging {
     allFoldersAndReleasesWithDependencies
   }
 
-  val allResponses = sequence(Seq(importTemplateFuture, allWithDependencyTrees, specialDaysFuture, usersFuture))
+  val allResponses = sequence(Seq(
+    importTemplateFuture,
+    allWithDependencyTrees,
+    specialDaysFuture,
+    usersAndRolesFuture
+  ))
 
   allResponses.andThen {
     case Failure(ex) =>
