@@ -51,8 +51,6 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.username"),
     config.getString("xl.data-generator.password"))
 
-  val importTemplateFuture = client.importTemplate("/many-automated-tasks.xlr")
-
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
   private val usersAndRolesGenerator = new UsersAndRolesGenerator()
@@ -66,6 +64,9 @@ object Main extends App with LazyLogging {
     }.flatMap { _ =>
       client.setPermissions(permissions)
     }
+
+  val usersAndRolesAndImportedTemplateFuture = usersAndRolesFuture.flatMap(_ =>
+    client.importTemplate("/many-automated-tasks.xlr"))
 
   val releaseGenerator = new ReleasesAndFoldersGenerator()
 
@@ -121,10 +122,9 @@ object Main extends App with LazyLogging {
   }
 
   val allResponses = sequence(Seq(
-    importTemplateFuture,
+    usersAndRolesAndImportedTemplateFuture,
     allWithDependencyTrees,
-    specialDaysFuture,
-    usersAndRolesFuture
+    specialDaysFuture
   ))
 
   allResponses.andThen {
