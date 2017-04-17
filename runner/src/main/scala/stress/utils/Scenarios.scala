@@ -93,7 +93,7 @@ object Scenarios {
   def releaseManagerScenario(repeats: Int): ScenarioBuilder = {
     scenario("Release manager")
       .repeat(repeats)(
-        releaseManagerChain500(releaseManagerPauseMin, releaseManagerPauseMax)
+        releaseManagerChain(opsPauseMin, opsPauseMax)
       )
   }
 
