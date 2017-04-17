@@ -71,9 +71,9 @@ object Scenarios {
       .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
   }
 
-  def developmentTeamChain(devPause: Duration, opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder = {
+  def developmentTeamChain(devPause: Duration): ChainBuilder = {
     exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
-      .pause(opsPauseMin, opsPauseMax)
+      .pause(devPause)
       .exec(PublicApi.getTemplates)
       .pause(devPause)
   }
@@ -114,7 +114,7 @@ object Scenarios {
 
   def developmentTeamScenario(repeats: Int): ScenarioBuilder = scenario("Team of developers")
     .repeat(repeats)(
-      developmentTeamChain(devPause, opsPauseMin, opsPauseMax)
+      developmentTeamChain(devPause)
     )
 
   def folderScenario(repeats: Int): ScenarioBuilder = scenario("Folder scenario")
@@ -141,7 +141,7 @@ object Scenarios {
     .repeat(repeats)(
       exec(
         releaseManagerChain500(1 second, 1 second),
-        developmentTeamChain(1 second, 1 second, 1 second),
+        developmentTeamChain(1 second),
         opsChain(1 second, 1 second, 1 second, 1 second)
       )
     )
