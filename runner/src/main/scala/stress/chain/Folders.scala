@@ -25,12 +25,11 @@ object Folders {
 
   def openFolderTemplates: ChainBuilder = exec(
     http("Open folder templates")
-      .get("/releases/templates")
+      .post("/releases/templates/search")
+      .body(StringBody("""{"tags":[],"title":"","parentId":"Applications/Folder_1"}"""))
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .queryParam("parentId", "Applications/Folder_1")
       .asJSON
   )
-
 
 }

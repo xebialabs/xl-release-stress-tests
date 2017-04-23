@@ -21,7 +21,7 @@ object Releases {
   val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
 
   def create(body: Body): ChainBuilder =
-    exec(http("Get templates").get("/releases/templates?depth=1"))
+    Templates.open
       .exec(http("Post release").post("/releases").body(body).asJSON)
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
