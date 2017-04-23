@@ -13,11 +13,12 @@ object Calendar {
       .post("/releases/search?depth=10&numberbypage=20")
       .body(StringBody(s"""{
             "active":true,
-            "planned":true,
-            "completed":false,
+            "planned":false,
+            "inactive":false,
             "onlyMine":false,
             "onlyFlagged":false,
-            "filter":"",
+            "tags":[],
+            "title":"",
             "from":${new LocalDateTime(2014, 12, 28, 0, 0).toDate.getTime},
             "to":${new LocalDateTime(2015, 2, 7, 0, 0).toDate.getTime}
           }"""))
