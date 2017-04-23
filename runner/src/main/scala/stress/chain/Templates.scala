@@ -10,7 +10,8 @@ object Templates {
 
   def open: ChainBuilder = exec(
     http("All templates")
-      .get("/releases/templates?filter=")
+      .post("/releases/templates/search")
+      .body(StringBody("""{"tags":[],"title":""}"""))
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON
@@ -18,7 +19,8 @@ object Templates {
 
   def findTemplatesByTitle(title: String): ChainBuilder = exec(
     http("Find template by title")
-      .get(s"/releases/templates?filter=$title")
+      .post("/releases/templates/search")
+      .body(StringBody(s"""{"tags":[],"title":"$title"}"""))
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON
