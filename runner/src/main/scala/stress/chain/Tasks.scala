@@ -40,7 +40,7 @@ object Tasks {
 
   def openAndPoll(httpName: String, filter: String, duration: Duration, taskPollPause: Duration): ChainBuilder = open(httpName, filter)
     .exec(session => {
-      session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
+      session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(", ")}]}""")
     })
     .during(duration) {
       exec(
@@ -64,6 +64,19 @@ object Tasks {
     .randomSwitch(
       50d -> setTeamOnRandomTask(Some("Release Admin")),
       50d -> setTeamOnRandomTask(None)
+    )
+
+  def commentOnTasks(): ChainBuilder =
+    exec(session => {
+      session.set("commentOnTasksBody",
+        s"""{"taskIds":[${session.taskIds.map(s => s""""${s.replace('-', '/')}"""").mkString(",")}], // TODO: extract TaskIds method for s.replace('-', '/')
+           |"commentText":"This task needs some comments"}""".stripMargin)
+    })
+    .exec(
+      http("Comment on tasks")
+        .post("/tasks/comments")
+        .body(StringBody("${commentOnTasksBody}"))
+        .asJSON
     )
 
   // In our generated dependency tree, the gate task is the last task

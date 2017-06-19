@@ -87,6 +87,7 @@ class RealisticSimulation extends Simulation {
   setUp(
     releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod),
     opsScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod),
+    bulkOpsScenario(repeats).inject(rampUsers(RunnerConfig.input.bulkOps) over rampUpPeriod),
     developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod)
   ).protocols(httpProtocol)
 }
@@ -111,6 +112,11 @@ class ReleaseManagerSimulation extends SimulationBase(releaseManagerScenario(1))
   * X ops people are working with XL Release
   */
 class OpsSimulation extends SimulationBase(opsScenario(1))
+
+/**
+  * X ops people are working with bulk operations in XL Release
+  */
+class BulkOpsSimulation extends SimulationBase(bulkOpsScenario(1))
 
 /**
   * X development teams commit code which triggers new releases. Each teams consists of ~10 developers.

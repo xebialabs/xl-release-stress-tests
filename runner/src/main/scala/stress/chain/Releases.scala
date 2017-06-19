@@ -64,6 +64,17 @@ object Releases {
   def getRelease: ChainBuilder =
     exec(http("Get release").get("/releases/${releaseId}"))
 
+  def getReleaseTaskIds: ChainBuilder = exec(
+    http("Get release taskIds")
+      .get("/releases/${releaseId}")
+      .asJSON
+      .check(
+        jsonPath("$['phases'][*]['tasks'][*]['id']")
+          .findAll
+          .saveAs("taskIds")
+      )
+  )
+
   def getDependencies: ChainBuilder =
     exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
 
