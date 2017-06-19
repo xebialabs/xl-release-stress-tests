@@ -12,4 +12,5 @@ object TaskIds {
     t   <- List.range(0, tasks).map(i => s"Task$i")
   ) yield Seq(r, ph, t).mkString("-")
 
+  def toDomainId(taskId: String) = s"Applications/${taskId.replace('-', '/')}"
 }

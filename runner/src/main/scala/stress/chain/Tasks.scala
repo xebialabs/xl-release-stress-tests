@@ -69,7 +69,7 @@ object Tasks {
   def commentOnTasks(): ChainBuilder =
     exec(session => {
       session.set("commentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(s => s""""${s.replace('-', '/')}"""").mkString(",")}], // TODO: extract TaskIds method for s.replace('-', '/')
+        s"""{"taskIds":[${session.taskIds.map(s => s""""${TaskIds.toDomainId(s)}"""").mkString(",")}],
            |"commentText":"This task needs some comments"}""".stripMargin)
     })
     .exec(
