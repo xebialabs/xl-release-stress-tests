@@ -117,6 +117,7 @@ object Scenarios {
           .exec(Tasks.changeAssignmentOnTasks)
           .pause(bulkOpsPauseMin, bulkOpsPauseMax)
           .exec(Tasks.removeTasks)
+          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
       )
   }
 
