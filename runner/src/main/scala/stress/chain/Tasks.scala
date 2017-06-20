@@ -96,7 +96,7 @@ object Tasks {
       s"""[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
   })
     .exec(
-      http("Change assignment on tasks")
+      http("Remove tasks")
         .delete("/tasks")
         .body(StringBody("${removeTasksBody}"))
         .asJSON

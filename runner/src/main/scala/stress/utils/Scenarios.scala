@@ -111,7 +111,7 @@ object Scenarios {
           .pause(bulkOpsPauseMin, bulkOpsPauseMax)
           .exec(Releases.getRelease)
           .pause(bulkOpsPauseMin, bulkOpsPauseMax)
-          .exec(Releases.getReleaseTaskIds)
+          .exec(Releases.getReleasePlannedTaskIds)
           .exec(Tasks.commentOnTasks)
           .pause(bulkOpsPauseMin, bulkOpsPauseMax)
           .exec(Tasks.changeAssignmentOnTasks)
