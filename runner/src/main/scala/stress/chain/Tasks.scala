@@ -69,13 +69,36 @@ object Tasks {
   def commentOnTasks(): ChainBuilder =
     exec(session => {
       session.set("commentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(s => s""""${TaskIds.toDomainId(s)}"""").mkString(",")}],
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
            |"commentText":"This task needs some comments"}""".stripMargin)
     })
     .exec(
       http("Comment on tasks")
         .post("/tasks/comments")
         .body(StringBody("${commentOnTasksBody}"))
+        .asJSON
+    )
+
+  def changeAssignmentOnTasks(): ChainBuilder = exec(session => {
+    session.set("changeAssignmentOnTasksBody",
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
+           |"team":"Release Admin", "owner": "admin"}""".stripMargin)
+    })
+    .exec(
+      http("Change assignment on tasks")
+        .put("/tasks/reassign")
+        .body(StringBody("${changeAssignmentOnTasksBody}"))
+        .asJSON
+    )
+
+  def removeTasks(): ChainBuilder = exec(session => {
+    session.set("removeTasksBody",
+      s"""[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
+  })
+    .exec(
+      http("Change assignment on tasks")
+        .delete("/tasks")
+        .body(StringBody("${removeTasksBody}"))
         .asJSON
     )
 
