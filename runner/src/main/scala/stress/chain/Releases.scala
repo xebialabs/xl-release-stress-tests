@@ -70,7 +70,7 @@ object Releases {
       .asJSON
       .check(
         jsonPath("$.phases[*].tasks[?(@.status == 'PLANNED')].id")
-          .findAll
+          .findAll.optional
           .saveAs("taskIds")
       )
   )
