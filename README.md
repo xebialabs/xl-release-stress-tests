@@ -139,6 +139,9 @@ It uses the following optional parameters :
 - **Ops**: The number of "ops" users that will be running the `stress.OpsSimulation`
     - Syntax : `-Pops=20`
     - The default value is `20`
+- **OpsBulk**: The number of "ops" users that will be running the `stress.OpsBulkSimulation` 
+    - Syntax : `-PopsBulk=10`
+    - The default value is `5`
 - **Release Managers**: The number of "ops" users that will be running the `stress.ReleaseManagerSimulation`
     - Syntax : `-PreleaseManagers=20`
     - The default value is `20`

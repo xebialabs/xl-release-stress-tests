@@ -104,20 +104,20 @@ object Scenarios {
       )
   }
 
-  def bulkOpsScenario(repeats: Int): ScenarioBuilder = {
+  def opsBulkScenario(repeats: Int): ScenarioBuilder = {
     scenario("Ops person (bulk operations)")
       .repeat(repeats)(
         exec(Releases.getRandomTreeRelease)
-          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
           .exec(Releases.getRelease)
-          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
           .exec(Releases.getReleasePlannedTaskIds)
           .exec(Tasks.commentOnTasks)
-          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
           .exec(Tasks.changeAssignmentOnTasks)
-          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
           .exec(Tasks.removeTasks)
-          .pause(bulkOpsPauseMin, bulkOpsPauseMax)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
       )
   }
 
