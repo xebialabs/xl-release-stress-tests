@@ -38,6 +38,8 @@ object RunnerConfig extends LazyLogging {
 
     val ops: Int = runnerConfig.getInt("input.ops")
 
+    val opsBulk: Int = runnerConfig.getInt("input.opsBulk")
+
     val releaseManagers: Int = runnerConfig.getInt("input.releaseManagers")
 
     val sshHost: String = runnerConfig.getString("input.sshHost")
@@ -54,6 +56,10 @@ object RunnerConfig extends LazyLogging {
   val opsPauseMin: FiniteDuration = duration("opsPauseMin")
 
   val opsPauseMax: FiniteDuration = duration("opsPauseMax")
+
+  val opsBulkPauseMin: FiniteDuration = duration("opsBulkPauseMin")
+
+  val opsBulkPauseMax: FiniteDuration = duration("opsBulkPauseMax")
 
   val devPause: FiniteDuration = duration("devPause")
 

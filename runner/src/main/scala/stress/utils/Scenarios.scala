@@ -104,6 +104,23 @@ object Scenarios {
       )
   }
 
+  def opsBulkScenario(repeats: Int): ScenarioBuilder = {
+    scenario("Ops person (bulk operations)")
+      .repeat(repeats)(
+        exec(Releases.getRandomTreeRelease)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
+          .exec(Releases.getRelease)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
+          .exec(Releases.getReleasePlannedTaskIds)
+          .exec(Tasks.commentOnTasks)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
+          .exec(Tasks.changeAssignmentOnTasks)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
+          .exec(Tasks.removeTasks)
+          .pause(opsBulkPauseMin, opsBulkPauseMax)
+      )
+  }
+
   def developmentTeamScenario500(repeats: Int): ScenarioBuilder = scenario("Team of developers")
     .repeat(repeats)(
       repeat(2) {
