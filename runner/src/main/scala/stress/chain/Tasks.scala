@@ -40,7 +40,7 @@ object Tasks {
 
   def openAndPoll(httpName: String, filter: String, duration: Duration, taskPollPause: Duration): ChainBuilder = open(httpName, filter)
     .exec(session => {
-      session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(", ")}]}""")
+      session.set("pollTasksBody", s"""{"ids":[${session.taskIds.map(s => s""""$s"""").mkString(",")}]}""")
     })
     .during(duration) {
       exec(

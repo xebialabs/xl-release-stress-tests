@@ -105,7 +105,7 @@ object Scenarios {
   }
 
   def bulkOpsScenario(repeats: Int): ScenarioBuilder = {
-    scenario("(Bulk) Ops person")
+    scenario("Ops person (bulk operations)")
       .repeat(repeats)(
         exec(Releases.getRandomTreeRelease)
           .pause(bulkOpsPauseMin, bulkOpsPauseMax)
