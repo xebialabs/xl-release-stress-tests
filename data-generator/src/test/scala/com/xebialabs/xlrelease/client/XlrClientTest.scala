@@ -11,6 +11,7 @@ import spray.http.{HttpEntity, HttpResponse, StatusCodes}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 @RunWith(classOf[JUnitRunner])
 class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
@@ -20,24 +21,16 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create a release") {
       val release = Release.build("ReleaseTest004")
 
-      val createResponse = client.createCi(release).futureValue
-      createResponse.status shouldBe StatusCodes.OK
+      client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
-      val removeResponse = client.removeCi(release.id).futureValue
-      removeResponse.status shouldBe StatusCodes.NoContent
+      client.removeCi(release.id).futureValue.status shouldBe StatusCodes.NoContent
     }
 
     it("should create a phase within release") {
       val release = Release.build("ReleaseTest005")
+      release.phases = Seq(Phase.build("Phase002", release.id))
 
-      val phase = Phase.build("Phase002", release.id)
-
-      val phaseResponse = for (
-        _ <- client.createCi(release);
-        phaseResponse <- client.createCi(phase)
-      ) yield phaseResponse
-
-      phaseResponse.futureValue.status shouldBe StatusCodes.OK
+      client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
       client.removeCi(release.id)
     }
@@ -45,34 +38,26 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create tasks") {
       val release = Release.build("ReleaseTest103")
       val phase = Phase.build("Phase002", release.id)
+      val task = Task.build("Task002", phase.id)
+      release.phases = Seq(phase)
+      phase.tasks = Seq(task)
 
-      val taskResponse = for (
-        _ <- client.createCi(release);
-        _ <- client.createCi(phase);
-        taskResponse <- client.createCi(Task.build("Task002", phase.id))
-      ) yield taskResponse
-
-      taskResponse.futureValue.status shouldBe StatusCodes.OK
+      client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
       client.removeCi(release.id)
     }
 
-    it("should create tasks and dependencies") {
-      val release = Release.build("ReleaseTest104")
-      val phase = Phase.build("Phase002", release.id)
-      val task = Task.buildGate("Task002", phase.id)
-      val dependency = Dependency.build("Dependency", task.id, task.id)
+    it("should create releases with activity logs") {
+      val release = Release.build("ReleaseTest103")
+      val logDirectory = ActivityLogDirectory.build(release.id)
+      val logEntry = ActivityLogEntry.build(logDirectory.id, message = "Hello!")
+      val releaseAndRelatedCis = ReleaseAndRelatedCis(release, Seq(logDirectory, logEntry))
 
-      val dependencyResponse = for (
-        _ <- client.createCi(release);
-        _ <- client.createCi(phase);
-        _ <- client.createCi(task);
-        dependencyResponse <- client.createCi(dependency)
-      ) yield dependencyResponse
-
-      dependencyResponse.futureValue.status shouldBe StatusCodes.OK
+      val createReleaseAndLogs = client.createReleaseAndRelatedCis(releaseAndRelatedCis)
+      createReleaseAndLogs.futureValue.status shouldBe StatusCodes.NoContent
 
       client.removeCi(release.id)
+      client.removeCi(logDirectory.id)
     }
 
     it("should create special days") {
@@ -84,16 +69,30 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       expectSuccessfulResponses(removalsFuture)
     }
 
-    it("should create many releases in batches") {
+    it("should create many CIs in batches") {
+      val range = 0 until 20
+      val cis = range.map(id =>
+        ActivityLogDirectory.build(s"Applications/ReleaseTest$id")
+      )
+      val groups = cis.grouped(10).toSeq
+
+      val responsesFutures = groups.map {
+        group: Seq[Ci] => client.createCis(group)
+      }
+      expectSuccessfulResponses(responsesFutures)
+
+      val removalFutures = cis.map(ci => {
+        client.removeCi(ci.id)
+      })
+      expectSuccessfulResponses(removalFutures)
+    }
+
+    it("should create many releases") {
       val range = 0 until 20
       val releases = range.map(id =>
         Release.build(s"ReleaseTest$id")
       )
-      val groups = releases.grouped(100).toSeq
-
-      val releaseResponsesFutures = groups.map {
-        group: Seq[Release] => client.createCis(group)
-      }
+      val releaseResponsesFutures = releases.map(client.createRelease)
       expectSuccessfulResponses(releaseResponsesFutures)
 
       val releaseRemovalFutures = releases.map(release => {
@@ -102,18 +101,14 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       expectSuccessfulResponses(releaseRemovalFutures)
     }
 
-    it("should create many releases") {
-      val range = 0 until 20
-      val releases = range.map(id =>
-        Release.build(s"ReleaseTest$id")
-      )
-      val releaseResponsesFutures = releases.map(client.createCi)
-      expectSuccessfulResponses(releaseResponsesFutures)
+    it("should not fail if a release already exists") {
+      val release = Release.build("ReleaseTest004")
+      client.createRelease(release).futureValue
 
-      val releaseRemovalFutures = releases.map(release => {
-        client.removeCi(release.id)
-      })
-      expectSuccessfulResponses(releaseRemovalFutures)
+      // Check future is not failed on second create request
+      client.createRelease(release).futureValue.status shouldBe StatusCodes.BadRequest
+
+      client.removeCi(release.id).futureValue.status shouldBe StatusCodes.NoContent
     }
 
     it("should import template from a file") {

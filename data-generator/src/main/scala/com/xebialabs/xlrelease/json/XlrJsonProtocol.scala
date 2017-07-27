@@ -1,29 +1,52 @@
 package com.xebialabs.xlrelease.json
+
 import com.xebialabs.xlrelease.domain._
 import spray.json._
 
 trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with ZonedDateTimeProtocol {
   this: ProductFormatsInstances =>
 
-  implicit val releaseFormat: RootJsonFormat[Release] = jsonFormat11(Release.apply)
-  implicit val phaseFormat: RootJsonFormat[Phase] = jsonFormat5(Phase.apply)
-  implicit val taskFormat: RootJsonFormat[Task] = jsonFormat5(Task.apply)
-  implicit val scriptTaskFormat: RootJsonFormat[ScriptTask] = jsonFormat6(ScriptTask.apply)
+  /**
+    * The order of implicit definitions in this class matters!
+    * First nested domain classes, then parent classes; e.g. first Phase then Release.
+    * Otherwise you get a cryptic NullPointerException from `PimpedAny.toJson`.
+    */
+
+  implicit val commentFormat: RootJsonFormat[Comment] = jsonFormat3(Comment.apply)
   implicit val dependencyFormat: RootJsonFormat[Dependency] = jsonFormat3(Dependency.apply)
+
+  implicit val taskFormat: RootJsonFormat[Task] = jsonFormat6(Task.apply)
+  implicit val scriptTaskFormat: RootJsonFormat[ScriptTask] = jsonFormat7(ScriptTask.apply)
+  implicit val gateTaskFormat: RootJsonFormat[GateTask] = jsonFormat7(GateTask.apply)
+
+  implicit object AbstractTaskProtocol extends RootJsonFormat[AbstractTask] {
+    def read(json: JsValue): AbstractTask = {
+      deserializationError("Read is not implemented")
+    }
+
+    def write(task: AbstractTask): JsValue = task match {
+      case t: Task => t.toJson
+      case t: ScriptTask => t.toJson
+      case t: GateTask => t.toJson
+      case _ => serializationError(s"Undefined task type ${task.getClass}")
+    }
+  }
+
+  implicit val phaseFormat: RootJsonFormat[Phase] = rootFormat(lazyFormat(jsonFormat6(Phase.apply)))
+  implicit val attachmentFormat: RootJsonFormat[Attachment] = jsonFormat3(Attachment.apply)
+  implicit val releaseTriggerFormat: RootJsonFormat[ReleaseTrigger] = jsonFormat8(ReleaseTrigger.apply)
+
   implicit val specialDayFormat: RootJsonFormat[SpecialDay] = jsonFormat5(SpecialDay.apply)
   implicit val directoryFormat: RootJsonFormat[Directory] = jsonFormat2(Directory.apply)
-  implicit val commentFormat: RootJsonFormat[Comment] = jsonFormat3(Comment.apply)
   implicit val userFormat: RootJsonFormat[User] = jsonFormat5(User)
   implicit val roleFormat: RootJsonFormat[Role] = jsonFormat2(Role)
   implicit val puserFormat: RootJsonFormat[PUser] = jsonFormat2(PUser)
   implicit val principalFormat: RootJsonFormat[Principal] = jsonFormat2(Principal)
   implicit val permissionFormat: RootJsonFormat[Permission] = jsonFormat2(Permission)
   implicit val httpConnectionFormat: RootJsonFormat[HttpConnection] = jsonFormat3(HttpConnection.apply)
-  implicit val attachmentFormat: RootJsonFormat[Attachment] = jsonFormat3(Attachment.apply)
   implicit val activityLogEntryFormat: RootJsonFormat[ActivityLogEntry] = jsonFormat6(ActivityLogEntry.apply)
   implicit val folderFormat: RootJsonFormat[Folder] = jsonFormat3(Folder.apply)
   implicit val teamFormat: RootJsonFormat[Team] = jsonFormat5(Team.apply)
-  implicit val releaseTriggerFormat: RootJsonFormat[ReleaseTrigger] = jsonFormat8(ReleaseTrigger.apply)
 
   implicit object CiProtocol extends RootJsonFormat[Ci] {
     def read(json: JsValue): Ci = {
@@ -34,8 +57,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
       ci match {
         case ci: Release => ci.toJson
         case ci: Phase => ci.toJson
-        case ci: Task => ci.toJson
-        case ci: ScriptTask => ci.toJson
+        case ci: AbstractTask => ci.toJson
         case ci: Dependency => ci.toJson
         case ci: SpecialDay => ci.toJson
         case ci: Directory => ci.toJson
@@ -50,4 +72,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
       }
     }
   }
+
+  implicit val releaseFormat: RootJsonFormat[Release] = jsonFormat14(Release.apply)
+
 }

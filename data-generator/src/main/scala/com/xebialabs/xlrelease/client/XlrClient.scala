@@ -30,10 +30,14 @@ object XlrClient {
    * Returns a failed [[Future]] for all the non-successful responses.
    */
   private[client] def failNonSuccessfulResponses(responseFuture: Future[HttpResponse]) = responseFuture.flatMap {
-    case response if response.status.isFailure && response.status != StatusCodes.Conflict =>
-      Future.failed(new XlrClientException(response.entity.data.asString))
-    case _ =>
+    case response if response.status.isSuccess =>
       responseFuture
+    case response if response.status == StatusCodes.Conflict =>
+      responseFuture
+    case response if response.status == StatusCodes.BadRequest && response.entity.data.asString.contains("already exists") =>
+      responseFuture
+    case response =>
+      Future.failed(new XlrClientException(response.entity.data.asString))
   }
 }
 
@@ -77,14 +81,18 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
   def setPermissions(permissions: Seq[Permission]): Future[HttpResponse] = strictPipeline(Put(s"$apiUrl/roles/permissions/global", permissions))
 
-  def createCi(ci: Ci): Future[HttpResponse] =
-    strictPipeline(Post(s"$apiUrl/repository/ci/${ci.id}", ci))
-
   def removeCi(id: String): Future[HttpResponse] =
-    strictPipeline(Delete(s"$apiUrl/repository/ci/$id"))
+    strictPipeline(Delete(s"$apiUrl/fixtures/$id"))
 
   def createCis(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Post(s"$apiUrl/fixtures/", cis))
+
+  def createRelease(release: Release): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/fixtures/release", release))
+
+  def createReleaseAndRelatedCis(releaseAndRelatedCis: ReleaseAndRelatedCis): Future[HttpResponse] =
+   createCis(releaseAndRelatedCis.activityLogDirsAndEntries)
+     .flatMap(_ => createRelease(releaseAndRelatedCis.release))
 
   def createOrUpdateCis(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Put(s"$apiUrl/fixtures/", cis))

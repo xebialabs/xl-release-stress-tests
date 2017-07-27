@@ -21,127 +21,120 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
   describe("generator of releases and templates") {
 
     it("should return empty seq if called with 0") {
-      generator.generateCompletedReleases(0)._1.flatten shouldBe 'empty
+      generator.generateCompletedReleases(0) shouldBe 'empty
     }
 
     it("should generate completed releases with default amount of phases and tasks") {
       val amount = 5
-      val cis = generator.generateCompletedReleases(amount)._1.flatten
-      releasesOfBatch(cis) should have size amount
-      phasesOfBatch(cis) should have size amount * phasesPerRelease
-      tasksOfBatch(cis) should have size amount * phasesPerRelease * tasksPerPhase
+      val releases = generator.generateCompletedReleases(amount)
+      releases should have size amount
+      phasesOfBatch(releases) should have size amount * phasesPerRelease
+      tasksOfBatch(releases) should have size amount * phasesPerRelease * tasksPerPhase
     }
 
     it("should slice CIs according to releases") {
-      val (batches, _) = generator.generateCompletedReleases(5)
+      val releases = generator.generateCompletedReleases(5)
 
-      batches should have size 5
-
-      batches.foreach(batch => {
-        releasesOfBatch(batch) should have size 1
-
-        val release = releaseOfBatch(batch)
-
-        phasesAndTasksOfBatch(batch).foreach(ci => {
-          ci.id should startWith(release.id)
+      releases.foreach(release => {
+        phasesAndTasksOfBatch(Seq(release)).foreach(ci => {
+          ci.id should startWith(release.release.id)
         })
       })
     }
 
     it("should generate completed releases") {
-      val cis = generator.generateCompletedReleases(1)._1.head
+      val releases = generator.generateCompletedReleases(1)
 
-      val release = releaseOfBatch(cis)
+      val release = releaseOfBatch(releases)
       release.status should be("COMPLETED")
       release.queryableEndDate.isAfter(release.queryableStartDate) shouldBe true
       release.endDate.get.isAfter(release.queryableStartDate) shouldBe true
       release.dueDate.isAfter(release.scheduledStartDate) shouldBe true
 
-      phasesAndTasksOfBatch(cis).foreach(ci => {
+      phasesAndTasksOfBatch(releases).foreach(ci => {
         ci.status should be("COMPLETED")
       })
     }
 
     it("should generate template releases") {
-      val cis = generator.generateTemplateReleases(1).head
+      val templates = generator.generateTemplateReleases(1)
 
-      val release = releaseOfBatch(cis)
+      val release = releaseOfBatch(templates)
       release.status should be("TEMPLATE")
 
-      phasesAndTasksOfBatch(cis).foreach(ci => {
+      phasesAndTasksOfBatch(templates).foreach(ci => {
         ci.status should be("PLANNED")
       })
     }
 
     it("should generate active releases") {
-      val cis = generator.generateActiveReleases(1).head
+      val releases = generator.generateActiveReleases(1)
 
-      val release = releaseOfBatch(cis)
+      val release = releaseOfBatch(releases)
       release.status should be("IN_PROGRESS")
       release.endDate shouldBe None
 
-      val activePhases = phasesOfBatch(cis).filter(_.status == "IN_PROGRESS")
+      val activePhases = phasesOfBatch(releases).filter(_.status == "IN_PROGRESS")
       activePhases should have size 1
 
-      val activeTasks = tasksOfBatch(cis).filter(_.status == "IN_PROGRESS")
+      val activeTasks = tasksOfBatch(releases).filter(_.status == "IN_PROGRESS")
       activeTasks should have size 1
     }
 
     it("should generate the dependent release") {
-      val cis = generator.generateDependentRelease()
+      val release = generator.generateDependentRelease()
 
-      val release = releaseOfBatch(cis)
       release.id should be(dependentReleaseId)
       release.status should be("PLANNED")
 
-      phasesAndTasksOfBatch(cis).foreach(ci => {
+      release.phases.flatMap(phase => phase +: phase.tasks).foreach(ci => {
         ci.status should be("PLANNED")
       })
     }
 
     it("should add one gate on each release with a dependency on the dependent release") {
-      val cis = generator.generateActiveReleases(1).head
+      val releases = generator.generateActiveReleases(1)
 
-      val gates = tasksOfBatch(cis).filter(_.`type` == "xlrelease.GateTask")
+      val gates = tasksOfBatch(releases).filter(_.`type` == "xlrelease.GateTask")
       gates should have size 1
 
-      val dependencies = dependenciesOfBatch(cis)
+      val dependencies = dependenciesOfBatch(releases)
       dependencies should have size 1
       dependencies.head.id should startWith(gates.head.id)
       dependencies.head.target should be(dependentReleaseId)
     }
 
     it("should add one attachment to each release and one attachment to first task of each phase") {
-      val cis = generator.generateActiveReleases(1).head
+      val releases = generator.generateActiveReleases(1)
 
-      val attachments = cis.filter(_.`type` == "xlrelease.Attachment")
+      val attachments = releases.flatMap(_.release.attachments)
 
-      attachments.head.asInstanceOf[Attachment].fileUri shouldBe "http://localhost:5516/ui-extensions/xlrelease-plugins.js"
+      attachments.head.fileUri shouldBe "http://localhost:5516/static/0/xlrelease.js"
 
       val attachmentNumbers = attachments.map(_.id.replaceAll(".*Attachment", ""))
       attachmentNumbers shouldEqual (1 to 6).map(_.toString)
-      val task21 = cis.find(_.id.contains("/Phase2/Task1")).get.asInstanceOf[Task]
+      val task21 = tasksOfBatch(releases).find(_.id.contains("/Phase2/Task1")).get.asInstanceOf[Task]
       task21.attachments should have size 1
       task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
     }
 
     it("should generated automated templates") {
-      val cis = generator.generateAutomatedTemplates(1).head
+      val releases = generator.generateAutomatedTemplates(1)
 
-      val template = releaseOfBatch(cis)
+      val template = releaseOfBatch(releases)
       template.status should be("TEMPLATE")
       template.allowConcurrentReleasesFromTrigger should be(false)
 
-      phasesOfBatch(cis).foreach { phase =>
+      phasesOfBatch(releases).foreach { phase =>
         phase.status should be("PLANNED")
       }
 
-      tasksOfBatch(cis).foreach { task =>
-        task.`type` should be("xlrelease.ScriptTask")
+      tasksOfBatch(releases).foreach { task =>
+        task.`type` should (be("xlrelease.ScriptTask") or be("xlrelease.GateTask"))
         task.status should be("PLANNED")
       }
 
-      val releaseTriggers = releaseTriggersOfBatch(cis)
+      val releaseTriggers = releaseTriggersOfBatch(releases)
       releaseTriggers should have size 1
 
       val releaseTrigger = releaseTriggers.head
@@ -203,7 +196,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       val depth = 4
       val breadth = 3
 
-      val cis = generator.generateDependencyTrees(1, depth, breadth).flatten
+      val cis = generator.generateDependencyTrees(1, depth, breadth)
 
       val releases = releasesOfBatch(cis)
       releases should have size depth * breadth + 1
@@ -213,7 +206,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate dependencies between releases in the tree") {
-      val cis = generator.generateDependencyTrees(1, 2, 2).flatten
+      val cis = generator.generateDependencyTrees(1, 2, 2)
 
       val dependencies = dependenciesOfBatch(cis)
       dependencies should have size 6
@@ -233,31 +226,33 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
     }
   }
 
-  def releasesOfBatch(cis: Seq[Ci]): Seq[Release] = {
-    cis.filter(_.isInstanceOf[Release]).asInstanceOf[Seq[Release]]
+  private def releasesOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[Release] = {
+    releases.map(_.release)
   }
 
-  def releaseOfBatch(batch: Seq[Ci]): Release = {
-    batch.find(_.isInstanceOf[Release]).get.asInstanceOf[Release]
+  private def releaseOfBatch(releases: Seq[ReleaseAndRelatedCis]): Release = {
+    releasesOfBatch(releases).head
   }
 
-  def phasesOfBatch(cis: Seq[Ci]): Seq[Phase] = {
-    cis.filter(_.isInstanceOf[Phase]).asInstanceOf[Seq[Phase]]
+  private def phasesOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[Phase] = {
+    releases.flatMap(_.release.phases)
   }
 
-  def tasksOfBatch(cis: Seq[Ci]): Seq[Task] = {
-    cis.filter(_.isInstanceOf[Task]).asInstanceOf[Seq[Task]]
+  private def tasksOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[AbstractTask] = {
+    phasesOfBatch(releases).flatMap(_.tasks)
   }
 
-  def dependenciesOfBatch(cis: Seq[Ci]): Seq[Dependency] = {
-    cis.filter(_.isInstanceOf[Dependency]).asInstanceOf[Seq[Dependency]]
+  private def dependenciesOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[Dependency] = {
+    tasksOfBatch(releases)
+      .filter(_.isInstanceOf[GateTask])
+      .flatMap(_.asInstanceOf[GateTask].dependencies)
   }
 
-  def phasesAndTasksOfBatch(batch: Seq[Ci]): Seq[PlanItem] = {
-    batch.filter(x => x.isInstanceOf[Phase] || x.isInstanceOf[Task]).asInstanceOf[Seq[PlanItem]]
+  private def phasesAndTasksOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[PlanItem] = {
+    phasesOfBatch(releases) ++ tasksOfBatch(releases)
   }
 
-  def releaseTriggersOfBatch(batch: Seq[Ci]): Seq[ReleaseTrigger] = {
-    batch.filter(x => x.isInstanceOf[ReleaseTrigger]).asInstanceOf[Seq[ReleaseTrigger]]
+  private def releaseTriggersOfBatch(releases: Seq[ReleaseAndRelatedCis]): Seq[ReleaseTrigger] = {
+    releases.flatMap(_.release.releaseTriggers)
   }
 }

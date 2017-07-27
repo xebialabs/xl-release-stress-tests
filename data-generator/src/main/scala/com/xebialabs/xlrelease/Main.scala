@@ -74,38 +74,42 @@ object Main extends App with LazyLogging {
   val foldersFuture = client.createOrUpdateCis(foldersAndRelatedCis)
 
   val allFoldersAndReleasesFuture = foldersFuture.flatMap(_ => {
-    val dependantReleaseFuture = client.createOrUpdateCis(releaseGenerator.generateDependentRelease())
+    val dependantReleaseFuture = client.createRelease(releaseGenerator.generateDependentRelease())
 
     dependantReleaseFuture.flatMap(_ => {
 
       val createTemplateReleasesFutures = releaseGenerator
-        .generateTemplateReleases(templatesAmount)
-        .map(client.createCis)
+        .generateTemplateReleases(templatesAmount, generateComments)
+        .map(client.createReleaseAndRelatedCis)
 
       val createAutomatedTemplatesFutures = releaseGenerator
-        .generateAutomatedTemplates(automatedTemplatesAmount)
-        .map(client.createCis)
+        .generateAutomatedTemplates(automatedTemplatesAmount, generateComments)
+        .map(client.createReleaseAndRelatedCis)
 
       val createActiveReleasesFutures = releaseGenerator
-        .generateActiveReleases(activeReleasesAmount)
-        .map(client.createCis)
+        .generateActiveReleases(activeReleasesAmount, generateComments)
+        .map(client.createReleaseAndRelatedCis)
 
-      val (cis, completedIds) = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
+      val completedReleases = releaseGenerator.generateCompletedReleases(completedReleasesAmount, generateComments)
+      val completedReleaseIds = completedReleases.map(_.release.id)
 
-      val createCompletedReleasesFutures = cis.map(client.createCis)
+      val createCompletedReleasesFutures = completedReleases.map(client.createReleaseAndRelatedCis)
 
       sequence(
         createTemplateReleasesFutures ++
           createAutomatedTemplatesFutures ++
           createActiveReleasesFutures ++
           createCompletedReleasesFutures
-      ).map(f => f -> completedIds)
+      ).map(f => f -> completedReleaseIds)
     })
   })
 
   val allFoldersAndReleasesWithDependencies = if (createDependencyReleases) {
-    allFoldersAndReleasesFuture.flatMap { case (_, ids) =>
-      sequence(releaseGenerator.generateDepRelease(ids, completedReleasesAmount).map(client.createCis))
+    allFoldersAndReleasesFuture.flatMap { case (_, completedReleaseIds) =>
+      sequence(
+        releaseGenerator.generateReleasesDependingOn(completedReleaseIds, completedReleasesAmount)
+          .map(client.createRelease)
+      )
     }
   } else {
     allFoldersAndReleasesFuture
@@ -113,9 +117,9 @@ object Main extends App with LazyLogging {
 
   val allWithDependencyTrees = if (dependencyTreeAmount > 0) {
     allFoldersAndReleasesWithDependencies.flatMap(_ => {
-      sequential(releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth)) {
-        client.createCis
-      }
+      sequential(
+        releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth)
+      )(client.createReleaseAndRelatedCis)
     })
   } else {
     allFoldersAndReleasesWithDependencies

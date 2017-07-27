@@ -41,34 +41,47 @@ package object domain {
                      startDate: ZonedDateTime,
                      endDate: Option[ZonedDateTime],
                      allowConcurrentReleasesFromTrigger: Boolean = true,
-                     `type`: String = "xlrelease.Release") extends PlanItem
+                     `type`: String = "xlrelease.Release",
+                     var phases: Seq[Phase] = Seq(),
+                     var attachments: Seq[Attachment] = Seq(),
+                     var releaseTriggers: Seq[ReleaseTrigger] = Seq()) extends PlanItem
 
   case class Phase(id: String,
                    title: String,
                    `type`: String = "xlrelease.Phase",
                    color: String = "#009CDB",
-                   status: String = "PLANNED") extends PlanItem
+                   status: String = "PLANNED",
+                   var tasks: Seq[AbstractTask] = Seq()) extends PlanItem
 
-  abstract class AbstractTask(id: String,
-                              title: String,
-                              `type`: String,
-                              status: String = "PLANNED",
-                              attachments: List[String] = List()
-                             ) extends PlanItem
+  trait AbstractTask extends PlanItem {
+    def attachments: Seq[String]
+    var comments: Seq[Comment]
+  }
 
   case class Task(id: String,
                   title: String,
                   `type`: String = "xlrelease.Task",
                   status: String,
-                  attachments: List[String]
-                 ) extends AbstractTask(id, title, `type`, status, attachments)
+                  attachments: Seq[String],
+                  var comments: Seq[Comment] = Seq()
+                 ) extends AbstractTask
 
   case class ScriptTask(id: String,
                         title: String,
                         `type`: String = "xlrelease.ScriptTask",
                         status: String = "PLANNED",
-                        attachments: List[String],
-                        script: String) extends AbstractTask(id, title, "xlrelease.ScriptTask", status, attachments)
+                        script: String,
+                        attachments: Seq[String] = Seq(),
+                        var comments: Seq[Comment] = Seq()
+                       ) extends AbstractTask
+
+  case class GateTask(id: String,
+                      title: String,
+                      `type`: String = "xlrelease.GateTask",
+                      status: String = "PLANNED",
+                      attachments: Seq[String] = Seq(),
+                      var comments: Seq[Comment] = Seq(),
+                      var dependencies: Seq[Dependency] = Seq()) extends AbstractTask
 
   case class Comment(id: String,
                      text: String,
@@ -85,13 +98,15 @@ package object domain {
                         color: String = "#c3d4ef",
                         `type`: String = "xlrelease.SpecialDay") extends Ci
 
-  case class Directory(id: String, `type`: String = "core.Directory") extends Ci
+  trait ActivityLogCi extends Ci
+
+  case class Directory(id: String, `type`: String = "core.Directory") extends ActivityLogCi
 
   case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
 
   case class Attachment(id: String, fileUri: String, `type`: String = "xlrelease.Attachment") extends Ci
 
-  case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends Ci
+  case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends ActivityLogCi
 
   case class Folder(id: String,
                     title: String,
@@ -111,6 +126,9 @@ package object domain {
                             releaseTitle: String,
                             enabled: Boolean = false,
                             initialFire: Boolean = false) extends Ci
+
+
+  case class ReleaseAndRelatedCis(release: Release, activityLogDirsAndEntries: Seq[ActivityLogCi])
 
   object Release {
     def build(title: String): Release = {
@@ -177,23 +195,28 @@ package object domain {
   }
 
   object Task {
-
-    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List()): Task = {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: Seq[String] = Seq()): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
       Task(s"$containerId/$title", title, status = status, attachments = attachments)
     }
-
-    def buildGate(title: String, containerId: String, status: String = "COMPLETED"): Task =
-      build(title, containerId, status).copy(`type` = "xlrelease.GateTask")
   }
 
   object ScriptTask {
-    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: List[String] = List(), script: String): ScriptTask = {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: Seq[String] = Seq(), script: String): ScriptTask = {
       ScriptTask(id = s"$containerId/$title",
         title = title,
         status = status,
         attachments = attachments,
         script = script)
+    }
+  }
+
+  object GateTask {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: Seq[String] = Seq()): GateTask = {
+      GateTask(id = s"$containerId/$title",
+        title = title,
+        status = status,
+        attachments = attachments)
     }
   }
 

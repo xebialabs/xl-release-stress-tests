@@ -7,8 +7,8 @@ There are two projects in this repository :
 
 ## Requirements
 
-- Java 7 SDK
-- XL Release 4.6.0 or greater
+- Java 8 SDK
+- XL Release 7.1.0 or greater. For earlier versions of XL Release use v0.2.2.
 
 # Data Generator
 
