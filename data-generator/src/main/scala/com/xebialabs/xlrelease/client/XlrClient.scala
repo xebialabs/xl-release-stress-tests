@@ -53,7 +53,7 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
       logger.debug(i.toString)
     }
     val loggingResp = (i: HttpResponse) => {
-      logger.info(s"Request $requestNum execution done with ${i.status}")
+      logger.info(s"Request $requestNum [${req.toString}] execution done with ${i.status}")
       logger.debug(i.toString)
     }
 
