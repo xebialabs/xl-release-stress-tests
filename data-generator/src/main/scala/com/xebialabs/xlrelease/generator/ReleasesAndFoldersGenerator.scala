@@ -286,7 +286,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     val releaseAttachments: Seq[Attachment] = Seq(makeAttachments(release.id))
     val activityLogs = makeActivityLogs(10, release.id)
 
-    (phases, taskAttachments ++ releaseAttachments, activityLogs)
+    (phases, Seq(), Seq())
   }
 
   private def makeComment(parentId: String): Comment =
@@ -298,8 +298,8 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
                                         : (AbstractTask, Option[Attachment]) = {
     if (isFirstTaskOfPhase(taskNumber)) {
       val attachment = makeAttachments(releaseId)
-      val task = makeTask(phase, taskNumber, automated, Seq(attachment.id))
-      (task, Some(attachment))
+      val task = makeTask(phase, taskNumber, automated, Seq())
+      (task, None)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = GateTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
       dependsOn.zipWithIndex.map {
