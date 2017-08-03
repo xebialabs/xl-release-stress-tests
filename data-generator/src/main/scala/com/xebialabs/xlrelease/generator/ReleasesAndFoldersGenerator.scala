@@ -223,7 +223,8 @@ class ReleasesAndFoldersGenerator {
     val releaseAttachments: Seq[Ci] = makeAttachments(1, release.id)
     val activityLogs = makeActivityLogs(10, release.id)
 
-    phases ++ cis ++ releaseAttachments ++ activityLogs
+    // phases ++ cis ++ releaseAttachments ++ activityLogs
+    phases ++ cis ++ activityLogs
   }
 
   private def acceptsComment(ci: Ci): Boolean = {
@@ -236,9 +237,9 @@ class ReleasesAndFoldersGenerator {
   private def makeTaskCis(phase: Phase, phaseNumber: Int, taskNumber: Int, automated: Boolean, releaseId: String, dependsOn: Seq[String])
                          (implicit config: Config): Seq[Ci] = {
     if (isFirstTaskOfPhase(taskNumber)) {
-      val attachment = makeAttachments(1, releaseId).head
-      val task = makeTask(phase, taskNumber, automated, List(attachment.id))
-      Seq(task, attachment)
+      //val attachment = makeAttachments(1, releaseId).head
+      val task = makeTask(phase, taskNumber, automated, List.empty)) // List(attachment.id))
+      Seq(task) //, attachment)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = Task.buildGate(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
       dependsOn.view.zipWithIndex.map {
