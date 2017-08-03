@@ -238,7 +238,7 @@ class ReleasesAndFoldersGenerator {
                          (implicit config: Config): Seq[Ci] = {
     if (isFirstTaskOfPhase(taskNumber)) {
       //val attachment = makeAttachments(1, releaseId).head
-      val task = makeTask(phase, taskNumber, automated, List.empty)) // List(attachment.id))
+      val task = makeTask(phase, taskNumber, automated, List.empty) // List(attachment.id))
       Seq(task) //, attachment)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = Task.buildGate(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
