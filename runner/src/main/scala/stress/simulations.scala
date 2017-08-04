@@ -87,7 +87,7 @@ class RealisticSimulation extends Simulation {
   setUp(
     releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod),
     opsScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod),
-    opsBulkScenario(repeats).inject(rampUsers(RunnerConfig.input.opsBulk) over rampUpPeriod),
+//    opsBulkScenario(repeats).inject(rampUsers(RunnerConfig.input.opsBulk) over rampUpPeriod),
     developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod)
   ).protocols(httpProtocol)
 }
