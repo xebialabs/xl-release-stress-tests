@@ -34,6 +34,20 @@ object Releases {
       .body(RawFileBody("release-search-active-body.json")).asJSON
   )
 
+  def queryMutable(page: Int): ChainBuilder = exec(
+    http("All mutable [BULK] releases")
+      .post("/releases/search")
+      .queryParam("depth", "2")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", page)
+      .body(RawFileBody("release-search-mutable-body.json")).asJSON
+      .check(
+        jsonPath("$['cis'][*]['id']")
+          .findAll
+          .saveAs("mutableReleaseIds")
+      )
+  )
+
   def queryAllTreeReleases: ChainBuilder = exec(
     http("All active tree releases")
       .post("/releases/search")

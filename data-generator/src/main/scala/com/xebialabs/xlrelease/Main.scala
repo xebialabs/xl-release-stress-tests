@@ -18,6 +18,7 @@ object Main extends App with LazyLogging {
 
   private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
+  private val mutableReleasesAmount = config.getInt("xl.data-generator.mutable-releases")
   private val templatesAmount = config.getInt("xl.data-generator.templates")
   private val automatedTemplatesAmount = config.getInt("xl.data-generator.automated-templates")
   private val createDependencyReleases = config.getBoolean("xl.data-generator.create-dependency-releases")
@@ -78,6 +79,10 @@ object Main extends App with LazyLogging {
 
     dependantReleaseFuture.flatMap(_ => {
 
+      val createMutableReleasesFutures = releaseGenerator
+        .generateMutableReleases(mutableReleasesAmount, generateComments)
+        .map(client.createReleaseAndRelatedCis)
+
       val createTemplateReleasesFutures = releaseGenerator
         .generateTemplateReleases(templatesAmount, generateComments)
         .map(client.createReleaseAndRelatedCis)
@@ -96,6 +101,7 @@ object Main extends App with LazyLogging {
       val createCompletedReleasesFutures = completedReleases.map(client.createReleaseAndRelatedCis)
 
       sequence(
+        createMutableReleasesFutures ++
         createTemplateReleasesFutures ++
           createAutomatedTemplatesFutures ++
           createActiveReleasesFutures ++

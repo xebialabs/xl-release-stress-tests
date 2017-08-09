@@ -46,18 +46,23 @@ object Scenarios {
   }
 
   def releaseManagerChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder = {
-    exec(Folders.open)
-      .exec(Folders.openFolderTemplates)
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Folders.openFolderReleases)
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Releases.queryAllActive)
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Releases.queryAllCompleted)
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Templates.open)
-      .pause(opsPauseMin, opsPauseMax)
-      .exec(Calendar.open)
+    exec(Folders.open)  // Open folders
+      .exec(Folders.openFolderTemplates)  // List templates in that folder
+      .pause(opsPauseMin, opsPauseMax)  // wait
+      .exec(Folders.openFolderReleases)      // list planned releases in that folder
+      // start two releases from that folder, if there are any planned releases
+      .pause(opsPauseMin, opsPauseMax)      // wait
+      .exec(Releases.queryAllActive)  // Open releases overview - active releases
+      // Abort two random releases, if any
+      .pause(opsPauseMin, opsPauseMax) // wait
+      // Open releases overview - planned releases
+      // Open a random release
+      // wait
+      .exec(Releases.queryAllCompleted) // open releases overview - completed release
+      .pause(opsPauseMin, opsPauseMax)  // wait
+      .exec(Templates.open) // open templates overview
+      .pause(opsPauseMin, opsPauseMax)  // wait
+      .exec(Calendar.open)  // open calendar
   }
 
   def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration): ChainBuilder = {
@@ -119,6 +124,14 @@ object Scenarios {
           .exec(Tasks.removeTasks)
           .pause(opsBulkPauseMin, opsBulkPauseMax)
       )
+  }
+
+  def opsBulkReleaseScenario(): ScenarioBuilder = {
+    /*
+    Depending on how many releases there are, bulk start and abort them 50/50
+     */
+    scenario("Ops person (bulk start/abort releases)")
+      .exec(Releases.queryMutable())
   }
 
   def developmentTeamScenario500(repeats: Int): ScenarioBuilder = scenario("Team of developers")
