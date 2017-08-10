@@ -25,6 +25,20 @@ object Releases {
       .exec(http("Post release").post("/releases").body(body).asJSON)
       .exec(http("Get tasks-definitions").get("/tasks/task-definitions"))
 
+  def queryAllPlanned: ChainBuilder = exec(
+    http("All planned releases")
+      .post("/releases/search")
+      .queryParam("depth", "2")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .body(RawFileBody("release-search-planned-body.json")).asJSON
+      .check(
+        jsonPath("$['cis'][*]['id']")
+          .findAll
+          .saveAs("releasesPlanned")
+      )
+  )
+
   def queryAllActive: ChainBuilder = exec(
     http("All active releases")
       .post("/releases/search")
@@ -32,20 +46,19 @@ object Releases {
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .body(RawFileBody("release-search-active-body.json")).asJSON
-  )
-
-  def queryMutable(page: Int): ChainBuilder = exec(
-    http("All mutable [BULK] releases")
-      .post("/releases/search")
-      .queryParam("depth", "2")
-      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
-      .queryParam("page", page)
-      .body(RawFileBody("release-search-mutable-body.json")).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
-          .saveAs("mutableReleaseIds")
+          .saveAs("releasesActive")
       )
+  )
+
+  def queryAllCompleted: ChainBuilder = exec(
+    http("All completed releases")
+      .post("/releases/search")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .body(RawFileBody("release-search-completed-body.json")).asJSON
   )
 
   def queryAllTreeReleases: ChainBuilder = exec(
@@ -67,16 +80,7 @@ object Releases {
       session.set("releaseId", releaseIds(Random.nextInt(releaseIds.size)))
     })
 
-  def queryAllCompleted: ChainBuilder = exec(
-    http("All completed releases")
-      .post("/releases/search")
-      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
-      .queryParam("page", "0")
-      .body(RawFileBody("release-search-completed-body.json")).asJSON
-  )
-
-  def getRelease: ChainBuilder =
-    exec(http("Get release").get("/releases/${releaseId}"))
+  def getRelease: ChainBuilder = exec(http("Get release").get("/releases/${releaseId}"))
 
   def getReleasePlannedTaskIds: ChainBuilder = exec(
     http("Get release taskIds")
@@ -134,6 +138,18 @@ object Releases {
           .post("/releases/${createdReleaseId}/start")
       )
 
+  def startReleases: ChainBuilder = exec(
+    http("Start releases")
+      .post("/releases/start")
+      .body(StringBody("${releasesToStart.jsonStringify()}"))
+      .asJSON
+  )
+
+  def abortReleases: ChainBuilder = exec(
+    http("Abort releases")
+      .post("/releases/abort")
+      .body(StringBody("${releasesToAbort.jsonStringify()}"))
+  )
 
   private class ReplacingFileBody(filePath: String, sessionAttributes: Seq[String]) extends Body {
 

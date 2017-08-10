@@ -7,10 +7,14 @@ import io.gatling.http.request.StringBody
 import stress.config.RunnerConfig
 
 object Folders {
-  val RELEASES_FILTER = """{"active":true,"planned":true,"completed":false,"onlyMine":false,"onlyFlagged":false,"filter":"","parentId":"Applications/Folder_1"}"""
+
+  def releasesFilter(folder: String = "Applications/Folder_1") = {
+    println("folder ID: ", folder)
+    s"""{"active":false,"planned":true,"completed":false,"onlyMine":false,"onlyFlagged":false,"filter":"","parentId":"$folder"}"""
+  }
 
   def open: ChainBuilder = exec(
-    http("Open all folders")
+    http("Open all folders, first level")
       .get("/api/v1/folders/list?depth=10&permissions=true")
       .asJSON
       .check(
@@ -20,14 +24,33 @@ object Folders {
       )
   )
 
-  def openFolderReleases: ChainBuilder = exec(
-    http("Open folder releases")
-      .post("/releases/search")
-      .body(StringBody(RELEASES_FILTER))
-      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
-      .queryParam("page", "0")
+  def openChild: ChainBuilder = exec(
+    http("Open all folders, second level")
+      .get("/api/v1/folders/list?depth=10&permissions=true")
       .asJSON
+      .check(
+        jsonPath("$[${parentIdx}]['children'][*]['id']")
+          //  .transformOption(ids =>)
+          //.transformOption(ids => ids.orElse(Some("a")).saveAs("user_level"))
+          .findAll
+          .saveAs("childFolderIds")
+      )
   )
+
+  def openFolderReleasesPlanned: ChainBuilder =
+    exec(
+        http("Open folder planned releases")
+          .post("/releases/search")
+          .body(StringBody(releasesFilter("${folderId}")))
+          .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+          .queryParam("page", "0")
+          .asJSON
+          .check(
+            jsonPath("$['cis'][*]['id']")
+              .findAll
+              .saveAs("folderReleasesPlanned")
+          )
+      )
 
   def openFolderTemplates: ChainBuilder = exec(
     http("Open folder templates")

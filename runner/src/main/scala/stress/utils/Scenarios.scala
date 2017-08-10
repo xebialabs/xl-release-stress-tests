@@ -9,6 +9,7 @@ import stress.config.RunnerConfig._
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
+import scala.util.Random
 
 object Scenarios {
 
@@ -45,25 +46,45 @@ object Scenarios {
       .exec(Calendar.open)
   }
 
-  def releaseManagerChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder = {
-    exec(Folders.open)  // Open folders
-      .exec(Folders.openFolderTemplates)  // List templates in that folder
-      .pause(opsPauseMin, opsPauseMax)  // wait
-      .exec(Folders.openFolderReleases)      // list planned releases in that folder
-      // start two releases from that folder, if there are any planned releases
-      .pause(opsPauseMin, opsPauseMax)      // wait
-      .exec(Releases.queryAllActive)  // Open releases overview - active releases
-      // Abort two random releases, if any
-      .pause(opsPauseMin, opsPauseMax) // wait
-      // Open releases overview - planned releases
-      // Open a random release
-      // wait
-      .exec(Releases.queryAllCompleted) // open releases overview - completed release
-      .pause(opsPauseMin, opsPauseMax)  // wait
-      .exec(Templates.open) // open templates overview
-      .pause(opsPauseMin, opsPauseMax)  // wait
-      .exec(Calendar.open)  // open calendar
-  }
+  def releaseManagerChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder =
+    exec(Folders.open)
+      .exec(Folders.openFolderTemplates)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(session => {
+        val numOfParents = session("folderIds").validate[Seq[String]].get.size
+        session.set("parentIdx", Random nextInt numOfParents)
+      })
+      .exec(Folders.openChild)
+      .exec(session => {
+        val childFolderIds = session("childFolderIds").validate[Seq[String]]
+        session.set("folderId", (Random shuffle childFolderIds.get).head)
+      })
+      .exec(Folders.openFolderReleasesPlanned)
+      .exec(session => {
+        val plannedReleaseIds = session("folderReleasesPlanned").validate[Seq[String]]
+        session.set("releasesToStart", plannedReleaseIds.map(ids => ids take 2))
+      })
+      .exec(Releases.startReleases)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllActive)
+      .exec(session => {
+        val activeReleaseIds = session("releasesActive").validate[Seq[String]]
+        session.set("releasesToAbort", activeReleaseIds.map(ids => Random shuffle ids take 2))
+      })
+      .exec(Releases.abortReleases)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllPlanned)
+      .exec(session => {
+        val plannedReleases = session("releasesPlanned").validate[Seq[String]]
+        session.set("releaseId", (Random shuffle plannedReleases.get).head)
+      })
+      .exec(Releases.getRelease)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllCompleted)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Templates.open)
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Calendar.open)
 
   def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration): ChainBuilder = {
     exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
@@ -126,14 +147,6 @@ object Scenarios {
       )
   }
 
-  def opsBulkReleaseScenario(): ScenarioBuilder = {
-    /*
-    Depending on how many releases there are, bulk start and abort them 50/50
-     */
-    scenario("Ops person (bulk start/abort releases)")
-      .exec(Releases.queryMutable())
-  }
-
   def developmentTeamScenario500(repeats: Int): ScenarioBuilder = scenario("Team of developers")
     .repeat(repeats)(
       repeat(2) {
@@ -152,7 +165,7 @@ object Scenarios {
       exec(Folders.open)
         .exec(Folders.openFolderTemplates)
         .pause(opsPauseMin, opsPauseMax)
-        .exec(Folders.openFolderReleases)
+        .exec(Folders.openFolderReleasesPlanned)
         .pause(opsPauseMin, opsPauseMax)
         .exec(Releases.queryAllActive)
         .pause(opsPauseMin, opsPauseMax)

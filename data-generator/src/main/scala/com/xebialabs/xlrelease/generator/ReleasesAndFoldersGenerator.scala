@@ -31,8 +31,8 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     attachmentIdCounter
   }
 
-  def generateMutableReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "PLANNED", n => s"[BULK] Release for starting/aborting $n", genComments = genComments)
+  def generatePlannedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
+    generateReleases(amount, "PLANNED", n => s"Stress test planned release $n", genComments = genComments)
   }
 
   def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {

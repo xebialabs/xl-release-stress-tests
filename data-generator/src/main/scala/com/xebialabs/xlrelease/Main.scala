@@ -16,9 +16,9 @@ object Main extends App with LazyLogging {
   implicit val config = parseResources("data-generator.conf")
     .withFallback(ConfigFactory.load())
 
-  private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
+  private val plannedReleasesAmount = config.getInt("xl.data-generator.planned-releases")
   private val activeReleasesAmount = config.getInt("xl.data-generator.active-releases")
-  private val mutableReleasesAmount = config.getInt("xl.data-generator.mutable-releases")
+  private val completedReleasesAmount = config.getInt("xl.data-generator.completed-releases")
   private val templatesAmount = config.getInt("xl.data-generator.templates")
   private val automatedTemplatesAmount = config.getInt("xl.data-generator.automated-templates")
   private val createDependencyReleases = config.getBoolean("xl.data-generator.create-dependency-releases")
@@ -30,6 +30,7 @@ object Main extends App with LazyLogging {
   private val dependencyTreeDepth = config.getInt("xl.data-generator.dependency-tree-depth")
   private val dependencyTreeBreadth = config.getInt("xl.data-generator.dependency-tree-breadth")
 
+  logger.info("Planned releases: {}", plannedReleasesAmount.toString)
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
   logger.info("Templates: {}", templatesAmount.toString)
@@ -79,8 +80,8 @@ object Main extends App with LazyLogging {
 
     dependantReleaseFuture.flatMap(_ => {
 
-      val createMutableReleasesFutures = releaseGenerator
-        .generateMutableReleases(mutableReleasesAmount, generateComments)
+      val createPlannedReleases = releaseGenerator
+        .generatePlannedReleases(plannedReleasesAmount, generateComments)
         .map(client.createReleaseAndRelatedCis)
 
       val createTemplateReleasesFutures = releaseGenerator
@@ -101,8 +102,8 @@ object Main extends App with LazyLogging {
       val createCompletedReleasesFutures = completedReleases.map(client.createReleaseAndRelatedCis)
 
       sequence(
-        createMutableReleasesFutures ++
-        createTemplateReleasesFutures ++
+        createPlannedReleases ++
+          createTemplateReleasesFutures ++
           createAutomatedTemplatesFutures ++
           createActiveReleasesFutures ++
           createCompletedReleasesFutures
