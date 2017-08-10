@@ -35,6 +35,7 @@ object Releases {
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
+          .transformOption(data => data.orElse(Some(Seq.empty[String])))
           .saveAs("releasesPlanned")
       )
   )
@@ -49,6 +50,7 @@ object Releases {
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
+          .transformOption(data => data.orElse(Some(Seq.empty[String])))
           .saveAs("releasesActive")
       )
   )

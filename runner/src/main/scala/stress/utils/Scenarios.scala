@@ -50,33 +50,36 @@ object Scenarios {
     exec(Folders.open)
       .exec(Folders.openFolderTemplates)
       .pause(opsPauseMin, opsPauseMax)
+      .exec(Releases.queryAllPlanned)
       .exec(session => {
-        val numOfParents = session("folderIds").validate[Seq[String]].get.size
-        session.set("parentIdx", Random nextInt numOfParents)
-      })
-      .exec(Folders.openChild)
-      .exec(session => {
-        val childFolderIds = session("childFolderIds").validate[Seq[String]]
-        session.set("folderId", (Random shuffle childFolderIds.get).head)
-      })
-      .exec(Folders.openFolderReleasesPlanned)
-      .exec(session => {
-        val plannedReleaseIds = session("folderReleasesPlanned").validate[Seq[String]]
-        session.set("releasesToStart", plannedReleaseIds.map(ids => ids take 2))
+        val plannedReleases = session("releasesPlanned").asOption[Seq[String]]
+          .map(ids => ids take 2 map Converters.toDomainId).getOrElse(Seq.empty[String])
+
+        println("Planned releases IDs: ", plannedReleases)
+        session.set("releasesToStart", plannedReleases)
       })
       .exec(Releases.startReleases)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllActive)
       .exec(session => {
-        val activeReleaseIds = session("releasesActive").validate[Seq[String]]
-        session.set("releasesToAbort", activeReleaseIds.map(ids => Random shuffle ids take 2))
+        val releasesToAbort = session("releasesActive").asOption[Seq[String]]
+          .map(ids => Random shuffle ids take 2 map Converters.toDomainId)
+          .getOrElse(Seq.empty[String])
+
+        println("Releases to abort IDs: ", releasesToAbort)
+        session.set("releasesToAbort", releasesToAbort)
       })
       .exec(Releases.abortReleases)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllPlanned)
       .exec(session => {
-        val plannedReleases = session("releasesPlanned").validate[Seq[String]]
-        session.set("releaseId", (Random shuffle plannedReleases.get).head)
+        val randomPlannedRelease = session("releasesPlanned").asOption[Seq[String]]
+          .map(ids => Random shuffle ids)
+          .getOrElse(Seq.empty[String])
+          .headOption.getOrElse("")
+
+        println("Random planned release ID: ", randomPlannedRelease)
+        session.set("releaseId", randomPlannedRelease)
       })
       .exec(Releases.getRelease)
       .pause(opsPauseMin, opsPauseMax)

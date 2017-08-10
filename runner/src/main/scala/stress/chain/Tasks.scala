@@ -4,7 +4,7 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
-import stress.utils.TaskIds
+import stress.utils.{Converters, TaskIds}
 
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
@@ -69,7 +69,7 @@ object Tasks {
   def commentOnTasks(): ChainBuilder =
     exec(session => {
       session.set("commentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}],
            |"commentText":"This task needs some comments"}""".stripMargin)
     })
     .exec(
@@ -81,7 +81,7 @@ object Tasks {
 
   def changeAssignmentOnTasks(): ChainBuilder = exec(session => {
     session.set("changeAssignmentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}],
            |"team":"Release Admin", "owner": "admin"}""".stripMargin)
     })
     .exec(
@@ -93,7 +93,7 @@ object Tasks {
 
   def removeTasks(): ChainBuilder = exec(session => {
     session.set("removeTasksBody",
-      s"""[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
+      s"""[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
   })
     .exec(
       http("Remove tasks")
