@@ -52,34 +52,22 @@ object Scenarios {
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllPlanned)
       .exec(session => {
-        val plannedReleases = session("releasesPlanned").asOption[Seq[String]]
-          .map(ids => ids take 2 map Converters.toDomainId).getOrElse(Seq.empty[String])
-
-        println("Planned releases IDs: ", plannedReleases)
-        session.set("releasesToStart", plannedReleases)
+        val releasesToStart = session.getIds(Releases.PLANNED_RELEASES_ID) take 2 map Converters.toDomainId
+        session.set(Releases.START_RELEASES_SESSION_ID, releasesToStart)
       })
       .exec(Releases.startReleases)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllActive)
       .exec(session => {
-        val releasesToAbort = session("releasesActive").asOption[Seq[String]]
-          .map(ids => Random shuffle ids take 2 map Converters.toDomainId)
-          .getOrElse(Seq.empty[String])
-
-        println("Releases to abort IDs: ", releasesToAbort)
-        session.set("releasesToAbort", releasesToAbort)
+        val releasesToAbort = (Random shuffle session.getIds(Releases.ACTIVE_RELEASES_ID)) take 2 map Converters.toDomainId
+        session.set(Releases.ABORT_RELEASES_SESSION_ID, releasesToAbort)
       })
       .exec(Releases.abortReleases)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllPlanned)
       .exec(session => {
-        val randomPlannedRelease = session("releasesPlanned").asOption[Seq[String]]
-          .map(ids => Random shuffle ids)
-          .getOrElse(Seq.empty[String])
-          .headOption.getOrElse("")
-
-        println("Random planned release ID: ", randomPlannedRelease)
-        session.set("releaseId", randomPlannedRelease)
+        val randomPlannedRelease = (Random shuffle session.getIds(Releases.PLANNED_RELEASES_ID)).headOption.getOrElse("")
+        session.set(Releases.RELEASE_SESSION_ID, randomPlannedRelease)
       })
       .exec(Releases.getRelease)
       .pause(opsPauseMin, opsPauseMax)
@@ -192,4 +180,8 @@ object Scenarios {
       )
     )
 
+  private implicit class EnhancedSession(session: Session) {
+    def getIds(attribute: String): Seq[String] =
+      session(attribute).asOption[Seq[String]].getOrElse(Seq.empty[String])
+  }
 }

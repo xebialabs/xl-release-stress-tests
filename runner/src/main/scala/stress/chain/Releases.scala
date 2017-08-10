@@ -17,6 +17,11 @@ import stress.config.RunnerConfig
 import scala.util.Random
 
 object Releases {
+  val RELEASE_SESSION_ID = "release_id"
+  val PLANNED_RELEASES_ID = "releases_planned"
+  val ACTIVE_RELEASES_ID = "releases_active"
+  val START_RELEASES_SESSION_ID = "releases_start"
+  val ABORT_RELEASES_SESSION_ID = "releases_abort"
 
   val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
 
@@ -36,7 +41,7 @@ object Releases {
         jsonPath("$['cis'][*]['id']")
           .findAll
           .transformOption(data => data.orElse(Some(Seq.empty[String])))
-          .saveAs("releasesPlanned")
+          .saveAs(PLANNED_RELEASES_ID)
       )
   )
 
@@ -51,7 +56,7 @@ object Releases {
         jsonPath("$['cis'][*]['id']")
           .findAll
           .transformOption(data => data.orElse(Some(Seq.empty[String])))
-          .saveAs("releasesActive")
+          .saveAs(ACTIVE_RELEASES_ID)
       )
   )
 
@@ -82,11 +87,11 @@ object Releases {
       session.set("releaseId", releaseIds(Random.nextInt(releaseIds.size)))
     })
 
-  def getRelease: ChainBuilder = exec(http("Get release").get("/releases/${releaseId}"))
+  def getRelease: ChainBuilder = exec(http("Get release").get(s"/releases/$${$RELEASE_SESSION_ID}"))
 
   def getReleasePlannedTaskIds: ChainBuilder = exec(
     http("Get release taskIds")
-      .get("/releases/${releaseId}")
+      .get(s"/releases/$${$RELEASE_SESSION_ID}")
       .asJSON
       .check(
         jsonPath("$.phases[*].tasks[?(@.status == 'PLANNED')].id")
@@ -143,14 +148,14 @@ object Releases {
   def startReleases: ChainBuilder = exec(
     http("Start releases")
       .post("/releases/start")
-      .body(StringBody("${releasesToStart.jsonStringify()}"))
+      .body(StringBody(s"$${$START_RELEASES_SESSION_ID.jsonStringify()}"))
       .asJSON
   )
 
   def abortReleases: ChainBuilder = exec(
     http("Abort releases")
       .post("/releases/abort")
-      .body(StringBody("${releasesToAbort.jsonStringify()}"))
+      .body(StringBody(s"$${$ABORT_RELEASES_SESSION_ID.jsonStringify()}"))
   )
 
   private class ReplacingFileBody(filePath: String, sessionAttributes: Seq[String]) extends Body {
@@ -169,7 +174,5 @@ object Releases {
       }
       replacedContent.map(requestBuilder.setBody)
     }
-
   }
-
 }
