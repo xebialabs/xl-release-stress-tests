@@ -25,6 +25,11 @@ object Tasks {
           .findAll.optional
           .saveAs("taskIds")
       )
+      .check(
+        jsonPath("$['releaseTasks'][*]['id']")
+          .findAll.optional
+          .saveAs("taskReleaseIds")
+      )
   )
   def open(httpName: String, filter: String): ChainBuilder = open(httpName, StringBody(filter))
 
@@ -52,7 +57,7 @@ object Tasks {
       .pause(taskPollPause)
     }
 
-  def commentOnRandomTask(): ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
+  def commentOnRandomTask: ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
         .post("/tasks/${taskIds.random()}/comments")

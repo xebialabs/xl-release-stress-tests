@@ -77,16 +77,24 @@ object Scenarios {
       .pause(opsPauseMin, opsPauseMax)
       .exec(Calendar.open)
 
-  def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration): ChainBuilder = {
+  def opsChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration, taskPollDuration: Duration, taskPollPause: Duration): ChainBuilder =
     exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration, taskPollPause))
-      .exec(Calendar.open)
+      .exec(Tasks.commentOnRandomTask)
       .pause(opsPauseMin, opsPauseMax)
-      .exec(Tasks.commentOnRandomTask())
+      .exec(Tasks.open("Get list of all tasks", Tasks.ALL_TASKS_FILTER))
+      .exec(session => {
+        val randomReleaseFromTasks = (Random shuffle session.getIds("taskReleaseIds")).headOption.getOrElse("")
+        session.set(Releases.RELEASE_SESSION_ID, randomReleaseFromTasks)
+      })
+      .exec(Releases.getReleasePlannedTaskIds)
+      .exec(session => session.set("taskIds", session.getIds("taskIds") takeRight 2))
+      .exec(Tasks.changeAssignmentOnTasks())
+      .pause(opsPauseMin, opsPauseMax)
+      .exec(Tasks.removeTasks())
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.changeTeamAssignmentOfRandomTask())
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.openAndPoll("Get list of my tasks", Tasks.MY_TASKS_FILTER, taskPollDuration / 1.7, taskPollPause))
-  }
 
   def developmentTeamChain(devPause: Duration): ChainBuilder = {
     exec(Releases.createFromTemplate("create-release-many-automated-tasks.json", "Many automated tasks"))
