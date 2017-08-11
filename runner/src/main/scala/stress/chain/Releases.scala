@@ -23,7 +23,7 @@ object Releases {
   val START_RELEASES_SESSION_ID = "releases_start"
   val ABORT_RELEASES_SESSION_ID = "releases_abort"
 
-  val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "filter":"Tree"}"""
+  val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "title":"Tree"}"""
 
   def create(body: Body): ChainBuilder =
     Templates.open
