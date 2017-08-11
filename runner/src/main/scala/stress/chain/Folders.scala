@@ -29,11 +29,6 @@ object Folders {
           .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
           .queryParam("page", "0")
           .asJSON
-          .check(
-            jsonPath("$['cis'][*]['id']")
-              .findAll
-              .saveAs("folderReleasesPlanned")
-          )
       )
 
   def openFolderTemplates: ChainBuilder = exec(
