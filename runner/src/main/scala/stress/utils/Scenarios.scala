@@ -6,6 +6,7 @@ import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
 import stress.chain._
 import stress.config.RunnerConfig._
+import stress.filters.ReleaseSearchFilter
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -20,7 +21,7 @@ object Scenarios {
     .exec(Releases.queryAllActive)
 
   val queryPipelinesScenario: ScenarioBuilder = scenario("Query pipelines")
-    .exec(Pipeline.query(StringBody("""{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+    .exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
 
   val openCalendarScenario: ScenarioBuilder = scenario("Calendar page")
     .exec(Calendar.open)
@@ -41,7 +42,7 @@ object Scenarios {
     .exec(Templates.open)
 
   def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
-    exec(Pipeline.query(StringBody( """{"onlyMine":false,"onlyFlagged":false,"filter":"","active":true}""")))
+    exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
       .exec(Calendar.open)
   }

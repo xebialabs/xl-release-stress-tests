@@ -5,10 +5,16 @@ import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
 import stress.config.RunnerConfig
+import stress.filters.ReleaseSearchFilter
 
 object Folders {
 
-  val RELEASES_FILTER = s"""{"active":false,"planned":true,"completed":false,"onlyMine":false,"onlyFlagged":false,"filter":"","parentId":"Applications/Folder_1"}"""
+  val TEMPLATES_FILTER =
+    s"""{
+        "tags":[],
+        "title":"",
+        "parentId":"Applications/Folder_1"
+        }"""
 
   def open: ChainBuilder = exec(
     http("Open folders view")
@@ -25,7 +31,7 @@ object Folders {
     exec(
         http("Open folder planned releases")
           .post("/releases/search")
-          .body(StringBody(RELEASES_FILTER))
+          .body(StringBody(ReleaseSearchFilter(planned = true, parentId = "Applications/Folder_1")))
           .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
           .queryParam("page", "0")
           .asJSON
@@ -34,7 +40,7 @@ object Folders {
   def openFolderTemplates: ChainBuilder = exec(
     http("Open folder templates")
       .post("/releases/templates/search")
-      .body(StringBody("""{"tags":[],"title":"","parentId":"Applications/Folder_1"}"""))
+      .body(StringBody(TEMPLATES_FILTER))
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON

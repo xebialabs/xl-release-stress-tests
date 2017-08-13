@@ -13,6 +13,7 @@ import io.gatling.core.validation.Validation
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
 import stress.config.RunnerConfig
+import stress.filters.ReleaseSearchFilter
 
 import scala.util.Random
 
@@ -22,8 +23,6 @@ object Releases {
   val ACTIVE_RELEASES_ID = "releases_active"
   val START_RELEASES_SESSION_ID = "releases_start"
   val ABORT_RELEASES_SESSION_ID = "releases_abort"
-
-  val TREE_RELEASES_FILTER = """{"active":true, "planned": true, "title":"Tree"}"""
 
   def create(body: Body): ChainBuilder =
     Templates.open
@@ -36,7 +35,7 @@ object Releases {
       .queryParam("depth", "2")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(RawFileBody("release-search-planned-body.json")).asJSON
+      .body(StringBody(ReleaseSearchFilter(planned = true))).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
@@ -51,7 +50,7 @@ object Releases {
       .queryParam("depth", "2")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(RawFileBody("release-search-active-body.json")).asJSON
+      .body(StringBody(ReleaseSearchFilter(active = true))).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
@@ -65,7 +64,7 @@ object Releases {
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(RawFileBody("release-search-completed-body.json")).asJSON
+      .body(StringBody(ReleaseSearchFilter(completed = true))).asJSON
   )
 
   def queryAllTreeReleases: ChainBuilder = exec(
@@ -73,18 +72,19 @@ object Releases {
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(StringBody(TREE_RELEASES_FILTER)).asJSON
+      .body(StringBody(ReleaseSearchFilter(active = true, title = "Tree"))).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
+          .transformOption(data => data.orElse(Some(Seq.empty[String])))
           .saveAs("treeReleaseIds")
       )
   )
 
   def getRandomTreeRelease: ChainBuilder = queryAllTreeReleases
     .exec(session => {
-      val releaseIds = session.get("treeReleaseIds").as[Seq[String]]
-      session.set(RELEASE_SESSION_ID, releaseIds(Random.nextInt(releaseIds.size)))
+      val releaseIds = session.get("treeReleaseIds").asOption[Seq[String]].getOrElse(Seq.empty[String])
+      session.set(RELEASE_SESSION_ID, (Random shuffle releaseIds).headOption.getOrElse(""))
     })
 
   def getRelease: ChainBuilder = exec(http("Get release").get(s"/releases/$${$RELEASE_SESSION_ID}"))
@@ -101,10 +101,10 @@ object Releases {
   )
 
   def getDependencies: ChainBuilder =
-    exec(http("Get release dependencies").get("/dependencies/${releaseId}"))
+    exec(http("Get release dependencies").get(s"/dependencies/$${$RELEASE_SESSION_ID}"))
 
   def getDependencyTree: ChainBuilder =
-    exec(http("Get release dependency tree").get("/dependencies/${releaseId}/tree"))
+    exec(http("Get release dependency tree").get(s"/dependencies/$${$RELEASE_SESSION_ID}/tree"))
 
   def flow(release: String): ChainBuilder =
     exec(http("Get polling interval").get("/settings/polling-interval"))

@@ -4,6 +4,7 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
+import stress.filters.TaskSearchFilter
 import stress.utils.{Converters, TaskIds}
 
 import scala.concurrent.duration.Duration
@@ -11,9 +12,14 @@ import scala.language.postfixOps
 
 object Tasks {
 
-  val ALL_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":""}"""
-  val MY_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
-  val NOT_EXISTING_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}"""
+  val ALL_TASKS_FILTER = TaskSearchFilter(assignedToMe = true, assignedToMyTeams = true, assignedToOthers = true, notAssigned = true)
+  val MY_TASKS_FILTER = TaskSearchFilter(assignedToMe = true)
+  val NOT_EXISTING_TASKS_FILTER = TaskSearchFilter(
+    assignedToMe = true,
+    assignedToMyTeams = true,
+    assignedToOthers = true,
+    notAssigned = true,
+    filter = "non-existing")
 
   def open(httpName: String, filter: Body): ChainBuilder = exec(
     http(httpName)
@@ -109,7 +115,7 @@ object Tasks {
 
   // In our generated dependency tree, the gate task is the last task
   def getDependencyCandidates: ChainBuilder =
-    exec(http("Get gate task dependency candidates").get("/gates/${releaseId}-Phase5-Task10/dependency-target-candidates"))
+    exec(http("Get gate task dependency candidates").get(s"/gates/$${${Releases.RELEASE_SESSION_ID}}-Phase5-Task10/dependency-target-candidates"))
 
   private def setTeamOnRandomTask(team: Option[String]) = {
     val teamJson = team match {
