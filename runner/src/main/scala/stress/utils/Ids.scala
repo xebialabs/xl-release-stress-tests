@@ -1,5 +1,5 @@
 package stress.utils
 
-object Converters {
+object Ids {
   def toDomainId(ciId: String) = s"Applications/${ciId.replace('-', '/')}"
 }

@@ -83,7 +83,7 @@ object Releases {
 
   def getRandomTreeRelease: ChainBuilder = queryAllTreeReleases
     .exec(session => {
-      val releaseIds = session.get("treeReleaseIds").asOption[Seq[String]].getOrElse(Seq.empty[String])
+      val releaseIds = session.get("treeReleaseIds").asOption[Seq[String]].get
       session.set(RELEASE_SESSION_ID, (Random shuffle releaseIds).headOption.getOrElse(""))
     })
 
@@ -96,7 +96,7 @@ object Releases {
       .check(
         jsonPath("$.phases[*].tasks[?(@.status == 'PLANNED')].id")
           .findAll.optional
-          .saveAs("taskIds")
+          .saveAs(Tasks.TASK_IDS)
       )
   )
 

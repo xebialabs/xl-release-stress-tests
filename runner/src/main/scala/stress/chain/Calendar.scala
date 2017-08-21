@@ -11,7 +11,9 @@ object Calendar {
 
   def open: ChainBuilder = exec(
     http("Get calendar releases")
-      .post("/releases/search?depth=10&numberbypage=20")
+      .post("/releases/search")
+      .queryParam("numberbypage", 20)
+      .queryParam("depth", 10)
       .body(StringBody(ReleaseSearchFilter(
         active = true,
         from = new LocalDateTime(2014, 12, 28, 0, 0).toDate,

@@ -5,26 +5,15 @@ import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.StringBody
 import stress.config.RunnerConfig
-import stress.filters.ReleaseSearchFilter
+import stress.filters.{ReleaseSearchFilter, TemplateSearchFilter}
 
 object Folders {
-
-  val TEMPLATES_FILTER =
-    s"""{
-        "tags":[],
-        "title":"",
-        "parentId":"Applications/Folder_1"
-        }"""
-
   def open: ChainBuilder = exec(
     http("Open folders view")
-      .get("/api/v1/folders/list?depth=10&permissions=true")
+      .get("/api/v1/folders/list")
+      .queryParam("depth", 10)
+      .queryParam("permissions", true)
       .asJSON
-      .check(
-        jsonPath("$[*]['id']")
-          .findAll
-          .saveAs("folderIds")
-      )
   )
 
   def openFolderReleasesPlanned: ChainBuilder =
@@ -40,10 +29,11 @@ object Folders {
   def openFolderTemplates: ChainBuilder = exec(
     http("Open folder templates")
       .post("/releases/templates/search")
-      .body(StringBody(TEMPLATES_FILTER))
+      .body(StringBody(TemplateSearchFilter(
+        parentId = "Applications/Folder_1"
+      )))
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
       .asJSON
   )
-
 }

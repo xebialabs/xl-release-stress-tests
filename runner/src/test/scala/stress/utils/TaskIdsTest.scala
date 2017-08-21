@@ -46,7 +46,7 @@ class TaskIdsTest extends FunSpec with Matchers {
     }
 
     it("should convert taskId into domainId ") {
-      Converters.toDomainId("Release0-Phase0-Task0") shouldBe "Applications/Release0/Phase0/Task0"
+      Ids.toDomainId("Release0-Phase0-Task0") shouldBe "Applications/Release0/Phase0/Task0"
     }
 
   }

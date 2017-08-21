@@ -5,7 +5,7 @@ import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
 import stress.filters.TaskSearchFilter
-import stress.utils.{Converters, TaskIds}
+import stress.utils.{Ids, TaskIds}
 
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
@@ -14,12 +14,16 @@ object Tasks {
 
   val ALL_TASKS_FILTER = TaskSearchFilter(assignedToMe = true, assignedToMyTeams = true, assignedToOthers = true, notAssigned = true)
   val MY_TASKS_FILTER = TaskSearchFilter(assignedToMe = true)
-  val NOT_EXISTING_TASKS_FILTER = TaskSearchFilter(
+  val NON_EXISTENT_TASKS_FILTER = TaskSearchFilter(
     assignedToMe = true,
     assignedToMyTeams = true,
     assignedToOthers = true,
     notAssigned = true,
     filter = "non-existing")
+
+  val TASK_IDS = "taskIds"
+  val TASK_RELEASE_IDS = "taskReleaseIds"
+
 
   def open(httpName: String, filter: Body): ChainBuilder = exec(
     http(httpName)
@@ -29,12 +33,12 @@ object Tasks {
       .check(
         jsonPath("$['releaseTasks'][*]['tasks'][*]['id']")
           .findAll.optional
-          .saveAs("taskIds")
+          .saveAs(TASK_IDS)
       )
       .check(
         jsonPath("$['releaseTasks'][*]['id']")
           .findAll.optional
-          .saveAs("taskReleaseIds")
+          .saveAs(TASK_RELEASE_IDS)
       )
   )
   def open(httpName: String, filter: String): ChainBuilder = open(httpName, StringBody(filter))
@@ -66,7 +70,7 @@ object Tasks {
   def commentOnRandomTask: ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
-        .post("/tasks/${taskIds.random()}/comments")
+        .post(s"/tasks/$${$TASK_IDS.random()}/comments")
         .body(StringBody("""{"text":"This task needs some comments"}"""))
         .asJSON
     )
@@ -80,7 +84,7 @@ object Tasks {
   def commentOnTasks(): ChainBuilder =
     exec(session => {
       session.set("commentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"$TASK_IDS":[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}],
            |"commentText":"This task needs some comments"}""".stripMargin)
     })
     .exec(
@@ -92,7 +96,7 @@ object Tasks {
 
   def changeAssignmentOnTasks(): ChainBuilder = exec(session => {
     session.set("changeAssignmentOnTasksBody",
-        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"$TASK_IDS":[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}],
            |"team":"Release Admin", "owner": "admin"}""".stripMargin)
     })
     .exec(
@@ -104,7 +108,7 @@ object Tasks {
 
   def removeTasks(): ChainBuilder = exec(session => {
     session.set("removeTasksBody",
-      s"""[${session.taskIds.map(taskId => s""""${Converters.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
+      s"""[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
   })
     .exec(
       http("Remove tasks")
@@ -124,14 +128,14 @@ object Tasks {
     }
     exec(
       http("Change task team assignment")
-        .put("/tasks/${taskIds.random()}/team")
+        .put(s"/tasks/$${$TASK_IDS.random()}/team")
         .body(StringBody(s"""{"team":$teamJson}"""))
         .asJSON
     )
   }
 
   private implicit class SessionEnhancedByTasks(session: Session) {
-    def taskIds: Vector[String] = session("taskIds").asOption[Vector[String]].getOrElse(Vector())
+    def taskIds: Vector[String] = session(TASK_IDS).asOption[Vector[String]].getOrElse(Vector())
   }
 
 }

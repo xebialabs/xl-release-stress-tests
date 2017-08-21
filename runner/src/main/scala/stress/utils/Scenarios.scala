@@ -30,7 +30,7 @@ object Scenarios {
     .exec(Tasks.open("Get list of all tasks", StringBody(Tasks.ALL_TASKS_FILTER)))
 
   val queryNonExistingTaskScenario: ScenarioBuilder = scenario("Query all tasks with non-existing filter")
-    .exec(Tasks.open("Get list of non-existing tasks", StringBody(Tasks.NOT_EXISTING_TASKS_FILTER)))
+    .exec(Tasks.open("Get list of non-existing tasks", StringBody(Tasks.NON_EXISTENT_TASKS_FILTER)))
 
   val pollingScenario: ScenarioBuilder = scenario("Poll 320 tasks")
     .exec(Tasks.pollManyTasks)
@@ -53,14 +53,14 @@ object Scenarios {
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllPlanned)
       .exec(session => {
-        val releasesToStart = session.getIds(Releases.PLANNED_RELEASES_ID) take 2 map Converters.toDomainId
+        val releasesToStart = session.getIds(Releases.PLANNED_RELEASES_ID) take 2 map Ids.toDomainId
         session.set(Releases.START_RELEASES_SESSION_ID, releasesToStart)
       })
       .exec(Releases.startReleases)
       .pause(opsPauseMin, opsPauseMax)
       .exec(Releases.queryAllActive)
       .exec(session => {
-        val releasesToAbort = (Random shuffle session.getIds(Releases.ACTIVE_RELEASES_ID)) take 2 map Converters.toDomainId
+        val releasesToAbort = (Random shuffle session.getIds(Releases.ACTIVE_RELEASES_ID)) take 2 map Ids.toDomainId
         session.set(Releases.ABORT_RELEASES_SESSION_ID, releasesToAbort)
       })
       .exec(Releases.abortReleases)
@@ -84,11 +84,11 @@ object Scenarios {
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.open("Get list of all tasks", Tasks.ALL_TASKS_FILTER))
       .exec(session => {
-        val randomReleaseFromTasks = (Random shuffle session.getIds("taskReleaseIds")).headOption.getOrElse("")
+        val randomReleaseFromTasks = (Random shuffle session.getIds(Tasks.TASK_RELEASE_IDS)).headOption.getOrElse("")
         session.set(Releases.RELEASE_SESSION_ID, randomReleaseFromTasks)
       })
       .exec(Releases.getReleasePlannedTaskIds)
-      .exec(session => session.set("taskIds", session.getIds("taskIds") takeRight 2))
+      .exec(session => session.set(Tasks.TASK_IDS, session.getIds(Tasks.TASK_IDS) takeRight 2))
       .exec(Tasks.changeAssignmentOnTasks())
       .pause(opsPauseMin, opsPauseMax)
       .exec(Tasks.removeTasks())
