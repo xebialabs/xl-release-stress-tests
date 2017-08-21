@@ -38,9 +38,12 @@ It uses the following optional parameters :
 - **Password**: The password of the user account that will be used to connect to the server instance.
     - Syntax : `-Ppassword=password`
     - The default value is `admin`
+- **Planned Releases count**: The number of planned releases that should be created.
+    - Syntax : `-Pplanned-releases=100`
+    - The default value is `60`
 - **Active Releases count**: The number of active releases that should be created.
     - Syntax : `-Pactive-releases=100`
-    - The default value is `10`
+    - The default value is `60`
 - **Completed Releases count**: The number of completed releases that should be created.
     - Syntax : `-Pcompleted-releases=500`
     - The default value is `10`

@@ -31,6 +31,14 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     attachmentIdCounter
   }
 
+  def generatePlannedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
+    generateReleases(amount, "PLANNED", n => s"Stress test planned release $n", genComments = genComments)
+  }
+
+  def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
+    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments = genComments)
+  }
+
   def generateCompletedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
     generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments = genComments)
   }
@@ -50,10 +58,6 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     }
 
     templatesAndOtherCis
-  }
-
-  def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments = genComments)
   }
 
   def generateDependentRelease(): Release = {
