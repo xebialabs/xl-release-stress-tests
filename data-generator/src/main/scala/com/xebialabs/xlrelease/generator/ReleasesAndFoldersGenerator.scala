@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.generator
 
-import com.typesafe.config.Config
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 
@@ -14,7 +13,7 @@ object ReleasesAndFoldersGenerator {
   val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
-class ReleasesAndFoldersGenerator(implicit config: Config) {
+class ReleasesAndFoldersGenerator {
   val transaction: Int = Math.abs(Random.nextInt())
 
   var attachmentIdCounter = 0

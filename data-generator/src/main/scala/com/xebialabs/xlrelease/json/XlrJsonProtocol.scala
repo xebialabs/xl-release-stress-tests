@@ -33,7 +33,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   }
 
   implicit val phaseFormat: RootJsonFormat[Phase] = rootFormat(lazyFormat(jsonFormat6(Phase.apply)))
-  implicit val attachmentFormat: RootJsonFormat[Attachment] = jsonFormat3(Attachment.apply)
+  implicit val attachmentFormat: RootJsonFormat[Attachment] = jsonFormat2(Attachment.apply)
   implicit val releaseTriggerFormat: RootJsonFormat[ReleaseTrigger] = jsonFormat8(ReleaseTrigger.apply)
 
   implicit val specialDayFormat: RootJsonFormat[SpecialDay] = jsonFormat5(SpecialDay.apply)

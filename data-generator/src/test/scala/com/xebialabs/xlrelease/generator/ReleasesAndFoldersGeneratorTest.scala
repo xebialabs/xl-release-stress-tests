@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.generator
 
-import com.typesafe.config.ConfigFactory
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
@@ -11,8 +10,6 @@ import org.scalatest.junit.JUnitRunner
 class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
   var generator: ReleasesAndFoldersGenerator = _
-
-  private implicit val config = ConfigFactory.load()
 
   override protected def beforeEach(): Unit = {
     generator = new ReleasesAndFoldersGenerator()
@@ -109,13 +106,11 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
       val attachments = releases.flatMap(_.release.attachments)
 
-      attachments.head.fileUri shouldBe "http://localhost:5516/static/0/xlrelease.js"
-
-      val attachmentNumbers = attachments.map(_.id.replaceAll(".*Attachment", ""))
-      attachmentNumbers shouldEqual (1 to 6).map(_.toString)
+      attachments(1).id should include("2")
+      attachments(5).id should include("6")
       val task21 = tasksOfBatch(releases).find(_.id.contains("/Phase2/Task1")).get.asInstanceOf[Task]
       task21.attachments should have size 1
-      task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2"
+      task21.attachments.head should fullyMatch regex "Applications/Release_\\d+_1/Attachment2_500KB"
     }
 
     it("should generated automated templates") {

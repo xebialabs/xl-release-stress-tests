@@ -1,7 +1,6 @@
 package com.xebialabs.xlrelease
 
 
-import com.typesafe.config.Config
 import org.threeten.bp.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import scala.language.implicitConversions
@@ -104,7 +103,7 @@ package object domain {
 
   case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
 
-  case class Attachment(id: String, fileUri: String, `type`: String = "xlrelease.Attachment") extends Ci
+  case class Attachment(id: String, `type`: String = "xlrelease.Attachment") extends Ci
 
   case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends ActivityLogCi
 
@@ -243,13 +242,10 @@ package object domain {
 
   object Attachment {
 
-    // We generate an attachment content by pointing to 'xlrelease.js' file which is downloadable
-    // from XL Release itself without authentication and takes around 500 Kb.
-    def xlrAttachmentUrl(baseUrl: String) = s"$baseUrl/static/0/xlrelease.js"
-
-    def build(title: String, containerId: String)(implicit config: Config): Attachment = {
-      val attachmentsBaseUrl = config.getString("xl.data-generator.baseUrl")
-      Attachment(s"$containerId/$title", xlrAttachmentUrl(attachmentsBaseUrl))
+    def build(title: String, containerId: String, sizeInKb: Int = 500): Attachment = {
+      // The attachment content is generated on the server side, the size to generate
+      // is parsed from the attachment ID.
+      Attachment(s"$containerId/${title}_${sizeInKb}KB")
     }
   }
 

@@ -48,7 +48,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create releases with activity logs") {
-      val release = Release.build("ReleaseTest103")
+      val release = Release.build("ReleaseTest104")
       val logDirectory = ActivityLogDirectory.build(release.id)
       val logEntry = ActivityLogEntry.build(logDirectory.id, message = "Hello!")
       val releaseAndRelatedCis = ReleaseAndRelatedCis(release, Seq(logDirectory, logEntry))
@@ -58,6 +58,16 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
       client.removeCi(release.id)
       client.removeCi(logDirectory.id)
+    }
+
+    it("should create attachments in releases") {
+      val release = Release.build("ReleaseTest105")
+      val attachment = Attachment.build("Attachment1", release.id)
+      release.attachments = Seq(attachment)
+
+      client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
+
+      client.removeCi(release.id)
     }
 
     it("should create special days") {
