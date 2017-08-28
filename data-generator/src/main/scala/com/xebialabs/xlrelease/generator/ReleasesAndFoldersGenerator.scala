@@ -209,8 +209,8 @@ class ReleasesAndFoldersGenerator {
                                titleGenerator: (Int) => String,
                                automated: Boolean = false,
                                genComments: Boolean,
-                               dependsOn: Seq[String] = Seq(dependentReleaseId))
-  : Seq[ReleaseAndRelatedCis] = {
+                               dependsOn: Seq[String] = Seq(dependentReleaseId)
+                              ): Seq[ReleaseAndRelatedCis] = {
     (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
       val folderId = if (createdFolderIds.isEmpty) {
