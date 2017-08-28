@@ -22,13 +22,13 @@ import scala.language.postfixOps
 object XlrClient {
 
   /**
-   * A wrapper for error messages extracted from non-successful responses.
-   */
+    * A wrapper for error messages extracted from non-successful responses.
+    */
   class XlrClientException(m: String) extends RuntimeException(m)
 
   /**
-   * Returns a failed [[Future]] for all the non-successful responses.
-   */
+    * Returns a failed [[Future]] for all the non-successful responses.
+    */
   private[client] def failNonSuccessfulResponses(responseFuture: Future[HttpResponse]) = responseFuture.flatMap {
     case response if response.status.isSuccess =>
       responseFuture
@@ -71,18 +71,21 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
 
   def getPermissions(roleName: String): Future[Permission] = strictPipeline(Get(s"$apiUrl/roles/permissions/global"))
     .map(obj => {
-    obj.entity.as[JsObject] match {
-      case Right(r) =>
-        val roles = r.fields("rolePermissions").asInstanceOf[JsArray]
-        roles.elements.find(r => r.asJsObject.fields("role").asJsObject.fields("name").asInstanceOf[JsString].value == roleName).get.convertTo[Permission]
-      case Left(_) => null
-    }
-  })
+      obj.entity.as[JsObject] match {
+        case Right(r) =>
+          val roles = r.fields("rolePermissions").asInstanceOf[JsArray]
+          roles.elements.find(r => r.asJsObject.fields("role").asJsObject.fields("name").asInstanceOf[JsString].value == roleName).get.convertTo[Permission]
+        case Left(_) => null
+      }
+    })
 
   def setPermissions(permissions: Seq[Permission]): Future[HttpResponse] = strictPipeline(Put(s"$apiUrl/roles/permissions/global", permissions))
 
   def removeCi(id: String): Future[HttpResponse] =
     strictPipeline(Delete(s"$apiUrl/fixtures/$id"))
+
+  def removeRelease(id: String): Future[HttpResponse] =
+    removeCi(id)
 
   def createCis(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Post(s"$apiUrl/fixtures/", cis))
@@ -90,9 +93,12 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
   def createRelease(release: Release): Future[HttpResponse] =
     strictPipeline(Post(s"$apiUrl/fixtures/release", release))
 
-  def createReleaseAndRelatedCis(releaseAndRelatedCis: ReleaseAndRelatedCis): Future[HttpResponse] =
-   createCis(releaseAndRelatedCis.activityLogDirsAndEntries)
-     .flatMap(_ => createRelease(releaseAndRelatedCis.release))
+  def createActivityLogs(releaseId: String, logs: Seq[Ci]): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/fixtures/activityLogs/$releaseId", logs))
+
+  def createReleaseAndRelatedCis(releaseData: ReleaseAndRelatedCis): Future[HttpResponse] =
+    createRelease(releaseData.release)
+      .flatMap(_ => createActivityLogs(releaseData.release.id, releaseData.activityLogs))
 
   def createOrUpdateCis(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Put(s"$apiUrl/fixtures/", cis))

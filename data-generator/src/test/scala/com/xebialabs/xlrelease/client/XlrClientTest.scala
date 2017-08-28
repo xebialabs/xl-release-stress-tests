@@ -15,7 +15,7 @@ import scala.concurrent.Future
 @RunWith(classOf[JUnitRunner])
 class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
-  val client = new XlrClient("http://localhost:5516")
+  private val client = new XlrClient("http://localhost:5516")
 
   describe("XLR client") {
     it("should create a release") {
@@ -23,7 +23,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
       client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
-      client.removeCi(release.id).futureValue.status shouldBe StatusCodes.NoContent
+      client.removeRelease(release.id).futureValue.status shouldBe StatusCodes.NoContent
     }
 
     it("should create a phase within release") {
@@ -32,7 +32,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
       client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
-      client.removeCi(release.id)
+      client.removeRelease(release.id)
     }
 
     it("should create tasks") {
@@ -44,20 +44,18 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
       client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
-      client.removeCi(release.id)
+      client.removeRelease(release.id)
     }
 
     it("should create releases with activity logs") {
       val release = Release.build("ReleaseTest104")
-      val logDirectory = ActivityLogDirectory.build(release.id)
-      val logEntry = ActivityLogEntry.build(logDirectory.id, message = "Hello!")
-      val releaseAndRelatedCis = ReleaseAndRelatedCis(release, Seq(logDirectory, logEntry))
+      val logEntry = ActivityLogEntry.build(release.id, message = "Hello!")
+      val releaseAndRelatedCis = ReleaseAndRelatedCis(release, Seq(logEntry))
 
       val createReleaseAndLogs = client.createReleaseAndRelatedCis(releaseAndRelatedCis)
       createReleaseAndLogs.futureValue.status shouldBe StatusCodes.NoContent
 
-      client.removeCi(release.id)
-      client.removeCi(logDirectory.id)
+      client.removeRelease(release.id)
     }
 
     it("should create attachments in releases") {
@@ -67,7 +65,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
 
       client.createRelease(release).futureValue.status shouldBe StatusCodes.NoContent
 
-      client.removeCi(release.id)
+      client.removeRelease(release.id)
     }
 
     it("should create special days") {
@@ -80,10 +78,10 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     }
 
     it("should create many CIs in batches") {
-      val range = 0 until 20
-      val cis = range.map(id =>
-        ActivityLogDirectory.build(s"Applications/ReleaseTest$id")
-      )
+      val cis = (1 until 21).map(index => {
+        val day = s"201412$index"
+        SpecialDay("Configuration/Calendar/" + day, day, day)
+      })
       val groups = cis.grouped(10).toSeq
 
       val responsesFutures = groups.map {
@@ -106,7 +104,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       expectSuccessfulResponses(releaseResponsesFutures)
 
       val releaseRemovalFutures = releases.map(release => {
-        client.removeCi(release.id)
+        client.removeRelease(release.id)
       })
       expectSuccessfulResponses(releaseRemovalFutures)
     }
@@ -118,7 +116,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
       // Check future is not failed on second create request
       client.createRelease(release).futureValue.status shouldBe StatusCodes.BadRequest
 
-      client.removeCi(release.id).futureValue.status shouldBe StatusCodes.NoContent
+      client.removeRelease(release.id).futureValue.status shouldBe StatusCodes.NoContent
     }
 
     it("should import template from a file") {

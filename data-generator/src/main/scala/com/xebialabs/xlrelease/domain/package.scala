@@ -97,15 +97,13 @@ package object domain {
                         color: String = "#c3d4ef",
                         `type`: String = "xlrelease.SpecialDay") extends Ci
 
-  trait ActivityLogCi extends Ci
-
-  case class Directory(id: String, `type`: String = "core.Directory") extends ActivityLogCi
+  case class Directory(id: String, `type`: String = "core.Directory") extends Ci
 
   case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
 
   case class Attachment(id: String, `type`: String = "xlrelease.Attachment") extends Ci
 
-  case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends ActivityLogCi
+  case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends Ci
 
   case class Folder(id: String,
                     title: String,
@@ -127,7 +125,7 @@ package object domain {
                             initialFire: Boolean = false) extends Ci
 
 
-  case class ReleaseAndRelatedCis(release: Release, activityLogDirsAndEntries: Seq[ActivityLogCi])
+  case class ReleaseAndRelatedCis(release: Release, activityLogs: Seq[ActivityLogEntry])
 
   object Release {
     def build(title: String): Release = {
@@ -171,13 +169,14 @@ package object domain {
   }
 
   object ActivityLogEntry {
-    def build(directoryId: String,
+    def build(releaseId: String,
               username: String = "admin",
               activityType: String = "IMPORTANT",
               message: String = "Did some activity",
               eventTime: String = LocalDateTime.now.toString): ActivityLogEntry = {
-
-      ActivityLogEntry(directoryId + s"/Activity${System.currentTimeMillis + Random.nextInt}", username, activityType, message, eventTime)
+      val directoryId = releaseId.replace("Applications/", "Applications/ActivityLogs/")
+      ActivityLogEntry(directoryId + s"/Activity${System.currentTimeMillis + Random.nextInt}",
+        username, activityType, message, eventTime)
     }
   }
 

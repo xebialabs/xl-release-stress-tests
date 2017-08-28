@@ -100,7 +100,7 @@ class ReleasesAndFoldersGenerator {
     type AllReleasesAndTopLevelIds = (Seq[ReleaseAndRelatedCis], Seq[String])
 
     def generateDependencyTree(currentTree: Int, currentDepth: Int, maxDepth: Int, treeBreadth: Int)
-                              : AllReleasesAndTopLevelIds = {
+    : AllReleasesAndTopLevelIds = {
       if (currentDepth > maxDepth) {
         (Seq.empty, Seq.empty)
       } else {
@@ -210,7 +210,7 @@ class ReleasesAndFoldersGenerator {
                                automated: Boolean = false,
                                genComments: Boolean,
                                dependsOn: Seq[String] = Seq(dependentReleaseId))
-                              : Seq[ReleaseAndRelatedCis] = {
+  : Seq[ReleaseAndRelatedCis] = {
     (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
       val folderId = if (createdFolderIds.isEmpty) {
@@ -243,7 +243,7 @@ class ReleasesAndFoldersGenerator {
                           automated: Boolean,
                           generateComments: Boolean,
                           dependsOn: Seq[String] = Seq(dependentReleaseId))
-                         : (Release, Seq[ActivityLogCi]) = {
+  : (Release, Seq[ActivityLogEntry]) = {
     val release = Release.build(releaseId, title, status, releaseNumber, totalReleasesAmount,
       allowConcurrentReleasesFromTrigger = !automated)
 
@@ -263,7 +263,7 @@ class ReleasesAndFoldersGenerator {
   private def makeReleaseContent(release: Release, phasesPerRelease: Int = phasesPerRelease,
                                  tasksPerPhase: Int = tasksPerPhase, generateComments: Boolean,
                                  dependsOn: Seq[String] = Seq.empty, automated: Boolean = false)
-                                : (Seq[Phase], Seq[Attachment], Seq[ActivityLogCi]) = {
+  : (Seq[Phase], Seq[Attachment], Seq[ActivityLogEntry]) = {
 
     val phaseNumbers = 1 to phasesPerRelease
     val phases: Seq[Phase] = phaseNumbers.map(n =>
@@ -298,7 +298,7 @@ class ReleasesAndFoldersGenerator {
   private def makeTaskAndMaybeAttachment(phase: Phase, phaseNumber: Int, taskNumber: Int,
                                          automated: Boolean, releaseId: String,
                                          dependsOn: Seq[String])
-                                        : (AbstractTask, Option[Attachment]) = {
+  : (AbstractTask, Option[Attachment]) = {
     if (isFirstTaskOfPhase(taskNumber)) {
       val attachment = makeAttachments(releaseId)
       val task = makeTask(phase, taskNumber, automated, Seq(attachment.id))
@@ -339,10 +339,9 @@ for n in range(0, 100):
     Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
   }
 
-  private def makeActivityLogs(amount: Int, releaseId: String): Seq[ActivityLogCi] = {
-    val directory = ActivityLogDirectory.build(releaseId)
-    val entries = for (i <- 1 to amount) yield ActivityLogEntry.build(directory.id, message = s"Did some activity $i")
-    Seq(directory) ++ entries
+  private def makeActivityLogs(amount: Int, releaseId: String): Seq[ActivityLogEntry] = {
+    for (i <- 1 to amount) yield
+      ActivityLogEntry.build(releaseId, message = s"Did some activity $i")
   }
 
   private def isFirstTaskOfPhase(taskNumber: Int): Boolean = taskNumber == 1

@@ -1,6 +1,6 @@
 package com.xebialabs.xlrelease.generator
 
-import com.xebialabs.xlrelease.domain.{SpecialDay, Ci, Directory}
+import com.xebialabs.xlrelease.domain.{Directory, SpecialDay}
 import com.xebialabs.xlrelease.generator.SpecialDayGenerator.generateSpecialDays
 import com.xebialabs.xlrelease.support.UnitTestSugar
 import org.junit.runner.RunWith
