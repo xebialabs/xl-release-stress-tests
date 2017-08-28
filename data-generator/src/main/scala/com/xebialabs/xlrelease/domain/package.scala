@@ -255,8 +255,9 @@ package object domain {
   }
 
   object Team {
-    def build(containerId: String, teamName: String, members: Seq[String], permissions: Seq[String]): Team = {
-      Team(s"$containerId/Team$teamName", teamName, members, permissions)
+    def build(containerId: String, containerIndex: String, teamName: String,
+              members: Seq[String], permissions: Seq[String]): Team = {
+      Team(s"$containerId/Team${teamName}_$containerIndex", teamName, members, permissions)
     }
   }
 

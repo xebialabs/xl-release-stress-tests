@@ -167,18 +167,18 @@ class ReleasesAndFoldersGenerator {
       .flatMap(f => {
         val folderIndex = f.id.substring(f.id.lastIndexOf("_") + 1)
         Seq(
-          releaseAdminTeam(f.id, Seq("admin", s"user$folderIndex")),
-          templateOwnerTeam(f.id, Seq("admin", s"user$folderIndex")),
-          folderOwnerTeam(f.id, Seq("admin", s"user$folderIndex")),
-          Team.build(f.id, "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
+          releaseAdminTeam(f.id, folderIndex, Seq("admin", s"user$folderIndex")),
+          templateOwnerTeam(f.id, folderIndex, Seq("admin", s"user$folderIndex")),
+          folderOwnerTeam(f.id, folderIndex, Seq("admin", s"user$folderIndex")),
+          Team.build(f.id, folderIndex, "Viewers", Seq("viewer"), Seq("folder#view", "release#view", "template#view"))
         )
       })
 
     folders ++ activityLogs ++ teams
   }
 
-  private def releaseAdminTeam(containerId: String, members: Seq[String]) =
-    Team.build(containerId, "Release Admin", members, Seq(
+  private def releaseAdminTeam(containerId: String, containerIndex: String, members: Seq[String]) =
+    Team.build(containerId, containerIndex, "Release Admin", members, Seq(
       "release#view",
       "release#edit",
       "release#edit_security",
@@ -188,8 +188,8 @@ class ReleasesAndFoldersGenerator {
       "release#reassign_task"
     ))
 
-  private def templateOwnerTeam(containerId: String, members: Seq[String]) =
-    Team.build(containerId, "Template Owner", members, Seq(
+  private def templateOwnerTeam(containerId: String, containerIndex: String, members: Seq[String]) =
+    Team.build(containerId, containerIndex, "Template Owner", members, Seq(
       "template#create_release",
       "template#view",
       "template#edit",
@@ -197,8 +197,8 @@ class ReleasesAndFoldersGenerator {
       "template#edit_triggers"
     ))
 
-  private def folderOwnerTeam(containerId: String, members: Seq[String]) =
-    Team.build(containerId, "Folder Owner", members, Seq(
+  private def folderOwnerTeam(containerId: String, containerIndex: String, members: Seq[String]) =
+    Team.build(containerId, containerIndex, "Folder Owner", members, Seq(
       "folder#view",
       "folder#edit",
       "folder#edit_security"
