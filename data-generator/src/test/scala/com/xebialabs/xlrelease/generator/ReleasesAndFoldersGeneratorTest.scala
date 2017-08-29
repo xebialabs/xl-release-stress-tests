@@ -177,7 +177,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
 
       val teams = foldersAndRelatedCis.filter(f => f.id.contains("/Team"))
 
-      val folder1viewers = teams.find(_.id == "Applications/Folder_1/TeamViewers").get.asInstanceOf[Team]
+      val folder1viewers = teams.find(_.id == "Applications/Folder_1/TeamViewers_1").get.asInstanceOf[Team]
       folder1viewers.members shouldBe Seq("viewer")
       folder1viewers.permissions shouldBe Seq("folder#view", "release#view", "template#view")
       teams.filter(_.id.startsWith("Applications/Folder_1/")).map(_.asInstanceOf[Team].teamName) should contain theSameElementsAs
