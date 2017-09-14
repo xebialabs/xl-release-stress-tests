@@ -145,7 +145,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
   describe("generator of folders") {
 
     it("should generate n folder levels and m folders") {
-      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)._1
 
       val folders = foldersAndRelatedCis.filter(f => f.id.matches("Applications(/Folder[_\\d]+)+"))
       folders.map(_.id) shouldBe Seq(
@@ -158,22 +158,8 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       )
     }
 
-    it("should generate activity logs directory for each folder") {
-      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
-
-      val activityLogs = foldersAndRelatedCis.filter(f => f.id.contains("/ActivityLogs/"))
-      activityLogs.map(_.id) shouldBe Seq(
-        "Applications/ActivityLogs/Folder_1",
-        "Applications/ActivityLogs/Folder_1/Folder_1_1",
-        "Applications/ActivityLogs/Folder_1/Folder_1_2",
-        "Applications/ActivityLogs/Folder_2",
-        "Applications/ActivityLogs/Folder_2/Folder_2_1",
-        "Applications/ActivityLogs/Folder_2/Folder_2_2"
-      )
-    }
-
     it("should generate three default teams and a viewers team in each top level folder") {
-      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)
+      val foldersAndRelatedCis: Seq[Ci] = generator.generateFolders(2, 2)._2
 
       val teams = foldersAndRelatedCis.filter(f => f.id.contains("/Team"))
 

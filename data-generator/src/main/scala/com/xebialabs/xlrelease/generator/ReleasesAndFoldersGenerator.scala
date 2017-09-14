@@ -14,6 +14,7 @@ object ReleasesAndFoldersGenerator {
 }
 
 class ReleasesAndFoldersGenerator {
+  type FoldersAndTeams = (Seq[Ci], Seq[Ci])
   val transaction: Int = Math.abs(Random.nextInt())
 
   var attachmentIdCounter = 0
@@ -128,7 +129,7 @@ class ReleasesAndFoldersGenerator {
     }
   }
 
-  def generateFolders(amount: Int, levels: Int): Seq[Ci] = {
+  def generateFolders(amount: Int, levels: Int): FoldersAndTeams = {
 
     @tailrec
     def createFolders(parentIds: Seq[String], amount: Int, level: Int, allCreatedFolders: Seq[Folder] = Seq()): Seq[Folder] = {
@@ -161,7 +162,6 @@ class ReleasesAndFoldersGenerator {
 
     val folders: Seq[Folder] = createFolders(Seq("Applications"), amount, levels).sortBy((ci) => ci.id)
 
-    val activityLogs = folders.map(f => ActivityLogDirectory.build(f.id))
     val teams = folders
       .filter(_.id.matches("Applications/Folder_\\d+"))
       .flatMap(f => {
@@ -174,7 +174,7 @@ class ReleasesAndFoldersGenerator {
         )
       })
 
-    folders ++ activityLogs ++ teams
+    (folders, teams)
   }
 
   private def releaseAdminTeam(containerId: String, containerIndex: String, members: Seq[String]) =
