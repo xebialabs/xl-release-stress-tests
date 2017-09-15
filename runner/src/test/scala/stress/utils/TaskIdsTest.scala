@@ -1,6 +1,6 @@
 package stress.utils
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{Matchers, FunSpec}
 
 class TaskIdsTest extends FunSpec with Matchers {
 
@@ -46,7 +46,7 @@ class TaskIdsTest extends FunSpec with Matchers {
     }
 
     it("should convert taskId into domainId ") {
-      Ids.toDomainId("Release0-Phase0-Task0") shouldBe "Applications/Release0/Phase0/Task0"
+      TaskIds.toDomainId("Release0-Phase0-Task0") shouldBe "Applications/Release0/Phase0/Task0"
     }
 
   }

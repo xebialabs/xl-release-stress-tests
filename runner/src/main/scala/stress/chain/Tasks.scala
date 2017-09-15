@@ -4,26 +4,16 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.request.Body
-import stress.filters.TaskSearchFilter
-import stress.utils.{Ids, TaskIds}
+import stress.utils.TaskIds
 
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
 object Tasks {
 
-  val ALL_TASKS_FILTER = TaskSearchFilter(assignedToMe = true, assignedToMyTeams = true, assignedToOthers = true, notAssigned = true)
-  val MY_TASKS_FILTER = TaskSearchFilter(assignedToMe = true)
-  val NON_EXISTENT_TASKS_FILTER = TaskSearchFilter(
-    assignedToMe = true,
-    assignedToMyTeams = true,
-    assignedToOthers = true,
-    notAssigned = true,
-    filter = "non-existing")
-
-  val TASK_IDS = "taskIds"
-  val TASK_RELEASE_IDS = "taskReleaseIds"
-
+  val ALL_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":""}"""
+  val MY_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":false,"assignedToOthers":false,"notAssigned":false,"filter":""}"""
+  val NOT_EXISTING_TASKS_FILTER = """{"active":false,"assignedToMe":true,"assignedToMyTeams":true,"assignedToOthers":true,"notAssigned":true,"filter":"non-existing"}"""
 
   def open(httpName: String, filter: Body): ChainBuilder = exec(
     http(httpName)
@@ -33,12 +23,7 @@ object Tasks {
       .check(
         jsonPath("$['releaseTasks'][*]['tasks'][*]['id']")
           .findAll.optional
-          .saveAs(TASK_IDS)
-      )
-      .check(
-        jsonPath("$['releaseTasks'][*]['id']")
-          .findAll.optional
-          .saveAs(TASK_RELEASE_IDS)
+          .saveAs("taskIds")
       )
   )
   def open(httpName: String, filter: String): ChainBuilder = open(httpName, StringBody(filter))
@@ -67,10 +52,10 @@ object Tasks {
       .pause(taskPollPause)
     }
 
-  def commentOnRandomTask: ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
+  def commentOnRandomTask(): ChainBuilder = open("Get list of all tasks", ALL_TASKS_FILTER)
     .exec(
       http("Comment on a task")
-        .post(s"/tasks/$${$TASK_IDS.random()}/comments")
+        .post("/tasks/${taskIds.random()}/comments")
         .body(StringBody("""{"text":"This task needs some comments"}"""))
         .asJSON
     )
@@ -84,7 +69,7 @@ object Tasks {
   def commentOnTasks(): ChainBuilder =
     exec(session => {
       session.set("commentOnTasksBody",
-        s"""{"$TASK_IDS":[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
            |"commentText":"This task needs some comments"}""".stripMargin)
     })
     .exec(
@@ -96,7 +81,7 @@ object Tasks {
 
   def changeAssignmentOnTasks(): ChainBuilder = exec(session => {
     session.set("changeAssignmentOnTasksBody",
-        s"""{"$TASK_IDS":[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}],
+        s"""{"taskIds":[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}],
            |"team":"Release Admin", "owner": "admin"}""".stripMargin)
     })
     .exec(
@@ -108,7 +93,7 @@ object Tasks {
 
   def removeTasks(): ChainBuilder = exec(session => {
     session.set("removeTasksBody",
-      s"""[${session.taskIds.map(taskId => s""""${Ids.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
+      s"""[${session.taskIds.map(taskId => s""""${TaskIds.toDomainId(taskId)}"""").mkString(",")}]""".stripMargin)
   })
     .exec(
       http("Remove tasks")
@@ -119,7 +104,7 @@ object Tasks {
 
   // In our generated dependency tree, the gate task is the last task
   def getDependencyCandidates: ChainBuilder =
-    exec(http("Get gate task dependency candidates").get(s"/gates/$${${Releases.RELEASE_SESSION_ID}}-Phase5-Task10/dependency-target-candidates"))
+    exec(http("Get gate task dependency candidates").get("/gates/${releaseId}-Phase5-Task10/dependency-target-candidates"))
 
   private def setTeamOnRandomTask(team: Option[String]) = {
     val teamJson = team match {
@@ -128,14 +113,14 @@ object Tasks {
     }
     exec(
       http("Change task team assignment")
-        .put(s"/tasks/$${$TASK_IDS.random()}/team")
+        .put("/tasks/${taskIds.random()}/team")
         .body(StringBody(s"""{"team":$teamJson}"""))
         .asJSON
     )
   }
 
   private implicit class SessionEnhancedByTasks(session: Session) {
-    def taskIds: Vector[String] = session(TASK_IDS).asOption[Vector[String]].getOrElse(Vector())
+    def taskIds: Vector[String] = session("taskIds").asOption[Vector[String]].getOrElse(Vector())
   }
 
 }
