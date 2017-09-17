@@ -212,7 +212,7 @@ class ReleasesAndFoldersGenerator {
       val folderId = if (createdFolderIds.isEmpty) {
         "Applications"
       } else {
-        createdFolderIds(releaseNumber % createdFolderIds.size)
+        createdFolderIds((releaseNumber - 1) % createdFolderIds.size)
       }
       val releaseId = s"$folderId/Release_${transaction}_$releaseNumber"
 
