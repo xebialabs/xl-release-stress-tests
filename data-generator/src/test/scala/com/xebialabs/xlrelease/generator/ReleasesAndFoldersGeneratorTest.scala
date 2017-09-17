@@ -170,6 +170,15 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
         Set("Release Admin", "Template Owner", "Folder Owner", "Viewers")
     }
 
+    it("should spread releases across folders") {
+      val (Seq(folder1, folder2), _) = generator.generateFolders(amount = 2, levels = 1)
+      val Seq(release1, release2, release3) = generator.generateActiveReleases(3)
+
+      release1.release.id should startWith(folder1.id)
+      release2.release.id should startWith(folder2.id)
+      release3.release.id should startWith(folder1.id)
+    }
+
   }
 
   describe("generator of dependency trees") {
