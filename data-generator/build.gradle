@@ -25,8 +25,8 @@ dependencies {
   testCompile 'org.scalatest:scalatest_2.11:2.2.4'
 }
 
-def applicationJvmArgs = []
-['baseUrl', 'username', 'password', 'planned-releases', 'active-releases', 'completed-releases', 'templates', 'automated-templates', 'create-dependency-releases',
+def applicationJvmArgs = ["-Xmx2g"]
+['baseUrl', 'username', 'password', 'active-releases', 'completed-releases', 'templates', 'automated-templates', 'create-dependency-releases',
  'generate-comments', 'folders', 'folders-level', 'dependency-trees', 'dependency-tree-depth', 'dependency-tree-breadth'].each {
   if (project.hasProperty(it)) {
     applicationJvmArgs.add("-Dxl.data-generator.$it=${project.property(it)}")
