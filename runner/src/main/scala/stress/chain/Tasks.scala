@@ -12,12 +12,12 @@ import scala.language.postfixOps
 
 object Tasks {
 
-  val ALL_TASKS_FILTER = TaskSearchFilter(assignedToMe = true, assignedToMyTeams = true, assignedToOthers = true, notAssigned = true)
+  val ALL_TASKS_FILTER = TaskSearchFilter(assignedToMe = true, assignedToMyTeams = true, assignedToAnybody = true, notAssigned = true)
   val MY_TASKS_FILTER = TaskSearchFilter(assignedToMe = true)
   val NON_EXISTENT_TASKS_FILTER = TaskSearchFilter(
     assignedToMe = true,
     assignedToMyTeams = true,
-    assignedToOthers = true,
+    assignedToAnybody = true,
     notAssigned = true,
     filter = "non-existing")
 
