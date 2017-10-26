@@ -1,6 +1,6 @@
 package com.xebialabs.xlrelease
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
@@ -13,7 +13,7 @@ import scala.util.Failure
 
 object Main extends App with LazyLogging {
 
-  implicit val config = parseResources("data-generator.conf")
+  implicit val config: Config = parseResources("data-generator.conf")
     .withFallback(ConfigFactory.load())
 
   private val plannedReleasesAmount = config.getInt("xl.data-generator.planned-releases")

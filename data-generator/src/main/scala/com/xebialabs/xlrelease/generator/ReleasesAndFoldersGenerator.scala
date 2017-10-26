@@ -1,5 +1,6 @@
 package com.xebialabs.xlrelease.generator
 
+import com.typesafe.config.Config
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 
@@ -13,7 +14,7 @@ object ReleasesAndFoldersGenerator {
   val dependentReleaseId = "Applications/ReleaseDependent"
 }
 
-class ReleasesAndFoldersGenerator {
+class ReleasesAndFoldersGenerator(implicit config: Config) {
   type FoldersAndTeams = (Seq[Ci], Seq[Ci])
   val transaction: Int = Math.abs(Random.nextInt())
 
@@ -286,7 +287,7 @@ class ReleasesAndFoldersGenerator {
         attachmentOptions.flatten
     }
 
-    val releaseAttachments: Seq[Attachment] = Seq(makeAttachments(release.id))
+    val releaseAttachments: Seq[Attachment] = makeAttachment(release.id).toSeq
     val activityLogs = makeActivityLogs(10, release.id)
 
     (phases, taskAttachments ++ releaseAttachments, activityLogs)
@@ -300,9 +301,9 @@ class ReleasesAndFoldersGenerator {
                                          dependsOn: Seq[String])
   : (AbstractTask, Option[Attachment]) = {
     if (isFirstTaskOfPhase(taskNumber)) {
-      val attachment = makeAttachments(releaseId)
-      val task = makeTask(phase, taskNumber, automated, Seq(attachment.id))
-      (task, Some(attachment))
+      val attachmentOpt = makeAttachment(releaseId)
+      val task = makeTask(phase, taskNumber, automated, attachmentOpt.map(_.id).toSeq)
+      (task, attachmentOpt)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = GateTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
       dependsOn.zipWithIndex.map {
@@ -335,8 +336,12 @@ for n in range(0, 100):
     }
   }
 
-  private def makeAttachments(containerId: String): Attachment = {
-    Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId)
+  private def makeAttachment(containerId: String): Option[Attachment] = {
+    if (config.getBoolean("xl.data-generator.create-attachments")) {
+      Some(Attachment.build(s"Attachment${incrementAttachmentIdCounterAndGet()}", containerId))
+    } else {
+      None
+    }
   }
 
   private def makeActivityLogs(amount: Int, releaseId: String): Seq[ActivityLogEntry] = {

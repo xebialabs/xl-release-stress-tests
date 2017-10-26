@@ -93,6 +93,10 @@ New releases are created based on a time trigger - every 5 minutes by default.
     - Syntax: `-Pautomated-templates=10`
     - The default values is `0`   
 
+- **Disable attachments**: On SQL backend creating attachments can take a lot of time, so for faster testing you could disable that.
+    - Syntax : `-Pcreate-attachments=false`
+    - The default value is `true`
+
 Example :
 
     ./gradlew :data-generator:run -PbaseUrl=http://localhost:5516 -Pusername=admin -Ppassword=admin -Ptemplates=20 -Pactive-releases=20 -Pcompleted-releases=20 -Pfolders=10 -Pfolders-level=1
