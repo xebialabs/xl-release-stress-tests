@@ -1,5 +1,6 @@
 package com.xebialabs.xlrelease.generator
 
+import com.typesafe.config.{Config, ConfigFactory}
 import com.xebialabs.xlrelease.domain._
 import com.xebialabs.xlrelease.generator.ReleasesAndFoldersGenerator._
 import com.xebialabs.xlrelease.support.UnitTestSugar
@@ -12,6 +13,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
   var generator: ReleasesAndFoldersGenerator = _
 
   override protected def beforeEach(): Unit = {
+    implicit val config: Config = ConfigFactory.load()
     generator = new ReleasesAndFoldersGenerator()
   }
 
