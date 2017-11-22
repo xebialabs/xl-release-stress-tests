@@ -12,26 +12,26 @@ import scala.language.{implicitConversions, postfixOps}
 /**
   * X users , Y riskManagers , admin open Risks settings page
   */
-class OpenRiskSimulation extends Simulation{
-  setUp(
-    openRisksScenario.inject(rampUsers(RunnerConfig.input.ciso) over simulations.realistic.rampUpPeriod)
-  )
-}
+class OpenRiskSimulation extends SimulationBase(openRisksScenario)
 
 /**
   *  Y riskManagers , admin edit Risk profiles
   */
-class EditRiskSimulation extends SimulationBase(openRisksScenario)
+class EditRiskSimulation extends SimulationBase(editRiskScenario)
 
 /**
   *  1 riskManager edits 1 risk profile linked to 500 releases
   */
-class EditRiskLinkedToManyReleasesSimulation extends SimulationBase(openRisksScenario)
+class EditRiskLinkedToManyReleasesSimulation extends Simulation{
+
+}
 
 /**
   *  X riskManager, 1 admin create and delete risk profile
   */
-class CreateDeleteRiskProfilesSimulation extends SimulationBase(openRisksScenario)
+class CreateDeleteRiskProfilesSimulation extends Simulation{
+
+}
 
 /**
   * X users open calendar page on a given month

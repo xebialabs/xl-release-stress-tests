@@ -44,15 +44,12 @@ object Scenarios {
   val openRisksScenario: ScenarioBuilder = scenario("Risk settings page")
     .exec(Risk.open)
 
+  val editRiskScenario: ScenarioBuilder = scenario("Risk edit page")
+    .exec(Risk.edit)
+
   def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
     exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
-      .exec(Calendar.open)
-  }
-
-  def riskManagerChain(pauseMin: Duration, pauseMax: Duration): ChainBuilder = {
-    exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
-      .pause(pauseMin, pauseMax)
       .exec(Calendar.open)
   }
 
@@ -129,13 +126,6 @@ object Scenarios {
     scenario("Release manager")
       .repeat(repeats)(
         releaseManagerChain(opsPauseMin, opsPauseMax)
-      )
-  }
-
-  def riskManagerScenario(repeats: Int): ScenarioBuilder = {
-    scenario("Risk scenario")
-      .repeat(repeats)(
-        dependenciesChain(userPauseMin, userPauseMax)
       )
   }
 
