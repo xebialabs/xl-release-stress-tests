@@ -10,6 +10,7 @@ import scala.util.Random
 object Risk {
   val RISK_SESSION_ID = "risk_id"
   val NEW_RISK_PROFILE_ID = "new_risk_id"
+  val DELETE_RISK_ID = "riskProfileID"
 
   def open: ChainBuilder = exec(
     http("Get all risks")
@@ -36,14 +37,12 @@ object Risk {
         .post("api/v1/risks/profiles")
         .body(RawFileBody("update-risk-body"))
         .asJSON
+        .check(jsonPath("$.id").saveAs(DELETE_RISK_ID))
     )
 
-  def delete: ChainBuilder = exec(session => {
-    session.set("riskProfileID",session.newRisk)
-  })
-    .exec(
+  def delete: ChainBuilder = exec(
         http("delete risk Profile")
-        .delete("api/v1/risks/profiles/" + s"${"riskProfileID"}")
+        .delete(s"api/v1/risks/profiles/$${$DELETE_RISK_ID}")
         .check(status.is(204))
     )
 
@@ -56,7 +55,7 @@ object Risk {
     })
       .exec(http("Get global config").get("api/v1/risks/config").asJSON)
       .exec(
-        http("Get risk profile").get("api/v1/risks/profiles/" + RISK_SESSION_ID)
+        http("Get risk profile").get(s"api/v1/risks/profiles/$${$RISK_SESSION_ID}")
           .asJSON
           .check(jsonPath("$.title").saveAs("riskProfileIndex")
           )
@@ -64,7 +63,7 @@ object Risk {
       .exec(http("Get risk assessors").get("api/v1/risks/assessors").asJSON)
       .exec(
         http("Get risk profile")
-          .put("api/v1/risks/profiles/" + RISK_SESSION_ID)
+          .put(s"api/v1/risks/profiles/$${$RISK_SESSION_ID}")
           .body(RawFileBody("update-risk-body"))
           .asJSON
       )

@@ -44,13 +44,22 @@ object Scenarios {
   val openRisksScenario: ScenarioBuilder = scenario("Risk settings page")
     .exec(Risk.open)
 
-  val editRiskScenario: ScenarioBuilder = scenario("Risk edit page")
+  val editRiskScenario: ScenarioBuilder = scenario("Risk edit")
     .exec(Risk.edit)
 
   def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
     exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
       .exec(Calendar.open)
+  }
+
+  def riskManagerChain(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
+    exec(session => {
+      val randomRelease = (Random shuffle session.getIds(Releases.ACTIVE_RELEASE_IDS)).headOption.getOrElse("")
+      session.set(Releases.RELEASE_SESSION_ID, randomRelease)
+    })
+      .pause(releaseManagerPauseMin, releaseManagerPauseMax)
+      .exec(Releases.AssertActiveReleasesRiskScore)
   }
 
   def releaseManagerChain(opsPauseMin: FiniteDuration, opsPauseMax: Duration): ChainBuilder =
@@ -129,6 +138,25 @@ object Scenarios {
       )
   }
 
+  def riskManagerScenario(): ScenarioBuilder = {
+    scenario("Risk manager Delete Risk")
+      .exec(session => {
+        session.set(Risk.DELETE_RISK_ID, "Configuration/riskProfiles/RiskProfile1")
+      })
+      .exec(Risk.delete)
+      .exec(Releases.queryAllActiveReleasesRiskScores)
+        .repeat(s"$${${Releases.ACTIVE_RELEASE_IDS}.size()}")(
+          riskManagerChain(releaseManagerPauseMin,releaseManagerPauseMax)
+        )
+  }
+
+  def riskCRUDScenario(repeats: Int): ScenarioBuilder = scenario("Risk Create Delete")
+    .repeat(repeats)(
+      exec(Risk.create)
+        .pause(opsPauseMin, opsPauseMax)
+        .exec(Risk.delete)
+    )
+
   def opsScenario(repeats: Int): ScenarioBuilder = {
     scenario("Ops person")
       .repeat(repeats)(
@@ -194,4 +222,9 @@ object Scenarios {
         opsChain(1 second, 1 second, 1 second, 1 second)
       )
     )
+
+  private implicit class EnhancedSession(session: Session) {
+       def getIds(attribute: String): Seq[String] =
+        session(attribute).asOption[Seq[String]].getOrElse(Seq.empty[String])
+  }
 }

@@ -22,15 +22,16 @@ class EditRiskSimulation extends SimulationBase(editRiskScenario)
 /**
   *  1 riskManager edits 1 risk profile linked to 500 releases
   */
-class EditRiskLinkedToManyReleasesSimulation extends Simulation{
-
-}
+class DeleteRiskLinkedToManyReleasesSimulation extends SimulationBase(riskManagerScenario)
 
 /**
   *  X riskManager, 1 admin create and delete risk profile
   */
-class CreateDeleteRiskProfilesSimulation extends Simulation{
-
+class CreateDeleteRiskProfilesSimulation extends Simulation {
+  setUp(
+    riskCRUDScenario(simulations.realistic.repeats)
+      .inject(rampUsers(RunnerConfig.input.releaseManagers) over simulations.realistic.rampUpPeriod)
+  ).protocols(httpProtocol)
 }
 
 /**
