@@ -40,6 +40,8 @@ object RunnerConfig extends LazyLogging {
 
     val opsBulk: Int = runnerConfig.getInt("input.opsBulk")
 
+    val ciso: Int = runnerConfig.getInt("input.ciso")
+
     val releaseManagers: Int = runnerConfig.getInt("input.releaseManagers")
 
     val sshHost: String = runnerConfig.getString("input.sshHost")

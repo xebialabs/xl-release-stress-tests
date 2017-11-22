@@ -41,9 +41,18 @@ object Scenarios {
   val queryTemplatesScenario: ScenarioBuilder = scenario("Template overview")
     .exec(Templates.open)
 
+  val openRisksScenario: ScenarioBuilder = scenario("Risk settings page")
+    .exec(Risk.open)
+
   def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
     exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
       .pause(releaseManagerPauseMin, releaseManagerPauseMax)
+      .exec(Calendar.open)
+  }
+
+  def riskManagerChain(pauseMin: Duration, pauseMax: Duration): ChainBuilder = {
+    exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
+      .pause(pauseMin, pauseMax)
       .exec(Calendar.open)
   }
 
@@ -123,6 +132,13 @@ object Scenarios {
       )
   }
 
+  def riskManagerScenario(repeats: Int): ScenarioBuilder = {
+    scenario("Risk scenario")
+      .repeat(repeats)(
+        dependenciesChain(userPauseMin, userPauseMax)
+      )
+  }
+
   def opsScenario(repeats: Int): ScenarioBuilder = {
     scenario("Ops person")
       .repeat(repeats)(
@@ -188,9 +204,4 @@ object Scenarios {
         opsChain(1 second, 1 second, 1 second, 1 second)
       )
     )
-
-  private implicit class EnhancedSession(session: Session) {
-    def getIds(attribute: String): Seq[String] =
-      session(attribute).asOption[Seq[String]].getOrElse(Seq.empty[String])
-  }
 }

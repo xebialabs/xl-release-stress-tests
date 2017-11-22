@@ -80,7 +80,7 @@ class XlrClientTest extends UnitTestSugar with XlrJsonProtocol {
     it("should create many CIs in batches") {
       val cis = (1 until 21).map(index => {
         val day = s"201412$index"
-        SpecialDay("Configuration/Calendar/" + day, day, day)
+        SpecialDay("Configuration/Calendar/" + day, day)
       })
       val groups = cis.grouped(10).toSeq
 

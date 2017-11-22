@@ -18,6 +18,7 @@ import stress.filters.ReleaseSearchFilter
 import scala.util.Random
 
 object Releases {
+  val ACTIVE_RELEASE_IDS = "release_ids_active"
   val RELEASE_SESSION_ID = "release_id"
   val PLANNED_RELEASES_ID = "releases_planned"
   val ACTIVE_RELEASES_ID = "releases_active"
@@ -56,6 +57,31 @@ object Releases {
           .findAll
           .transformOption(data => data.orElse(Some(Seq.empty[String])))
           .saveAs(ACTIVE_RELEASES_ID)
+      )
+  )
+
+  def queryAllActiveReleasesRiskScores: ChainBuilder = exec(
+    http("All active releases")
+      .post("/releases/search")
+      .queryParam("depth", "3")
+      .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
+      .queryParam("page", "0")
+      .body(StringBody(ReleaseSearchFilter(active = true, title = "stress"))).asJSON
+      .check(
+        jsonPath("$['cis'][*]['id']")
+          .findAll
+          .saveAs(ACTIVE_RELEASE_IDS)
+      )
+  )
+
+  def getReleaseRiskScore: ChainBuilder = exec(
+    http("Get Release Risk Score")
+      .get(s"api/v1/risks/Applications/${RELEASE_SESSION_ID}/Risk")
+      .asJSON
+      .check(
+        jsonPath("$[score]")
+          .find
+          .is("30")
       )
   )
 

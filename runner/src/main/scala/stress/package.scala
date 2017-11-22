@@ -12,4 +12,5 @@ package object stress {
       .acceptHeader("application/json")
       .basicAuth(RunnerConfig.input.username, RunnerConfig.input.password)
       .contentTypeHeader("application/json; charset=UTF-8").build
+
 }

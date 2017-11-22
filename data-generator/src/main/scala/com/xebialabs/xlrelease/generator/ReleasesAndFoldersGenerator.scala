@@ -33,23 +33,23 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   }
 
   def generatePlannedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "PLANNED", n => s"Stress test planned release $n", genComments = genComments)
+    generateReleases(amount, "PLANNED", "Configuration/riskProfiles/RiskProfileDefault", n => s"Stress test planned release $n", genComments = genComments)
   }
 
   def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments = genComments)
+    generateReleases(amount, "IN_PROGRESS","Configuration/riskProfiles/RiskProfile1", (n) => s"Stress test active release $n", genComments = genComments)
   }
 
   def generateCompletedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments = genComments)
+    generateReleases(amount, "COMPLETED","Configuration/riskProfiles/RiskProfileDefault", (n) => s"Stress test completed release $n", genComments = genComments)
   }
 
   def generateTemplateReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments = genComments)
+    generateReleases(amount, "TEMPLATE","Configuration/riskProfiles/RiskProfileDefault", (n) => s"Stress test template release $n", genComments = genComments)
   }
 
   def generateAutomatedTemplates(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    val templatesAndOtherCis = generateReleases(amount, "TEMPLATE", (n) => s"Stress test automated template release $n",
+    val templatesAndOtherCis = generateReleases(amount, "TEMPLATE","Configuration/riskProfiles/RiskProfileDefault", (n) => s"Stress test automated template release $n",
       automated = true, genComments = genComments)
 
     templatesAndOtherCis.foreach { templateAndOtherCis =>
@@ -66,6 +66,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
       releaseId = dependentReleaseId,
       title = "Stress test Dependent release",
       status = "PLANNED",
+      riskProfileId = "Configuration/riskProfiles/RiskProfileDefault",
       releaseNumber = 1,
       totalReleasesAmount = 1,
       automated = false,
@@ -79,7 +80,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
       val releaseNumber = incrementReleaseIdCounterAndGet()
 
       val release = Release.build(s"Applications/Release_${transaction}_$releaseNumber",
-        s"Dependent release #$releaseNumber", "IN_PROGRESS", releaseNumber, numberOfReleases)
+        s"Dependent release #$releaseNumber", "IN_PROGRESS", releaseNumber, numberOfReleases,"Configuration/riskProfiles/RiskProfile1")
 
       val inProgress: Boolean => String = b => if (b) "IN_PROGRESS" else "PLANNED"
       release.phases = (1 to 10).map { i =>
@@ -111,6 +112,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
         val releasesOnThisLevel: Seq[ReleaseAndRelatedCis] = generateReleases(
           amount = if (currentDepth == 0) 1 else treeBreadth,
           status = "PLANNED",
+          riskProfileId = "Configuration/riskProfiles/RiskProfileDefault",
           titleGenerator = (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
           genComments = false,
           dependsOn = directChildIds
@@ -207,6 +209,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
 
   private def generateReleases(amount: Int,
                                status: String,
+                               riskProfileId : String,
                                titleGenerator: (Int) => String,
                                automated: Boolean = false,
                                genComments: Boolean,
@@ -225,6 +228,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
         releaseId = releaseId,
         title = titleGenerator(n),
         status = status,
+        riskProfileId = riskProfileId,
         releaseNumber = n,
         totalReleasesAmount = amount,
         automated = automated,
@@ -239,13 +243,14 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   private def makeRelease(releaseId: String,
                           title: String,
                           status: String,
+                          riskProfileId: String,
                           releaseNumber: Int,
                           totalReleasesAmount: Int,
                           automated: Boolean,
                           generateComments: Boolean,
                           dependsOn: Seq[String] = Seq(dependentReleaseId))
   : (Release, Seq[ActivityLogEntry]) = {
-    val release = Release.build(releaseId, title, status, releaseNumber, totalReleasesAmount,
+    val release = Release.build(releaseId, title, status, releaseNumber, totalReleasesAmount,riskProfileId,
       allowConcurrentReleasesFromTrigger = !automated)
 
     val (phases, attachments, activityLogs) = makeReleaseContent(

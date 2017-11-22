@@ -1,6 +1,8 @@
 package com.xebialabs.xlrelease
 
 
+import java.util
+
 import org.threeten.bp.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import scala.language.implicitConversions
@@ -33,6 +35,7 @@ package object domain {
   case class Release(id: String,
                      title: String,
                      status: String,
+                     riskProfileId:String ="Configuration/riskProfiles/RiskProfileDefault",
                      scheduledStartDate: ZonedDateTime,
                      dueDate: ZonedDateTime,
                      queryableStartDate: ZonedDateTime,
@@ -93,9 +96,15 @@ package object domain {
 
   case class SpecialDay(id: String,
                         label: String,
-                        date: String,
                         color: String = "#c3d4ef",
                         `type`: String = "xlrelease.SpecialDay") extends Ci
+
+  case class RiskProfile(id: String,
+                        title: String,
+                         riskProfileAssessors : Map[String, String] = Map(),
+                         defaultProfile:Boolean = false,
+                          `type`: String = "xlrelease.RiskProfile"
+                          ) extends Ci
 
   case class Directory(id: String, `type`: String = "core.Directory") extends Ci
 
@@ -127,12 +136,13 @@ package object domain {
 
   case class ReleaseAndRelatedCis(release: Release, activityLogs: Seq[ActivityLogEntry])
 
+
   object Release {
     def build(title: String): Release = {
       if (!title.startsWith("Release"))
         throw new IllegalArgumentException("Release id/title should start with 'Release'")
 
-      build(s"Applications/$title", title, "PLANNED", 0, 1)
+      build(s"Applications/$title", title, "PLANNED", 0, 1,"Configuration/riskProfiles/RiskProfile"+"Default")
     }
 
     def build(id: String,
@@ -140,6 +150,7 @@ package object domain {
               status: String,
               releaseNumber: Double,
               releasesCount: Double,
+              riskProfileId:String,
               allowConcurrentReleasesFromTrigger: Boolean = true): Release = {
       if (!id.matches("^Applications/(Folder.*/|ActivityLogs.*/)?Release.*$"))
         throw new IllegalArgumentException(s"Container id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
@@ -149,7 +160,7 @@ package object domain {
       val start = firstDayOfYear.plusDays(offset)
       val end = start.plusDays(30)
 
-      Release(id, title, status,
+      Release(id, title, status,riskProfileId,
         scheduledStartDate = start,
         dueDate = end,
         queryableStartDate = start,
@@ -189,6 +200,18 @@ package object domain {
         throw new IllegalArgumentException("Phase id/title should start with 'Phase'")
 
       Phase(s"$releaseId/$title", title, status = status)
+    }
+  }
+
+  object RiskProfile {
+    def build(id: String,
+              title: String,
+              riskProfileAssessors : Map[String, String] = Map(),
+                defaultProfile:Boolean = false,
+                `type`: String = "xlrelease.RiskProfile"
+              ): RiskProfile = {
+
+      RiskProfile(id, title)
     }
   }
 

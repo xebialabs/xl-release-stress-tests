@@ -1,0 +1,28 @@
+{
+    "id": "${riskProfileID}",
+    "riskProfileAssessors": {
+        "xlrelease.MoreThanOneTaskOverDueRiskAssessor": "35",
+        "xlrelease.OneTaskOverDueRiskAssessor": "25",
+        "xlrelease.ReleaseDueDateRiskAssessor": "30",
+        "xlrelease.ReleaseFlaggedAtRiskAssessor": "74",
+        "xlrelease.ReleaseFlaggedAttentionNeededRiskAssessor": "30",
+        "xlrelease.ReleaseStatusFailedRiskAssessor": "90",
+        "xlrelease.ReleaseStatusFailingRiskAssessor": "70",
+        "xlrelease.TaskRetriesRiskAssessor": "50",
+        "xlrelease.TaskRetriesRiskAssessor2Retries": "60",
+        "xlrelease.TaskRetriesRiskAssessor3Retries": "70",
+        "xlrelease.TaskRetriesRiskAssessor4Retries": "80",
+        "xlrelease.TaskRetriesRiskAssessor5Retries": "90",
+        "xlrelease.TaskRetriesRiskAssessorMoreThan5Retries": "100",
+        "xlrelease.TaskWithFourFiveOrSixFlagsAtRiskRiskAssessor": "75",
+        "xlrelease.TaskWithFourFiveOrSixFlagsNeedsAttentionRiskAssessor": "30",
+        "xlrelease.TaskWithMoreThanSixFlagsAtRiskRiskAssessor": "80",
+        "xlrelease.TaskWithMoreThanSixFlagsNeedsAttentionRiskAssessor": "40",
+        "xlrelease.TaskWithOneFlagAtRiskRiskAssessor": "65",
+        "xlrelease.TaskWithOneFlagNeedsAttentionRiskAssessor": "10",
+        "xlrelease.TaskWithTwoOrThreeFlagsAtRiskRiskAssessor": "70",
+        "xlrelease.TaskWithTwoOrThreeFlagsNeedsAttentionRiskAssessor": "20"
+    },
+    "title":"${riskProfileIndex}",
+    "type":"xlrelease.RiskProfile"
+}

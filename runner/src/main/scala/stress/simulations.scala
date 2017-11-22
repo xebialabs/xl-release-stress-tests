@@ -10,6 +10,30 @@ import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 /**
+  * X users , Y riskManagers , admin open Risks settings page
+  */
+class OpenRiskSimulation extends Simulation{
+  setUp(
+    openRisksScenario.inject(rampUsers(RunnerConfig.input.ciso) over simulations.realistic.rampUpPeriod)
+  )
+}
+
+/**
+  *  Y riskManagers , admin edit Risk profiles
+  */
+class EditRiskSimulation extends SimulationBase(openRisksScenario)
+
+/**
+  *  1 riskManager edits 1 risk profile linked to 500 releases
+  */
+class EditRiskLinkedToManyReleasesSimulation extends SimulationBase(openRisksScenario)
+
+/**
+  *  X riskManager, 1 admin create and delete risk profile
+  */
+class CreateDeleteRiskProfilesSimulation extends SimulationBase(openRisksScenario)
+
+/**
   * X users open calendar page on a given month
   */
 class CalendarSimulation extends SimulationBase(openCalendarScenario)

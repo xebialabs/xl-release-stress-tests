@@ -109,6 +109,9 @@ class XlrClient(apiUrl: String, username: String = "admin", password: String = "
   def createTeams(cis: Seq[Ci]): Future[HttpResponse] =
     strictPipeline(Post(s"$apiUrl/fixtures/teams", cis))
 
+  def createRiskProfiles(cis: Seq[Ci]): Future[HttpResponse] =
+    strictPipeline(Post(s"$apiUrl/fixtures/", cis))
+
   def importTemplate(file: String): Future[HttpResponse] = {
     val is = getClass.getResourceAsStream(file)
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray

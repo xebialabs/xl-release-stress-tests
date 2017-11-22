@@ -4,7 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator, UsersAndRolesGenerator}
+import com.xebialabs.xlrelease.generator._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -30,6 +30,11 @@ object Main extends App with LazyLogging {
   private val dependencyTreeDepth = config.getInt("xl.data-generator.dependency-tree-depth")
   private val dependencyTreeBreadth = config.getInt("xl.data-generator.dependency-tree-breadth")
 
+  private val riskProfilesAmount = config.getInt("xl.data-generator.risk-profiles")
+
+  logger.info("risk profiles: {}", riskProfilesAmount.toString)
+
+
   logger.info("Planned releases: {}", plannedReleasesAmount.toString)
   logger.info("Active releases: {}", activeReleasesAmount.toString)
   logger.info("Completed releases: {}", completedReleasesAmount.toString)
@@ -54,6 +59,8 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.password"))
 
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
+
+  val RiskProfileFuture = client.createOrUpdateCis(RiskProfilesGenerator.generateRiskProfiles())
 
   private val usersAndRolesGenerator = new UsersAndRolesGenerator()
   val users = usersAndRolesGenerator.generateUsers(foldersAmount)
@@ -136,7 +143,8 @@ object Main extends App with LazyLogging {
   val allResponses = sequence(Seq(
     usersAndRolesAndImportedTemplateFuture,
     allWithDependencyTrees,
-    specialDaysFuture
+    specialDaysFuture,
+    RiskProfileFuture
   ))
 
   allResponses.andThen {
