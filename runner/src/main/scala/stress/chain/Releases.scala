@@ -76,11 +76,10 @@ object Releases {
 
   def AssertActiveReleasesRiskScore: ChainBuilder = exec(
     http(s"Get Release $${$RELEASE_SESSION_ID} Risk Score")
-      .get(s"api/v1/risks/Applications/$${$RELEASE_SESSION_ID}/Risk")
+      .get(s"/api/v1/risks/$${$RELEASE_SESSION_ID}/Risk")
       .asJSON
       .check(
-        jsonPath("$.score")
-          .is("30")
+        jsonPath("$.score").is("30")
       )
   )
 

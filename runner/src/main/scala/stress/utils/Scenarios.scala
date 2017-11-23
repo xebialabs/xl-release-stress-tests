@@ -53,12 +53,13 @@ object Scenarios {
       .exec(Calendar.open)
   }
 
-  def riskManagerChain(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
+  def riskManagerChain(riskManagerPauseMin: Duration, riskManagerPauseMax: Duration): ChainBuilder = {
     exec(session => {
-      val randomRelease = (Random shuffle session.getIds(Releases.ACTIVE_RELEASE_IDS)).headOption.getOrElse("")
+      val randomRelease = ((Random shuffle session.getIds(Releases.ACTIVE_RELEASE_IDS)) map Ids.toDomainId)
+        .headOption.getOrElse("")
       session.set(Releases.RELEASE_SESSION_ID, randomRelease)
     })
-      .pause(releaseManagerPauseMin, releaseManagerPauseMax)
+      .pause(riskManagerPauseMin, riskManagerPauseMax)
       .exec(Releases.AssertActiveReleasesRiskScore)
   }
 
@@ -146,7 +147,7 @@ object Scenarios {
       .exec(Risk.delete)
       .exec(Releases.queryAllActiveReleasesRiskScores)
         .repeat(s"$${${Releases.ACTIVE_RELEASE_IDS}.size()}")(
-          riskManagerChain(releaseManagerPauseMin,releaseManagerPauseMax)
+          riskManagerChain(riskManagerPauseMin,riskManagerPauseMax)
         )
   }
 

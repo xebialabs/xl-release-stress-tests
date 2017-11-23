@@ -55,6 +55,10 @@ object RunnerConfig extends LazyLogging {
 
   val releaseManagerPauseMax: FiniteDuration = duration("releaseManagerPauseMax")
 
+  val riskManagerPauseMin: FiniteDuration = duration("riskManagerPauseMin")
+
+  val riskManagerPauseMax: FiniteDuration = duration("riskManagerPauseMax")
+
   val opsPauseMin: FiniteDuration = duration("opsPauseMin")
 
   val opsPauseMax: FiniteDuration = duration("opsPauseMax")
