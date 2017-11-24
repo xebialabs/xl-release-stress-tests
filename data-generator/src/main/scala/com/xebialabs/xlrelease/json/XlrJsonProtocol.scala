@@ -36,7 +36,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val attachmentFormat: RootJsonFormat[Attachment] = jsonFormat2(Attachment.apply)
   implicit val releaseTriggerFormat: RootJsonFormat[ReleaseTrigger] = jsonFormat8(ReleaseTrigger.apply)
 
-  implicit val specialDayFormat: RootJsonFormat[SpecialDay] = jsonFormat5(SpecialDay.apply)
+  implicit val specialDayFormat: RootJsonFormat[SpecialDay] = jsonFormat4(SpecialDay.apply)
   implicit val directoryFormat: RootJsonFormat[Directory] = jsonFormat2(Directory.apply)
   implicit val userFormat: RootJsonFormat[User] = jsonFormat5(User)
   implicit val roleFormat: RootJsonFormat[Role] = jsonFormat2(Role)
