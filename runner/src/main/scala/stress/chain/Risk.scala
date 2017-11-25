@@ -51,6 +51,12 @@ object Risk {
         .check(status.is(204))
     )
 
+  def getReferencesToDelete: ChainBuilder = exec(
+    http("get references to delete")
+      .get(s"/risks/profiles/$${$DELETE_RISK_ID}/references")
+      .asJSON
+  )
+
   def edit: ChainBuilder = open
     .exec(session => {
       val riskIds = session("riskIds").asOption[Seq[String]].get takeRight 900

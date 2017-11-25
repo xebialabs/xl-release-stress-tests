@@ -4,34 +4,32 @@ import io.gatling.core.Predef._
 import stress.chain.Releases
 import stress.config.RunnerConfig
 import stress.config.RunnerConfig.simulations
-import stress.utils.Scenarios._
+import stress.utils.Scenarios.{riskCRUDScenario, _}
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
 /**
-  * X users , Y riskManagers , admin open Risks settings page
-  */
-class OpenRiskSimulation extends SimulationBase(openRisksScenario)
-
-/**
-  *  Y riskManagers , admin edit Risk profiles
-  */
-class EditRiskSimulation extends SimulationBase(editRiskScenario)
-
-/**
-  *  1 riskManager edits 1 risk profile linked to 500 releases
-  */
-class DeleteRiskLinkedToManyReleasesSimulation extends SimulationBase(riskManagerScenario)
-
-/**
+  * X users open Risks settings page,
+  * Y riskManagers edit Risk profiles,
+  * 1 riskManager edits 1 risk profile linked to 500 releases,
   *  X riskManager, 1 admin create and delete risk profile
   */
-class CreateDeleteRiskProfilesSimulation extends Simulation {
+class RealisticRiskSimulation extends Simulation{
+  private val rampUpPeriod = simulations.realistic.rampUpPeriod
+  private val repeats = simulations.realistic.repeats
+
   setUp(
-    riskCRUDScenario(simulations.realistic.repeats)
-      .inject(rampUsers(RunnerConfig.input.releaseManagers) over simulations.realistic.rampUpPeriod)
-  ).protocols(httpProtocol)
+    openRisksScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
+      .protocols(httpProtocolNormalUser),
+    editRiskScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
+      .protocols(httpProtocolRiskUser),
+    riskManagerScenario.inject(atOnceUsers(RunnerConfig.input.ciso))
+      .protocols(httpProtocol),
+    riskCRUDScenario(repeats)
+      .inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod)
+      .protocols(httpProtocol)
+  )
 }
 
 /**

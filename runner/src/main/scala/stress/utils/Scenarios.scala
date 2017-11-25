@@ -41,11 +41,15 @@ object Scenarios {
   val queryTemplatesScenario: ScenarioBuilder = scenario("Template overview")
     .exec(Templates.open)
 
-  val openRisksScenario: ScenarioBuilder = scenario("Risk settings page")
-    .exec(Risk.open)
+  def openRisksScenario(repeats: Int): ScenarioBuilder = scenario("Risk settings page")
+    .repeat(repeats){
+      Risk.open
+    }
 
-  val editRiskScenario: ScenarioBuilder = scenario("Risk edit")
-    .exec(Risk.edit)
+  def editRiskScenario(repeats: Int): ScenarioBuilder = scenario("Risk edit")
+    .repeat(repeats){
+      Risk.edit
+    }
 
   def releaseManagerChain500(releaseManagerPauseMin: Duration, releaseManagerPauseMax: Duration): ChainBuilder = {
     exec(Pipeline.query(StringBody(ReleaseSearchFilter(active = true))))
@@ -144,6 +148,7 @@ object Scenarios {
       .exec(session => {
         session.set(Risk.DELETE_RISK_ID, "Configuration/riskProfiles/RiskProfile1")
       })
+      .exec(Risk.getReferencesToDelete)
       .exec(Risk.delete)
       .exec(Releases.queryAllActiveReleasesRiskScores)
         .repeat(s"$${${Releases.ACTIVE_RELEASE_IDS}.size()}")(

@@ -34,6 +34,14 @@ object RunnerConfig extends LazyLogging {
 
     val password: String = runnerConfig.getString("input.password")
 
+    val nusername: String = runnerConfig.getString("input.nusername")
+
+    val npassword: String = runnerConfig.getString("input.npassword")
+
+    val rusername: String = runnerConfig.getString("input.rusername")
+
+    val rpassword: String = runnerConfig.getString("input.rpassword")
+
     val teams: Int = runnerConfig.getInt("input.teams")
 
     val ops: Int = runnerConfig.getInt("input.ops")

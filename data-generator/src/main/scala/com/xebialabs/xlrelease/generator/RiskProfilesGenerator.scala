@@ -9,7 +9,7 @@ object RiskProfilesGenerator {
       Map("xlrelease.TaskRetriesRiskAssessor" -> "50",
         "xlrelease.TaskWithTwoOrThreeFlagsNeedsAttentionRiskAssessor" -> "20",
         "xlrelease.MoreThanOneTaskOverDueRiskAssessor" -> "35",
-        "xlrelease.ReleaseDueDateRiskAssessor" -> "30",
+        "xlrelease.ReleaseDueDateRiskAssessor" -> "45",
         "xlrelease.TaskRetriesRiskAssessor4Retries" -> "80",
         "xlrelease.ReleaseFlaggedAttentionNeededRiskAssessor" -> "30",
         "xlrelease.TaskRetriesRiskAssessor5Retries" -> "90",

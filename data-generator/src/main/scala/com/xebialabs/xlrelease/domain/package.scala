@@ -35,7 +35,7 @@ package object domain {
   case class Release(id: String,
                      title: String,
                      status: String,
-                     riskProfileId:String ="Configuration/riskProfiles/RiskProfileDefault",
+                     riskProfile:String ="Configuration/riskProfiles/RiskProfileDefault",
                      scheduledStartDate: ZonedDateTime,
                      dueDate: ZonedDateTime,
                      queryableStartDate: ZonedDateTime,
@@ -150,7 +150,7 @@ package object domain {
               status: String,
               releaseNumber: Double,
               releasesCount: Double,
-              riskProfileId:String,
+              riskProfile:String,
               allowConcurrentReleasesFromTrigger: Boolean = true): Release = {
       if (!id.matches("^Applications/(Folder.*/|ActivityLogs.*/)?Release.*$"))
         throw new IllegalArgumentException(s"Container id should start with 'Applications/Folder.../.../Release but starts with [$id]'")
@@ -160,7 +160,7 @@ package object domain {
       val start = firstDayOfYear.plusDays(offset)
       val end = start.plusDays(30)
 
-      Release(id, title, status,riskProfileId,
+      Release(id, title, status,riskProfile,
         scheduledStartDate = start,
         dueDate = end,
         queryableStartDate = start,
