@@ -84,7 +84,7 @@ object Releases {
   def getRandomTreeRelease: ChainBuilder = queryAllTreeReleases
     .exec(session => {
       val releaseIds = session.get("treeReleaseIds").asOption[Seq[String]].get
-      session.set(RELEASE_SESSION_ID, (Random shuffle releaseIds).headOption.getOrElse(""))
+      session.set(RELEASE_SESSION_ID, (Random shuffle releaseIds).head)
     })
 
   def getRelease: ChainBuilder = exec(http("Get release").get(s"/releases/$${$RELEASE_SESSION_ID}"))
