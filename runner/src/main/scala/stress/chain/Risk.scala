@@ -16,6 +16,7 @@ object Risk {
   val RISK_SESSION_ID = "risk_id"
   val NEW_RISK_PROFILE_ID = "new_risk_id"
   val DELETE_RISK_ID = "riskProfileID"
+  val UPDATE_RISK_ID = "riskProfileUpdateId"
 
   def open: ChainBuilder = exec(
     http("Get all risks")
@@ -77,7 +78,17 @@ object Risk {
           .body(new ReplacingFileBody("update-risk-body.json",Seq("riskProfileID","riskProfileIndex")))
           .asJSON
       )
-  
+
+  def editOneRiskProfileToManyReleases : ChainBuilder = exec(session => {
+    session.set("riskProfileIndex", "1").set("riskProfileID", "Configuration/riskProfiles/RiskProfile1")
+  })
+    .exec(
+    http("Update risk profile attached to many releases")
+      .put(s"/api/v1/risks/profiles/$${$UPDATE_RISK_ID}")
+      .body(new ReplacingFileBody("update-risk-for-many.json",Seq("riskProfileID","riskProfileIndex")))
+      .asJSON
+  )
+
   private implicit class SessionEnhancedByRisks(session: Session) {
     def newRisk: String =  session(NEW_RISK_PROFILE_ID).asOption[String].getOrElse("")
   }

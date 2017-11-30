@@ -20,9 +20,9 @@ class RealisticRiskSimulation extends Simulation{
   private val repeats = simulations.realistic.repeats
 
   setUp(
-    openRisksScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
+    openRisksScenario(repeats).inject(atOnceUsers(RunnerConfig.input.ops))
       .protocols(httpProtocolNormalUser),
-    editRiskScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
+    editRiskScenario(repeats).inject(atOnceUsers(RunnerConfig.input.ops))
       .protocols(httpProtocolRiskUser),
     riskManagerScenario.inject(atOnceUsers(RunnerConfig.input.ciso))
       .protocols(httpProtocol),

@@ -144,12 +144,13 @@ object Scenarios {
   }
 
   def riskManagerScenario(): ScenarioBuilder = {
-    scenario("Risk manager Delete Risk")
+    scenario("Risk manager Update Risk")
       .exec(session => {
-        session.set(Risk.DELETE_RISK_ID, "Configuration/riskProfiles/RiskProfile1")
+        session.set(Risk.UPDATE_RISK_ID, "Configuration/riskProfiles/RiskProfile1")
       })
-      .exec(Risk.getReferencesToDelete)
-      .exec(Risk.delete)
+      //.exec(Risk.getReferencesToDelete)
+      //.exec(Risk.delete)
+      .exec(Risk.editOneRiskProfileToManyReleases)
       .exec(Releases.queryAllActiveReleasesRiskScores)
         .repeat(s"$${${Releases.ACTIVE_RELEASE_IDS}.size()}")(
           riskManagerChain(riskManagerPauseMin,riskManagerPauseMax)

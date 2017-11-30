@@ -79,7 +79,7 @@ object Releases {
       .get(s"/api/v1/risks/$${$RELEASE_SESSION_ID}/Risk")
       .asJSON
       .check(
-        jsonPath("$.score").is("30")
+        jsonPath("$.score").is("31")
       )
   )
 
