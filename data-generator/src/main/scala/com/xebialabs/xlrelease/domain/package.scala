@@ -250,7 +250,7 @@ package object domain {
     lazy val generateText: String = {
       // 100.000 chars per comment which should be ~291K per comment which is ~29MB per release
       // REDUCED
-      Random.nextString(100) * 200
+      Random.nextString(100)
     }
   }
 
