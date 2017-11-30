@@ -245,14 +245,12 @@ package object domain {
 
     def buildComment(title: String, containerId: String): Comment =
       if (!title.startsWith("Comment")) throw new IllegalArgumentException("Comment id/title should start with 'Comment'")
-      else Comment(s"$containerId/$title", generateText())
+      else Comment(s"$containerId/$title", generateText)
 
-    def generateText(size: Int = 0): String = {
+    lazy val generateText: String = {
       // 100.000 chars per comment which should be ~291K per comment which is ~29MB per release
-      val str = Random.nextString(100)
-      val sb = new StringBuilder()
-      (0 until 1000).foreach(_ => sb.append(str))
-      sb.toString()
+      // REDUCED
+      Random.nextString(100) * 200
     }
   }
 
