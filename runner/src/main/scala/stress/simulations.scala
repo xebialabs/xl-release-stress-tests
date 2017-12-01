@@ -4,7 +4,7 @@ import io.gatling.core.Predef._
 import stress.chain.Releases
 import stress.config.RunnerConfig
 import stress.config.RunnerConfig.simulations
-import stress.utils.Scenarios.{riskCRUDScenario, _}
+import stress.utils.Scenarios.{openRisksScenario, riskCRUDScenario, _}
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -15,16 +15,16 @@ import scala.language.{implicitConversions, postfixOps}
   * 1 riskManager edits 1 risk profile linked to 500 releases,
   *  X riskManager, 1 admin create and delete risk profile
   */
-class RealisticRiskSimulation extends Simulation{
+class RiskOnlySimulation extends Simulation{
   private val rampUpPeriod = simulations.realistic.rampUpPeriod
   private val repeats = simulations.realistic.repeats
 
   setUp(
-    openRisksScenario(repeats).inject(atOnceUsers(RunnerConfig.input.ops))
+    openRisksScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod )
       .protocols(httpProtocolNormalUser),
-    editRiskScenario(repeats).inject(atOnceUsers(RunnerConfig.input.ops))
+    editRiskScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
       .protocols(httpProtocolRiskUser),
-    riskManagerScenario.inject(atOnceUsers(RunnerConfig.input.ciso))
+    riskManagerScenario.inject(atOnceUsers(1))
       .protocols(httpProtocol),
     riskCRUDScenario(repeats)
       .inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod)
@@ -113,6 +113,31 @@ class RealisticSimulation extends Simulation {
     opsBulkScenario(repeats).inject(rampUsers(RunnerConfig.input.opsBulk) over rampUpPeriod),
     developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod)
   ).protocols(httpProtocol)
+}
+
+/**
+  * Combining  risk and Realistic simulations
+  */
+class RealisticWithRiskSimulation extends Simulation {
+
+  private val rampUpPeriod = simulations.realistic.rampUpPeriod
+  private val repeats = simulations.realistic.repeats
+
+  setUp(
+    releaseManagerScenario(repeats).inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod).protocols(httpProtocol),
+    opsScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod).protocols(httpProtocol),
+    opsBulkScenario(repeats).inject(rampUsers(RunnerConfig.input.opsBulk) over rampUpPeriod).protocols(httpProtocol),
+    developmentTeamScenario(repeats).inject(rampUsers(RunnerConfig.input.teams) over rampUpPeriod).protocols(httpProtocol),
+      openRisksScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod )
+      .protocols(httpProtocolNormalUser),
+    editRiskScenario(repeats).inject(rampUsers(RunnerConfig.input.ops) over rampUpPeriod)
+      .protocols(httpProtocolRiskUser),
+    riskManagerScenario.inject(atOnceUsers(1))
+      .protocols(httpProtocol),
+    riskCRUDScenario(repeats)
+      .inject(rampUsers(RunnerConfig.input.releaseManagers) over rampUpPeriod)
+      .protocols(httpProtocol)
+  )
 }
 
 /**
