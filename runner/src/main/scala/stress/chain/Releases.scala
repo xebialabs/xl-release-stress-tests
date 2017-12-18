@@ -18,8 +18,12 @@ import stress.filters.ReleaseSearchFilter
 import scala.util.Random
 
 object Releases {
+
+  import stress.EnhancedSession
+
   val RELEASE_SESSION_ID = "release_id"
   val PLANNED_RELEASES_ID = "releases_planned"
+  val TREE_RELEASES_IDS = "treeReleaseIds"
   val ACTIVE_RELEASES_ID = "releases_active"
   val START_RELEASES_SESSION_ID = "releases_start"
   val ABORT_RELEASES_SESSION_ID = "releases_abort"
@@ -72,18 +76,18 @@ object Releases {
       .post("/releases/search")
       .queryParam("numberbypage", RunnerConfig.queries.search.numberByPage)
       .queryParam("page", "0")
-      .body(StringBody(ReleaseSearchFilter(active = true, title = "Tree"))).asJSON
+      .body(StringBody(ReleaseSearchFilter(planned = true, title = "Tree"))).asJSON
       .check(
         jsonPath("$['cis'][*]['id']")
           .findAll
           .transformOption(data => data.orElse(Some(Seq.empty[String])))
-          .saveAs("treeReleaseIds")
+          .saveAs(TREE_RELEASES_IDS)
       )
   )
 
   def getRandomTreeRelease: ChainBuilder = queryAllTreeReleases
     .exec(session => {
-      val releaseIds = session.get("treeReleaseIds").asOption[Seq[String]].get
+      val releaseIds = session.getIds(TREE_RELEASES_IDS)
       session.set(RELEASE_SESSION_ID, (Random shuffle releaseIds).headOption.getOrElse(""))
     })
 
@@ -175,4 +179,5 @@ object Releases {
       replacedContent.map(requestBuilder.setBody)
     }
   }
+
 }

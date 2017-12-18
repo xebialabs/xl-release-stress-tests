@@ -13,6 +13,7 @@ import scala.language.{implicitConversions, postfixOps}
 import scala.util.Random
 
 object Scenarios {
+  import stress.EnhancedSession
 
   val createReleaseScenario: ScenarioBuilder = scenario("Create release")
     .exec(Releases.create(RawFileBody("create-release-body.json")))
@@ -189,8 +190,4 @@ object Scenarios {
       )
     )
 
-  private implicit class EnhancedSession(session: Session) {
-    def getIds(attribute: String): Seq[String] =
-      session(attribute).asOption[Seq[String]].getOrElse(Seq.empty[String])
-  }
 }
