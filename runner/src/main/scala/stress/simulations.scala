@@ -129,6 +129,11 @@ class DevelopmentTeamSimulation extends SimulationBase(developmentTeamScenario(1
 class DependenciesSimulation extends SimulationBase(dependenciesScenario(simulations.repeats))
 
 /**
+  * X users interact with relationships endpoints (note this requires the relationships plugin to be installed)
+  */
+class RelationshipsSimulation extends SimulationBase(relationshipsScenario(simulations.repeats))
+
+/**
   * X release managers open folders and their releases and templates.
   */
 class FoldersSimulation extends Simulation {

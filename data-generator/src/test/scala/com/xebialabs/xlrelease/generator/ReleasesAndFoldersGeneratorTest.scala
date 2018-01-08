@@ -188,7 +188,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
       val depth = 4
       val breadth = 3
 
-      val cis = generator.generateDependencyTrees(1, depth, breadth)
+      val cis = generator.generateDependencyTrees(1, depth, breadth, breadth)
 
       val releases = releasesOfBatch(cis)
       releases should have size depth * breadth + 1
@@ -198,7 +198,7 @@ class ReleasesAndFoldersGeneratorTest extends UnitTestSugar {
     }
 
     it("should generate dependencies between releases in the tree") {
-      val cis = generator.generateDependencyTrees(1, 2, 2)
+      val cis = generator.generateDependencyTrees(1, 2, 2, 2)
 
       val dependencies = dependenciesOfBatch(cis)
       dependencies should have size 6

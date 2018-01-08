@@ -33,23 +33,23 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   }
 
   def generatePlannedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "PLANNED", n => s"Stress test planned release $n", genComments = genComments)
+    generateReleases(amount, 0, "PLANNED", n => s"Stress test planned release $n", genComments = genComments)
   }
 
   def generateActiveReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments = genComments)
+    generateReleases(amount, 0, "IN_PROGRESS", (n) => s"Stress test active release $n", genComments = genComments)
   }
 
   def generateCompletedReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "COMPLETED", (n) => s"Stress test completed release $n", genComments = genComments)
+    generateReleases(amount, 0, "COMPLETED", (n) => s"Stress test completed release $n", genComments = genComments)
   }
 
   def generateTemplateReleases(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    generateReleases(amount, "TEMPLATE", (n) => s"Stress test template release $n", genComments = genComments)
+    generateReleases(amount, 0, "TEMPLATE", (n) => s"Stress test template release $n", genComments = genComments)
   }
 
   def generateAutomatedTemplates(amount: Int, genComments: Boolean = false): Seq[ReleaseAndRelatedCis] = {
-    val templatesAndOtherCis = generateReleases(amount, "TEMPLATE", (n) => s"Stress test automated template release $n",
+    val templatesAndOtherCis = generateReleases(amount, 0, "TEMPLATE", (n) => s"Stress test automated template release $n",
       automated = true, genComments = genComments)
 
     templatesAndOtherCis.foreach { templateAndOtherCis =>
@@ -66,6 +66,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
       releaseId = dependentReleaseId,
       title = "Stress test Dependent release",
       status = "PLANNED",
+      currentDepth = 0,
       releaseNumber = 1,
       totalReleasesAmount = 1,
       automated = false,
@@ -97,23 +98,25 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   }
 
   def generateDependencyTrees(dependencyTreeAmount: Int, dependencyTreeDepth: Int,
-                              dependencyTreeBreadth: Int): Seq[ReleaseAndRelatedCis] = {
+                              dependencyTreeBreadth: Int, dependencyTreeDependencyAmount: Int): Seq[ReleaseAndRelatedCis] = {
 
     type AllReleasesAndTopLevelIds = (Seq[ReleaseAndRelatedCis], Seq[String])
 
-    def generateDependencyTree(currentTree: Int, currentDepth: Int, maxDepth: Int, treeBreadth: Int)
+    def generateDependencyTree(currentTree: Int, currentDepth: Int, maxDepth: Int, treeBreadth: Int, dependencyTreeDependencyAmount: Int)
     : AllReleasesAndTopLevelIds = {
       if (currentDepth > maxDepth) {
         (Seq.empty, Seq.empty)
       } else {
-        val (allChildReleases, directChildIds) = generateDependencyTree(currentTree, currentDepth + 1, maxDepth, treeBreadth)
+        val (allChildReleases, directChildIds) = generateDependencyTree(currentTree, currentDepth + 1, maxDepth, treeBreadth, dependencyTreeDependencyAmount)
 
         val releasesOnThisLevel: Seq[ReleaseAndRelatedCis] = generateReleases(
           amount = if (currentDepth == 0) 1 else treeBreadth,
+          currentDepth = currentDepth,
           status = "PLANNED",
           titleGenerator = (n) => s"Tree $currentTree release (depth: $currentDepth, number: $n)",
           genComments = false,
-          dependsOn = directChildIds
+          dependsOn = directChildIds,
+          dependencyAmount = dependencyTreeDependencyAmount
         )
         val gateIds = releasesOnThisLevel
           .flatMap(_.release.phases)
@@ -126,7 +129,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     }
 
     (1 to dependencyTreeAmount).flatMap { i =>
-      generateDependencyTree(i, 0, dependencyTreeDepth, dependencyTreeBreadth)._1
+      generateDependencyTree(i, 0, dependencyTreeDepth, dependencyTreeBreadth, dependencyTreeDependencyAmount)._1
     }
   }
 
@@ -206,11 +209,13 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
     ))
 
   private def generateReleases(amount: Int,
+                               currentDepth: Int,
                                status: String,
                                titleGenerator: (Int) => String,
                                automated: Boolean = false,
                                genComments: Boolean,
-                               dependsOn: Seq[String] = Seq(dependentReleaseId)
+                               dependsOn: Seq[String] = Seq(dependentReleaseId),
+                               dependencyAmount: Int = 1
                               ): Seq[ReleaseAndRelatedCis] = {
     (1 to amount).map { n =>
       val releaseNumber = incrementReleaseIdCounterAndGet()
@@ -225,11 +230,13 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
         releaseId = releaseId,
         title = titleGenerator(n),
         status = status,
+        currentDepth = currentDepth,
         releaseNumber = n,
         totalReleasesAmount = amount,
         automated = automated,
         generateComments = genComments,
-        dependsOn = dependsOn
+        dependsOn = dependsOn,
+        dependencyAmount = dependencyAmount
       )
 
       ReleaseAndRelatedCis(release, activityLogs)
@@ -239,19 +246,24 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   private def makeRelease(releaseId: String,
                           title: String,
                           status: String,
+                          currentDepth: Int,
                           releaseNumber: Int,
                           totalReleasesAmount: Int,
                           automated: Boolean,
                           generateComments: Boolean,
-                          dependsOn: Seq[String] = Seq(dependentReleaseId))
+                          dependsOn: Seq[String] = Seq(dependentReleaseId),
+                          dependencyAmount: Int = 1)
   : (Release, Seq[ActivityLogEntry]) = {
     val release = Release.build(releaseId, title, status, releaseNumber, totalReleasesAmount,
       allowConcurrentReleasesFromTrigger = !automated)
 
     val (phases, attachments, activityLogs) = makeReleaseContent(
       release,
+      currentDepth,
       generateComments = generateComments,
+      releaseNumber = releaseNumber,
       dependsOn = dependsOn,
+      dependencyAmount = dependencyAmount,
       automated = automated
     )
     release.phases = phases
@@ -261,9 +273,9 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   }
 
 
-  private def makeReleaseContent(release: Release, phasesPerRelease: Int = phasesPerRelease,
-                                 tasksPerPhase: Int = tasksPerPhase, generateComments: Boolean,
-                                 dependsOn: Seq[String] = Seq.empty, automated: Boolean = false)
+  private def makeReleaseContent(release: Release, currentDepth: Int, phasesPerRelease: Int = phasesPerRelease,
+                                 tasksPerPhase: Int = tasksPerPhase, generateComments: Boolean, releaseNumber: Int,
+                                 dependsOn: Seq[String] = Seq.empty, dependencyAmount: Int, automated: Boolean = false)
   : (Seq[Phase], Seq[Attachment], Seq[ActivityLogEntry]) = {
 
     val phaseNumbers = 1 to phasesPerRelease
@@ -274,7 +286,7 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
       case (phase, phaseNumber) =>
         val tasksAndAttachments = (1 to tasksPerPhase).map { taskNumber =>
           val (task, attachmentOpt) = makeTaskAndMaybeAttachment(
-            phase, phaseNumber, taskNumber, automated, release.id, dependsOn
+            phase, phaseNumber, currentDepth, taskNumber, automated, release.id, releaseNumber, dependsOn, dependencyAmount
           )
           if (generateComments) {
             task.comments = task.comments :+ makeComment(task.id)
@@ -296,9 +308,10 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
   private def makeComment(parentId: String): Comment =
     Comment.buildComment(s"Comment0", parentId)
 
-  private def makeTaskAndMaybeAttachment(phase: Phase, phaseNumber: Int, taskNumber: Int,
-                                         automated: Boolean, releaseId: String,
-                                         dependsOn: Seq[String])
+  private def makeTaskAndMaybeAttachment(phase: Phase, phaseNumber: Int, currentDepth: Int, taskNumber: Int,
+                                         automated: Boolean, releaseId: String, releaseNumber: Int,
+                                         dependsOn: Seq[String],
+                                         dependencyAmount: Int )
   : (AbstractTask, Option[Attachment]) = {
     if (isFirstTaskOfPhase(taskNumber)) {
       val attachmentOpt = makeAttachment(releaseId)
@@ -306,7 +319,13 @@ class ReleasesAndFoldersGenerator(implicit config: Config) {
       (task, attachmentOpt)
     } else if (isLastTaskOfRelease(phaseNumber, taskNumber)) {
       val task = GateTask.build(s"Task$taskNumber", phase.id, taskStatus(phase, taskNumber))
-      dependsOn.zipWithIndex.map {
+
+      val dependencies = currentDepth match {
+        case 0 => dependsOn
+        case _ => dependsOn.slice((releaseNumber - 1) - dependencyAmount, (releaseNumber - 1) + dependencyAmount).takeRight(dependencyAmount)
+      }
+
+      dependencies.zipWithIndex.map {
         case (targetId, dependencyIndex) =>
           val dependency = Dependency.build(s"Dependency$dependencyIndex", task.id, targetId)
           task.dependencies = task.dependencies :+ dependency
