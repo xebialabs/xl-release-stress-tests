@@ -117,6 +117,12 @@ object Scenarios {
       .exec(Tasks.getDependencyCandidates)
   }
 
+  def relationshipsChain(pauseMin: Duration, pauseMax: Duration): ChainBuilder = {
+    exec(Releases.getRandomTreeRelease)
+      .pause(pauseMin, pauseMax)
+      .exec(Relationships.getRelationships)
+  }
+
   def releaseManagerScenario(repeats: Int): ScenarioBuilder = {
     scenario("Release manager")
       .repeat(repeats)(
@@ -178,6 +184,13 @@ object Scenarios {
     scenario("Dependencies scenario")
       .repeat(repeats)(
         dependenciesChain(userPauseMin, userPauseMax)
+      )
+  }
+
+  def relationshipsScenario(repeats: Int): ScenarioBuilder = {
+    scenario("Relationships scenario")
+      .repeat(repeats)(
+        relationshipsChain(userPauseMin, userPauseMax)
       )
   }
 

@@ -29,6 +29,7 @@ object Main extends App with LazyLogging {
   private val dependencyTreeAmount = config.getInt("xl.data-generator.dependency-trees")
   private val dependencyTreeDepth = config.getInt("xl.data-generator.dependency-tree-depth")
   private val dependencyTreeBreadth = config.getInt("xl.data-generator.dependency-tree-breadth")
+  private val dependencyTreeDependencyAmount = config.getInt("xl.data-generator.dependency-tree-dependency-amount")
 
   logger.info("Planned releases: {}", plannedReleasesAmount.toString)
   logger.info("Active releases: {}", activeReleasesAmount.toString)
@@ -126,7 +127,7 @@ object Main extends App with LazyLogging {
   val allWithDependencyTrees = if (dependencyTreeAmount > 0) {
     allFoldersAndReleasesWithDependencies.flatMap(_ => {
       sequential(
-        releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth)
+        releaseGenerator.generateDependencyTrees(dependencyTreeAmount, dependencyTreeDepth, dependencyTreeBreadth, dependencyTreeDependencyAmount)
       )(client.createReleaseAndRelatedCis)
     })
   } else {
