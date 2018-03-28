@@ -77,3 +77,5 @@ documentation/temporaryScreenshots
 # Gatling
 stress-tests/simulation/reports/*
 results/
+
+xl-release*-server
