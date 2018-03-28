@@ -15,7 +15,7 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val commentFormat: RootJsonFormat[Comment] = jsonFormat3(Comment.apply)
   implicit val dependencyFormat: RootJsonFormat[Dependency] = jsonFormat3(Dependency.apply)
 
-  implicit val taskFormat: RootJsonFormat[Task] = jsonFormat6(Task.apply)
+  implicit val taskFormat: RootJsonFormat[Task] = jsonFormat7(Task.apply)
   implicit val scriptTaskFormat: RootJsonFormat[ScriptTask] = jsonFormat7(ScriptTask.apply)
   implicit val gateTaskFormat: RootJsonFormat[GateTask] = jsonFormat7(GateTask.apply)
 

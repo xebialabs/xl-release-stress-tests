@@ -4,6 +4,13 @@ import com.xebialabs.xlrelease.domain.{Permission, Principal, Role, User, users2
 
 class UsersAndRolesGenerator(emailDomain: String) {
 
+
+  def generateApprovalUsers(amount: Int): Seq[User] = {
+    for {
+      i <- 1 to amount
+    } yield User(s"approver$i", s"approver$i", s"approver$i@$emailDomain", s"Approver $i")
+  }
+
   def generateUsers(amount: Int): Seq[User] = {
     val users = for {
       i <- 1 to amount

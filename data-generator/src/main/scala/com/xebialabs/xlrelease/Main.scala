@@ -4,8 +4,9 @@ import com.typesafe.config.ConfigFactory.parseResources
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
-import com.xebialabs.xlrelease.domain.{ImapServer, SmtpServer}
+import com.xebialabs.xlrelease.domain.{ImapServer, Phase, Release, SmtpServer, Task, Team}
 import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator, UsersAndRolesGenerator}
+import spray.http.HttpResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -77,6 +78,36 @@ object Main extends App with LazyLogging {
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
   private val usersAndRolesGenerator = new UsersAndRolesGenerator(emailDomain)
+
+  val release = Release.build(s"Applications/ReleaseRemoteCompletionTemplate", "Remote completion template", "TEMPLATE", 0, 0)
+  val phase = Phase.build("PhaseApproval", release.id)
+  val task = Task.build("TaskApproval", phase.id, "PLANNED", `type` = "xlrelease.RemoteCompletionTask", team = Some("Approvers"))
+  release.phases = Seq(phase)
+  phase.tasks = Seq(task)
+  private val remoteCompletionTemplate: Future[HttpResponse] = client.createRelease(release)
+
+  val approvalUsers = usersAndRolesGenerator.generateApprovalUsers(10)
+
+  private val userFutures = sequential(approvalUsers)(client.createUser)
+
+  sequence(Seq(remoteCompletionTemplate, userFutures)).onComplete( add => {
+    val team = Team.build(release.id, "", "Approvers", approvalUsers.map(_.username), Seq(
+      "template#create_release",
+      "template#view",
+      "template#edit",
+      "template#edit_security",
+      "template#edit_triggers",
+      "release#view",
+      "release#edit",
+      "release#edit_security",
+      "release#start",
+      "release#abort",
+      "release#edit_task",
+      "release#reassign_task"
+    ))
+    client.createTeams(Seq(team))
+  })
+
   val users = usersAndRolesGenerator.generateUsers(foldersAmount)
   val roles = usersAndRolesGenerator.generateRoles(users)
   val permissions = usersAndRolesGenerator.generatePermissions(roles)

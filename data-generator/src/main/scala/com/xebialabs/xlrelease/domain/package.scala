@@ -62,7 +62,8 @@ package object domain {
                   `type`: String = "xlrelease.Task",
                   status: String,
                   attachments: Seq[String],
-                  var comments: Seq[Comment] = Seq()
+                  var comments: Seq[Comment] = Seq(),
+                  team: Option[String] = None
                  ) extends AbstractTask
 
   case class ScriptTask(id: String,
@@ -196,9 +197,9 @@ package object domain {
   }
 
   object Task {
-    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: Seq[String] = Seq()): Task = {
+    def build(title: String, containerId: String, status: String = "COMPLETED", attachments: Seq[String] = Seq(), `type`: String = "xlrelease.Task", team: Option[String] = None): Task = {
       if (!title.startsWith("Task")) throw new IllegalArgumentException("Task id/title should start with 'Task'")
-      Task(s"$containerId/$title", title, status = status, attachments = attachments)
+      Task(s"$containerId/$title", title, status = status, attachments = attachments, `type` = `type`, team = team)
     }
   }
 
