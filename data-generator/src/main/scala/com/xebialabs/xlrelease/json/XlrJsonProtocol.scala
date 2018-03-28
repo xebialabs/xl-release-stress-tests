@@ -44,6 +44,8 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
   implicit val principalFormat: RootJsonFormat[Principal] = jsonFormat2(Principal)
   implicit val permissionFormat: RootJsonFormat[Permission] = jsonFormat2(Permission)
   implicit val httpConnectionFormat: RootJsonFormat[HttpConnection] = jsonFormat3(HttpConnection.apply)
+  implicit val smtpServerFormat: RootJsonFormat[SmtpServer] = jsonFormat7(SmtpServer.apply)
+  implicit val imapServerFormat: RootJsonFormat[ImapServer] = jsonFormat9(ImapServer.apply)
   implicit val activityLogEntryFormat: RootJsonFormat[ActivityLogEntry] = jsonFormat6(ActivityLogEntry.apply)
   implicit val folderFormat: RootJsonFormat[Folder] = jsonFormat3(Folder.apply)
   implicit val teamFormat: RootJsonFormat[Team] = jsonFormat5(Team.apply)
@@ -68,6 +70,8 @@ trait XlrJsonProtocol extends DefaultJsonProtocol with AdditionalFormats with Zo
         case ci: Folder => ci.toJson
         case ci: Team => ci.toJson
         case ci: ReleaseTrigger => ci.toJson
+        case ci: SmtpServer => ci.toJson
+        case ci: ImapServer => ci.toJson
         case _ => serializationError(s"Undefined CI type ${ci.getClass}")
       }
     }

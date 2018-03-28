@@ -2,15 +2,15 @@ package com.xebialabs.xlrelease.generator
 
 import com.xebialabs.xlrelease.domain.{Permission, Principal, Role, User, users2pusers}
 
-class UsersAndRolesGenerator {
+class UsersAndRolesGenerator(emailDomain: String) {
 
   def generateUsers(amount: Int): Seq[User] = {
     val users = for {
       i <- 1 to amount
-    } yield User(s"user$i", s"user$i", "", s"User $i")
+    } yield User(s"user$i", s"user$i", s"user$i@$emailDomain", s"User $i")
 
-    val allViewer = User("viewer", "viewer", "", "Viewer has access to folders")
-    val noViewer = User("noViewer", "noViewer", "", "No Viewer user has no access to folders")
+    val allViewer = User("viewer", "viewer", s"viewer@$emailDomain", "Viewer has access to folders")
+    val noViewer = User("noViewer", "noViewer", s"noViewer@$emailDomain", "No Viewer user has no access to folders")
 
     users :+ allViewer :+ noViewer
   }

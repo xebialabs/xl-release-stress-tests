@@ -1,9 +1,10 @@
 package com.xebialabs.xlrelease
 
-import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.config.ConfigFactory.parseResources
+import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import com.xebialabs.xlrelease.client.XlrClient
+import com.xebialabs.xlrelease.domain.{ImapServer, SmtpServer}
 import com.xebialabs.xlrelease.generator.{ReleasesAndFoldersGenerator, SpecialDayGenerator, UsersAndRolesGenerator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,6 +26,7 @@ object Main extends App with LazyLogging {
   private val generateComments = config.getBoolean("xl.data-generator.generate-comments")
   private val foldersAmount = config.getInt("xl.data-generator.folders")
   private val foldersLevel = config.getInt("xl.data-generator.folders-level")
+  private val emailDomain = config.getString("xl.data-generator.mail-domain")
 
   private val dependencyTreeAmount = config.getInt("xl.data-generator.dependency-trees")
   private val dependencyTreeDepth = config.getInt("xl.data-generator.dependency-tree-depth")
@@ -53,9 +55,28 @@ object Main extends App with LazyLogging {
     config.getString("xl.data-generator.username"),
     config.getString("xl.data-generator.password"))
 
+  val smtpServerFuture = client.createOrUpdateCis(Seq(SmtpServer(
+    "Configuration/mail/SmtpServer",
+    config.getString("xl.data-generator.mail-server"),
+    config.getInt("xl.data-generator.smtp-port"),
+    config.getString("xl.data-generator.mail-user"),
+    config.getString("xl.data-generator.mail-user"),
+    config.getString("xl.data-generator.mail-pass"))))
+
+  val imapServerFuture = client.createOrUpdateCis(Seq(ImapServer(
+    "Configuration/Custom/Imap",
+    "imap",
+    config.getString("xl.data-generator.mail-server"),
+    config.getInt("xl.data-generator.imap-port"),
+    config.getString("xl.data-generator.mail-user"),
+    config.getString("xl.data-generator.mail-user"),
+    config.getString("xl.data-generator.mail-pass"),
+    "secret"
+  )))
+
   val specialDaysFuture = client.createOrUpdateCis(SpecialDayGenerator.generateSpecialDays())
 
-  private val usersAndRolesGenerator = new UsersAndRolesGenerator()
+  private val usersAndRolesGenerator = new UsersAndRolesGenerator(emailDomain)
   val users = usersAndRolesGenerator.generateUsers(foldersAmount)
   val roles = usersAndRolesGenerator.generateRoles(users)
   val permissions = usersAndRolesGenerator.generatePermissions(roles)
@@ -136,7 +157,9 @@ object Main extends App with LazyLogging {
   val allResponses = sequence(Seq(
     usersAndRolesAndImportedTemplateFuture,
     allWithDependencyTrees,
-    specialDaysFuture
+    specialDaysFuture,
+    smtpServerFuture,
+    imapServerFuture
   ))
 
   allResponses.andThen {

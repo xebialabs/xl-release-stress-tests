@@ -100,6 +100,10 @@ package object domain {
 
   case class HttpConnection(id: String, title: String, `type`: String = "configuration.HttpConnection") extends Ci
 
+  case class SmtpServer(id: String, host: String, port: Int, fromAddress: String, username: String, password: String, `type`: String = "xlrelease.SmtpServer") extends Ci
+
+  case class ImapServer(id: String, title: String, host: String, port: Int, fromAddress: String, username: String, password: String, secret: String, `type`: String = "xlrelease.ImapServer") extends Ci
+
   case class Attachment(id: String, `type`: String = "xlrelease.Attachment") extends Ci
 
   case class ActivityLogEntry(id: String, username: String, activityType: String, message: String, eventTime: String, `type`: String = "xlrelease.ActivityLogEntry") extends Ci

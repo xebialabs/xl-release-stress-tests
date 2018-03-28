@@ -107,6 +107,14 @@ The runner should **not** be run against a production environment.
 
 It should be run against an XL Release Server on which the data-generator has already been run.
 
+## Mailserver
+
+    docker run -t -i \
+           -e GREENMAIL_OPTS='-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled -Dgreenmail.verbose' \
+           -e JAVA_OPTS='-Djava.net.preferIPv4Stack=true -Xmx512m' \
+           -p 3025:3025 -p 3143:3143 \
+           greenmail/standalone:1.5.7
+
 ## Running
 
 The application can be started with the following command :
