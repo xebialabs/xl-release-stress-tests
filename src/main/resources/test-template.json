@@ -1,0 +1,129 @@
+{
+  "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471",
+  "type": "xlrelease.Release",
+  "title": "T1",
+  "scheduledStartDate": "2018-04-13T09:00:00+02:00",
+  "flagStatus": "OK",
+  "overdueNotified": false,
+  "maxConcurrentReleases": 100,
+  "releaseTriggers": [],
+  "teams": [
+    {
+      "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Team44daa899984443dea19a19a667ccd2c5",
+      "type": "xlrelease.Team",
+      "teamName": "Template Owner",
+      "members": [
+        "admin"
+      ],
+      "roles": [],
+      "permissions": [
+        "template#edit",
+        "template#lock_task",
+        "template#view",
+        "template#edit_triggers",
+        "template#edit_security",
+        "template#create_release"
+      ]
+    },
+    {
+      "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Teamddcda416a5b24909b8eb1904118d3048",
+      "type": "xlrelease.Team",
+      "teamName": "Release Admin",
+      "members": [],
+      "roles": [],
+      "permissions": [
+        "release#edit",
+        "release#lock_task",
+        "release#start",
+        "release#reassign_task",
+        "release#edit_blackout",
+        "template#view",
+        "release#edit_security",
+        "release#abort",
+        "release#view",
+        "release#edit_task"
+      ]
+    }
+  ],
+  "memberViewers": [],
+  "roleViewers": [],
+  "attachments": [],
+  "phases": [
+    {
+      "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Phasea0d2c3b738fc4ecf8c87db6384bd4061",
+      "type": "xlrelease.Phase",
+      "title": "P1",
+      "flagStatus": "OK",
+      "overdueNotified": false,
+      "tasks": [
+        {
+          "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Phasea0d2c3b738fc4ecf8c87db6384bd4061/Taskad189b5cc48b4ef987dfa4b8f9c5811c",
+          "type": "xlrelease.ParallelGroup",
+          "title": "PG1",
+          "flagStatus": "OK",
+          "overdueNotified": false,
+          "comments": [],
+          "container": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Phasea0d2c3b738fc4ecf8c87db6384bd4061",
+          "attachments": [],
+          "status": "PLANNED",
+          "waitForScheduledStartDate": true,
+          "delayDuringBlackout": false,
+          "postponedDueToBlackout": false,
+          "hasBeenFlagged": false,
+          "hasBeenDelayed": false,
+          "failuresCount": 0,
+          "variableMapping": {},
+          "tags": [],
+          "dueSoonNotified": false,
+          "locked": false,
+          "watchers": [],
+          "tasks": [
+            {
+              "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Phasea0d2c3b738fc4ecf8c87db6384bd4061/Taskad189b5cc48b4ef987dfa4b8f9c5811c/Task4a4bcc9cb4aa40b89593766ece08de24",
+              "type": "xlrelease.Task",
+              "title": "T1",
+              "flagStatus": "OK",
+              "overdueNotified": false,
+              "comments": [],
+              "container": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Phasea0d2c3b738fc4ecf8c87db6384bd4061/Taskad189b5cc48b4ef987dfa4b8f9c5811c",
+              "attachments": [],
+              "status": "PLANNED",
+              "waitForScheduledStartDate": true,
+              "delayDuringBlackout": false,
+              "postponedDueToBlackout": false,
+              "hasBeenFlagged": false,
+              "hasBeenDelayed": false,
+              "failuresCount": 0,
+              "variableMapping": {},
+              "tags": [],
+              "dueSoonNotified": false,
+              "locked": false,
+              "watchers": []
+            }
+          ],
+          "links": []
+        }
+      ],
+      "release": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471",
+      "status": "PLANNED",
+      "color": "#0099CC"
+    }
+  ],
+  "queryableStartDate": "2018-04-13T09:00:00+02:00",
+  "realFlagStatus": "OK",
+  "status": "TEMPLATE",
+  "tags": [],
+  "variables": [],
+  "calendarPublished": false,
+  "tutorial": false,
+  "abortOnFailure": false,
+  "allowConcurrentReleasesFromTrigger": true,
+  "runningTriggeredReleasesCount": 0,
+  "createdFromTrigger": false,
+  "extensions": [],
+  "autoStart": false,
+  "automatedResumeCount": 0,
+  "riskScore": "000",
+  "totalRiskScore": "0000",
+  "riskProfile": "Configuration/riskProfiles/RiskProfileDefault"
+}
