@@ -25,7 +25,7 @@ object TestXLRClient extends App {
     import C._
 
     for {
-      templateId <- importTemplate("admin", Template("test", Paths.get("/home/icassina/dev/xl/xlr-stress-tests/src/main/resources/test-template.json").toFile))
+      templateId <- importTemplate("admin", Template("test", Paths.get(this.getClass.getClassLoader.getResource("test-template.xlr").getPath)))
     } yield templateId
   }
 
@@ -37,7 +37,6 @@ object TestXLRClient extends App {
     },
     300 seconds
   )
-
 
 
 }

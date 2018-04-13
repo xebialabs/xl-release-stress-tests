@@ -1,6 +1,7 @@
 package com.xebialabs.xlrelease.stress.parsers.dataset
 
 import java.io.File
+import java.nio.file.Path
 
 
 trait DatasetDSL {
@@ -16,6 +17,6 @@ trait DatasetDSL {
   def role(name: String, members: UsersSet): Role =
     Role(name, members)
 
-  def template(name: String, jsonTemplate: File): Template =
-    Template(name, jsonTemplate)
+  def template(name: String, xlrTemplate: Path): Template =
+    Template(name, xlrTemplate)
 }

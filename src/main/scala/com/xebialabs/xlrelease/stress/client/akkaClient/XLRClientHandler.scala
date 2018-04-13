@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object XLRClientHandler {
-  private val client = new AkkaHttpXlrClient(Uri("https://releaseit.xebialabs.com/xlr-master-integration"), BasicHttpCredentials("admin", "admin"))
+  private val client = new AkkaHttpXlrClient(Uri("http://localhost:5516"), BasicHttpCredentials("admin", "admin"))
 
   private var sessions: Map[User.ID, User] = Map.empty
 

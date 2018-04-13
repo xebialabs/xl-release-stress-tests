@@ -1,11 +1,9 @@
 package com.xebialabs.xlrelease.stress.parsers.dataset
 
-import java.io.File
+import java.nio.file.Path
 
-case class Template(name: String, jsonTemplate: File) {
 
-  println("file: "+ jsonTemplate + " "+ jsonTemplate.exists())
-}
+case class Template(name: String, xlrTemplate: Path)
 
 object Template {
   type ID = String
