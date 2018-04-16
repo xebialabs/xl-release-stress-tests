@@ -10,7 +10,7 @@ import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Accept, Authorization, BasicHttpCredentials}
 import akka.stream.ActorMaterializer
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Template, User}
+import com.xebialabs.xlrelease.stress.parsers.dataset.{CreateReleaseArgs, Release, Template, User}
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +49,21 @@ class AkkaHttpXlrClient(serverUri: Uri, adminCredentials: BasicHttpCredentials) 
       template.xlrTemplate
     )(Authorization(adminCredentials))
       .collect {
-        case JsArray(ids) => ids.headOption.flatMap(_.asJsObject.getFields("id").headOption.map(_.toString))
+        case JsArray(ids) => ids.headOption.flatMap(_.asJsObject.getFields("id").headOption.collect {
+          case JsString(id) => id
+        })
+        case _ => None
+      }
+  }
+
+  def createRelease(user: User, templateId: Template.ID, release: CreateReleaseArgs): Future[Option[Release.ID]] = {
+    postJSON(serverUri.withPath(serverUri.path / "api" / "v1" / "templates" / "Applications" / templateId / "create"),
+      release.toJson
+    )(Authorization(adminCredentials))
+      .collect {
+        case JsObject(r) => r.get("id").collect({
+          case JsString(id) => id
+        })
         case _ => None
       }
   }

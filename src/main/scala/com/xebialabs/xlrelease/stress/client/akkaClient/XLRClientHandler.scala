@@ -17,17 +17,17 @@ object XLRClientHandler {
   sessions = sessions + ("admin" -> User("admin", "", "", "admin"))
 
 
-    implicit val usersClient: Users.Op ~> Future = new (Users.Op ~> Future) {
-      def apply[A](fa: Users.Op[A]): Future[A] = fa match {
-        case Users.CreateUserOp(user) =>
-          Future.successful(user.username)
+  implicit val usersClient: Users.Op ~> Future = new (Users.Op ~> Future) {
+    def apply[A](fa: Users.Op[A]): Future[A] = fa match {
+      case Users.CreateUserOp(user) =>
+        Future.successful(user.username)
 
-        case Users.LoginOp(user) =>
-          // not the actual session
-          sessions = sessions + (user.username -> user)
-          Future.successful(user.username)
-      }
+      case Users.LoginOp(user) =>
+        // not the actual session
+        sessions = sessions + (user.username -> user)
+        Future.successful(user.username)
     }
+  }
 
   implicit val releasesClient: Releases.Op ~> Future = new (Releases.Op ~> Future) {
     def apply[A](fa: Releases.Op[A]): Future[A] = fa match {
@@ -44,8 +44,18 @@ object XLRClientHandler {
             }
         }
 
-      case Releases.CreateReleaseOp(session, template) =>
-        ???
+      case Releases.CreateReleaseOp(session, templateId, createReleaseArgs) =>
+        sessions.get(session) match {
+          case None =>
+            Future.failed(???)
+          case Some(user) =>
+            client.createRelease(user, templateId, createReleaseArgs).flatMap {
+              case None =>
+                Future.failed(???)
+              case Some(id) =>
+                Future.successful(id)
+            }
+        }
     }
   }
 }
