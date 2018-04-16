@@ -18,7 +18,6 @@ scalacOptions ++= Seq(
 //)
 
 addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M10" cross CrossVersion.full)
-//addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.0")
 
 
 libraryDependencies ++= Seq(

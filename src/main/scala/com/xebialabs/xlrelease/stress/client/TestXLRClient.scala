@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.client.akkaClient.{AkkaHttpXlrClient, ReleasesHandler, UsersHandler}
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Template, User}
+import com.xebialabs.xlrelease.stress.parsers.dataset.{CreateReleaseArgs, Template, User}
 import freestyle.free._
 import freestyle.free.implicits._
 import cats.implicits._
@@ -41,19 +41,17 @@ object TestXLRClient extends App {
       session <- users.admin()
       _ <- users.createUser(user1)
       templateId <- releases.importTemplate(session, template1)
-    } yield templateId
+      releaseId <- releases.createRelease(session, templateId, CreateReleaseArgs("test", Map.empty, Map.empty))
+    } yield releaseId
   }
 
-  //  println("running program with full interpreter: " + xlrInterpreter)
   Await.result(
     for {
-      templateId <- scenario1[XLRClient.Op].interpret[Future]
+      releaseId <- scenario1[XLRClient.Op].interpret[Future]
       _ <- client.shutdown()
     } yield {
-      println("templateId: " + templateId)
+      println("releaseId: " + releaseId)
     },
     300 seconds
   )
-
-
 }

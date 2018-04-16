@@ -2,6 +2,11 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import java.nio.file.Path
 
+import cats.implicits._
+import cats.instances.option._
+import cats.instances.future._
+import cats.syntax.traverse._
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -10,7 +15,7 @@ import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.stream.ActorMaterializer
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Template, User}
+import com.xebialabs.xlrelease.stress.parsers.dataset.{CreateReleaseArgs, Release, Template, User}
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,16 +33,26 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
   def importTemplate(template: Template)(implicit session: HttpSession): Future[Template.ID] = {
     postZip(serverUri.withPath(xlrApiPath / "templates" / "import"),
       template.xlrTemplate
-    ).collect {
+    ).map[Option[String]] {
       case JsArray(ids) =>
-        ids.headOption
-          .flatMap(_.asJsObject.getFields("id").headOption)
-          .map(_.toString) match {
-          case None => Future.failed(new RuntimeException("Cannot read template id"))
-          case Some(id) => Future.successful(id)
+        ids.headOption.flatMap(_.asJsObject.getFields("id").headOption).flatMap {
+          case JsString(id) => Some(id)
+          case _ => Option.empty[Template.ID]
         }
-      case _ => Future.failed(new RuntimeException("Not a json array"))
-    }.flatten
+      case _ => Option.empty[Template.ID]
+    }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
+  }
+
+  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[Release.ID] = {
+    postJSON(serverUri.withPath(serverUri.path / "api" / "v1" / "templates" / "Applications" / templateId / "create"),
+      release.toJson
+    ).flatMap {
+      case JsObject(r) => r.get("id") match {
+        case Some(JsString(id)) => Future.successful(id)
+        case _ => Future.failed(new RuntimeException("Cannot extract Release ID"))
+      }
+      case _ => Future.failed(new RuntimeException("not a Js object"))
+    }
   }
 
   def createUser(user: User)(implicit session: HttpSession): Future[User.ID] = {
