@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import com.xebialabs.xlrelease.stress.client.Users
-import com.xebialabs.xlrelease.stress.parsers.dataset.User
+import com.xebialabs.xlrelease.stress.parsers.dataset.{Role, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.mutable.{HashMap => MutableHashMap}
@@ -9,7 +9,7 @@ import scala.collection.mutable.{HashMap => MutableHashMap}
 class UsersHandler(val client: AkkaHttpXlrClient, val admin: User)(implicit ec: ExecutionContext) { self =>
 
   implicit def usersHandler: Users.Handler[Future] = new Users.Handler[Future] {
-    private val sessions: MutableHashMap[User.ID, HttpSession] = MutableHashMap.empty
+//    private val sessions: MutableHashMap[User.ID, User.Session] = MutableHashMap.empty
 
     protected var _adminSession: Option[HttpSession] = None
 
@@ -18,24 +18,24 @@ class UsersHandler(val client: AkkaHttpXlrClient, val admin: User)(implicit ec: 
       session
     }
 
-    protected def admin(): Future[HttpSession] =
+    protected def admin(): Future[User.Session] =
       _adminSession.fold(adminLogin())(Future.successful)
 
+    protected def login(user: User): Future[User.Session] =
+      client.login(user)
+
     protected def createUser(user: User): Future[User.ID] = {
-      println(s"CreateUserOp($user)")
       for {
         adminSession <- admin()
         userId <- client.createUser(user)(adminSession)
       } yield userId
     }
 
-    protected def login(user: User): Future[HttpSession] = {
-      println(s"LoginOp($user)")
-      // not the actual session
-      client.login(user).map { session =>
-        sessions += user.username -> session
-        session
-      }
+    protected def createRole(role: Role): Future[Role.ID] = {
+      for {
+        adminSession <- admin()
+        roleId <- client.createRole(role)(adminSession)
+      } yield roleId
     }
   }
 
