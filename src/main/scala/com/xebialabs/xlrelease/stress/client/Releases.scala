@@ -4,6 +4,6 @@ import com.xebialabs.xlrelease.stress.parsers.dataset.{CreateReleaseArgs, Releas
 import freestyle.free._
 
 @free trait Releases {
-  def importTemplate(session: User.Session, template: Template): FS[Template.ID]
+  def importTemplate(session: User.Session, owner: User, template: Template): FS[Template.ID]
   def createRelease(session: User.Session, templateId: Template.ID, release: CreateReleaseArgs): FS[Release.ID]
 }

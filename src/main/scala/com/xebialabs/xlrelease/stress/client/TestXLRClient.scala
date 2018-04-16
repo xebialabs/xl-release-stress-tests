@@ -47,8 +47,8 @@ object TestXLRClient {
       session <- users.admin()
       _ <- users.createUser(user1)
       _ <- users.createRole(role1)
+      templateId <- releases.importTemplate(session, user1, template1)
       userSession <- users.login(user1)
-      templateId <- releases.importTemplate(userSession, template1)
       releaseId <- releases.createRelease(userSession, templateId, CreateReleaseArgs("test", Map.empty, Map.empty))
     } yield releaseId
   }

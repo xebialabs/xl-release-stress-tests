@@ -78,6 +78,15 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
   }
 
+  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[Unit] = {
+    postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
+      teams.map(_.toJson).toJson
+    ).map { resp =>
+      resp.discardEntityBytes()
+      ()
+    }
+  }
+
   def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[Release.ID] = {
     postJSONasJson(serverUri.withPath(serverUri.path / "api" / "v1" / "templates" / "Applications" / templateId / "create"),
       release.toJson

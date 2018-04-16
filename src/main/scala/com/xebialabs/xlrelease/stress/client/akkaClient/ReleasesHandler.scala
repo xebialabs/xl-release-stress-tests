@@ -1,18 +1,22 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import com.xebialabs.xlrelease.stress.client.Releases
-import com.xebialabs.xlrelease.stress.parsers.dataset.{CreateReleaseArgs, Template, User}
-import com.xebialabs.xlrelease.stress.parsers.dataset.Template.ID
+import com.xebialabs.xlrelease.stress.parsers.dataset.Member.UserMember
+import com.xebialabs.xlrelease.stress.parsers.dataset.Team.{releaseAdmin, templateOwner}
+import com.xebialabs.xlrelease.stress.parsers.dataset._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class ReleasesHandler(val client: AkkaHttpXlrClient) {
+class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionContext) {
 
   implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] {
-    protected def importTemplate(session: User.Session, template: Template): Future[ID] =
-      client.importTemplate(template)(session)
+    protected def importTemplate(session: User.Session, owner: User, template: Template): Future[Template.ID] =
+      for {
+        templateId <- client.importTemplate(template)(session)
+        _ <- client.setTemplateTeams(templateId, List(templateOwner(owner, templateId), releaseAdmin(owner, templateId)))(session)
+      } yield templateId
 
-    protected def createRelease(session: User.Session, templateId: ID, createReleaseArgs: CreateReleaseArgs): Future[ID] =
+    protected def createRelease(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Template.ID] =
       client.createRelease(templateId, createReleaseArgs)(session)
   }
 }
