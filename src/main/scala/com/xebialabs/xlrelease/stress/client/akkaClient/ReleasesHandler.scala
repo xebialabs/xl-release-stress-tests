@@ -1,26 +1,92 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
+import akka.stream.Materializer
+import cats.implicits._
 import com.xebialabs.xlrelease.stress.client.Releases
+import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.parsers.dataset.Team.{releaseAdmin, templateOwner}
 import com.xebialabs.xlrelease.stress.parsers.dataset.User.Session
 import com.xebialabs.xlrelease.stress.parsers.dataset._
+import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionContext) {
+class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionContext, m: Materializer) {
 
-  implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] {
+  implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] with DefaultJsonProtocol {
     protected def importTemplate(session: User.Session, owner: User, template: Template): Future[Template.ID] =
       for {
-        templateId <- client.importTemplate(template)(session)
+        templateId <- importTemplateOnly(template)(session)
         _ <- client.setTemplateTeams(templateId, List(templateOwner(owner, templateId), releaseAdmin(owner, templateId)))(session)
       } yield templateId
 
     protected def setTemplateTeam(session: Session, templateId: Template.ID, teams: Set[Team]): Future[Map[String, String]] =
       client.setTemplateTeams(templateId, teams.toList)(session)
+        .asJson.map {
+        case JsArray(arr) =>
+          arr.toList.collect {
+            case team: JsObject =>
+              team.getFields("teamName", "id") match {
+                case Seq(JsString(teamName), JsString(id)) => Option(teamName -> id)
+                case _ => None
+              }
+            case _ => None
+          }
+        case _ => List.empty
+      }.map { teamIds: List[Option[(String, String)]] =>
+        teamIds
+          .sequence
+          .map(_.toMap)
+          .getOrElse(Map.empty)
+      }
 
-    protected def createRelease(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Template.ID] =
+    protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Release.ID] =
       client.createRelease(templateId, createReleaseArgs)(session)
+      .asJson
+      .flatMap {
+        case JsObject(r) => r.get("id") match {
+          case Some(JsString(id)) => Future.successful(id.replaceFirst("Applications/", ""))
+          case _ => Future.failed(new RuntimeException("Cannot extract Release ID"))
+        }
+        case _ => Future.failed(new RuntimeException("not a Js object"))
+      }
 
+    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] =
+      client.startRelease(releaseId)(session)
+        .discard(_ => releaseId)
+
+    protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): Future[Set[Task.ID]] =
+      client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).collect {
+        case JsArray(tasks) => tasks.toList.collect {
+          case task: JsObject =>
+            task.getFields("id").headOption.flatMap {
+              case JsString(fullId) => fullId.split("/").toList match {
+                case "Applications" :: `releaseId` :: phaseId :: Nil =>
+                  println("No task id!!")
+                  None
+                case "Applications" :: `releaseId` :: phaseId :: taskId =>
+                  Some(Task.ID(Phase.ID(releaseId, phaseId), taskId.mkString("/")))
+                case otherId =>
+                  println("Task Id does not match Applications/releaseId/phaseId/...")
+                  None
+              }
+              case _ => None
+            }
+        }.sequence.map(_.toSet).getOrElse(Set.empty)
+      }
+  }
+
+  def importTemplateOnly(template: Template)(implicit session: User.Session): Future[Release.ID] = {
+    client.importTemplate(template)
+      .asJson
+      .map[Option[String]] {
+      case JsArray(ids) =>
+        ids.headOption.flatMap(_.asJsObject.getFields("id").headOption).flatMap {
+          case JsString(id) => Some(id)
+          case _ => Option.empty[Template.ID]
+        }
+      case _ => Option.empty[Template.ID]
+    }
+      .flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
   }
 }

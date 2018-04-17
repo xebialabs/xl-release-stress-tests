@@ -6,11 +6,12 @@ import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.HttpMethods.POST
+import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip`}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.stream.ActorMaterializer
+import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.parsers.dataset._
 import spray.json._
 
@@ -26,87 +27,67 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
 
   def shutdown(): Future[Unit] = Http().shutdownAllConnectionPools()
 
-  def createUser(user: User)(implicit session: HttpSession): Future[User.ID] = {
-    postJSONasJson(serverUri.withPath(xlrApiPath / "users" / user.username), JsObject(
+  def createUser(user: User)(implicit session: HttpSession): Future[HttpResponse] = {
+    postJSON(serverUri.withPath(xlrApiPath / "users" / user.username), JsObject(
       "fullName" -> user.fullname.toJson,
       "email" -> user.email.toJson,
       "loginAllowed" -> true.toJson,
       "password" -> user.password.toJson
-    )).collect {
-        case JsObject(_) => Future.successful(user.username)
-        case _ => Future.failed(new RuntimeException(s"Cannot create user ${user.username}"))
-      }.flatten
+    ))
   }
 
-  def login(user: User): Future[HttpSession] = {
+  def login(user: User): Future[HttpResponse] = {
     Http().singleRequest(HttpRequest(POST, serverUri.withPath(serverUri.path / "login"),
       entity = HttpEntity(`application/json`, JsObject(
         "username" -> user.username.toJson,
         "password" -> user.password.toJson).compactPrint),
       headers = List(Accept(`application/json`))
-    )).map { resp =>
-      val cookies = resp.headers[`Set-Cookie`]
-      resp.discardEntityBytes()
-      HttpSession(user, cookies.map(sc => Cookie(sc.cookie.name, sc.cookie.value)))
-    }
+    ))
   }
 
-  def createRole(role: Role)(implicit session: HttpSession): Future[Role.ID] = {
+  def createRole(role: Role)(implicit session: HttpSession): Future[HttpResponse] = {
     postJSON(serverUri.withPath(xlrApiPath / "roles" / role.rolename), JsObject(
       "name" -> role.rolename.toJson,
       "permissions" -> role.permissions.map(_.permission.toJson).toJson,
       "principals" -> role.principals.map(username => JsObject("username" -> username.toJson)).toJson
-    )).map { resp =>
-      resp.discardEntityBytes()
-      role.rolename
-    }
+    ))
   }
 
-  def importTemplate(template: Template)(implicit session: HttpSession): Future[Template.ID] = {
+  def importTemplate(template: Template)(implicit session: HttpSession): Future[HttpResponse] = {
     postZip(serverUri.withPath(xlrApiPath / "templates" / "import"),
       template.xlrTemplate
-    ).map[Option[String]] {
-      case JsArray(ids) =>
-        ids.headOption.flatMap(_.asJsObject.getFields("id").headOption).flatMap {
-          case JsString(id) => Some(id)
-          case _ => Option.empty[Template.ID]
-        }
-      case _ => Option.empty[Template.ID]
-    }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
+    )
   }
 
-  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[Map[String, String]] = {
-    postJSONasJson(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
+  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[HttpResponse] = {
+    postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
       teams.map(_.toJson).toJson
-    ).map {
-      case JsArray(arr) =>
-        arr.toList.collect {
-          case team: JsObject =>
-            team.getFields("teamName", "id") match {
-              case Seq(JsString(teamName), JsString(id)) => Option(teamName -> id)
-              case _ => None
-            }
-          case _ => None
-        }
-      case _ => List.empty
-    }.map { teamIds: List[Option[(String, String)]] =>
-      teamIds
-        .sequence
-        .map(_.toMap)
-        .getOrElse(Map.empty)
-    }
+    )
   }
 
-  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[Release.ID] = {
-    postJSONasJson(serverUri.withPath(serverUri.path / "api" / "v1" / "templates" / "Applications" / templateId / "create"),
+  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] = {
+    postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "create"),
       release.toJson
-    ).flatMap {
-      case JsObject(r) => r.get("id") match {
-        case Some(JsString(id)) => Future.successful(id)
-        case _ => Future.failed(new RuntimeException("Cannot extract Release ID"))
-      }
-      case _ => Future.failed(new RuntimeException("not a Js object"))
-    }
+    )
+  }
+
+  def startRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[HttpResponse] = {
+    postJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId / "start"), JsNull)
+  }
+
+  def getTaskByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: HttpSession): Future[JsValue] = {
+    val baseQuery = Uri.Query(
+      "releaseId" -> s"Applications/$releaseId",
+      "taskTitle" -> taskTitle
+    )
+    getJSON(serverUri.withPath(xlrApiPath / "tasks" / "byTitle").withQuery(
+      phaseTitle.fold(baseQuery)(pt => ("phaseTitle" -> pt) +: baseQuery)
+    ))
+  }
+
+  def getJSON(uri: Uri)(implicit session: HttpSession): Future[JsValue] = {
+    Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies.toList))
+      .flatMap(_.entity.asJson[JsValue])
   }
 
   def postJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] = {
@@ -116,22 +97,14 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     ))
   }
 
-  def postJSONasJson(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[JsValue] =
-    postJSON(uri, entity).flatMap(_.entity.asJson[JsValue])
-
-  def postZip(uri: Uri, path: Path)(implicit session: HttpSession): Future[JsValue] = {
+  def postZip(uri: Uri, path: Path)(implicit session: HttpSession): Future[HttpResponse] = {
     val payload = Multipart.FormData(
       Multipart.FormData.BodyPart.fromPath("file", `application/zip`, path)
     )
-    for {
-      resp <- Http().singleRequest(HttpRequest(POST, uri,
-        entity = payload.toEntity(),
-        headers = Accept(`application/json`) :: session.cookies.toList
-      ))
-      json <- resp
-        .onSuccess(_.asJson[JsValue])
-        .onFailure((status, msg) => new RuntimeException(s"Failed with status $status: $msg"))
-    } yield json
+    Http().singleRequest(HttpRequest(POST, uri,
+      entity = payload.toEntity(),
+      headers = Accept(`application/json`) :: session.cookies.toList
+    ))
   }
 
 }

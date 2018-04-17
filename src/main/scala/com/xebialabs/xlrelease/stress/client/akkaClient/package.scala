@@ -66,4 +66,14 @@ package object akkaClient {
 
   case class IsFailed(resp: HttpResponse) extends SuccessMapped[Nothing]
 
+  implicit class FutureHttpResponseOps(val futureResponse: Future[HttpResponse]) extends DefaultJsonProtocol {
+    def asJson(implicit ec: ExecutionContext, m: Materializer): Future[JsValue] = futureResponse.flatMap(_.entity.asJson[JsValue])
+
+    def discard[A](f: HttpResponse => A)(implicit ec: ExecutionContext, m: Materializer): Future[A] = futureResponse.map { resp =>
+      val a = f(resp)
+      resp.discardEntityBytes()
+      a
+    }
+  }
+
 }
