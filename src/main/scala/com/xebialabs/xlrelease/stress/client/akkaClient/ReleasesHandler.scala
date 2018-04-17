@@ -42,7 +42,7 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
       }
 
     protected def setTemplateScriptUser(session: Session, templateId: ID, scriptUser: Option[User]): Future[Unit] =
-      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session).discard(_ => ())
+      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session).discardU
 
     protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Release.ID] =
       client.createRelease(templateId, createReleaseArgs)(session)
@@ -58,7 +58,7 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
     protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] = {
       for {
         _ <- Future.successful {
-          println(s"Starting release: ${releaseId}")
+          println(s"Starting release: $releaseId")
         }
         releaseId <- client.startRelease(releaseId)(session)
           .discard(_ => releaseId)

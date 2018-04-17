@@ -3,8 +3,6 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 import java.nio.file.Path
 
 import com.github.nscala_time.time.Imports._
-import cats.Show
-import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -30,45 +28,40 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
 
   def shutdown(): Future[Unit] = Http().shutdownAllConnectionPools()
 
-  def createUser(user: User)(implicit session: HttpSession): Future[HttpResponse] = {
+  def createUser(user: User)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "users" / user.username), JsObject(
       "fullName" -> user.fullname.toJson,
       "email" -> user.email.toJson,
       "loginAllowed" -> true.toJson,
       "password" -> user.password.toJson
     ))
-  }
 
-  def login(user: User): Future[HttpResponse] = {
+  def login(user: User): Future[HttpResponse] =
     Http().singleRequest(HttpRequest(POST, serverUri.withPath(serverUri.path / "login"),
       entity = HttpEntity(`application/json`, JsObject(
         "username" -> user.username.toJson,
         "password" -> user.password.toJson).compactPrint),
       headers = List(Accept(`application/json`))
     ))
-  }
 
-  def createRole(role: Role)(implicit session: HttpSession): Future[HttpResponse] = {
+  def createRole(role: Role)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "roles" / role.rolename), JsObject(
       "name" -> role.rolename.toJson,
       "permissions" -> role.permissions.map(_.permission.toJson).toJson,
       "principals" -> role.principals.map(username => JsObject("username" -> username.toJson)).toJson
     ))
-  }
 
-  def importTemplate(template: Template)(implicit session: HttpSession): Future[HttpResponse] = {
+  def importTemplate(template: Template)(implicit session: HttpSession): Future[HttpResponse] =
     postZip(serverUri.withPath(xlrApiPath / "templates" / "import"),
       template.xlrTemplate
     )
-  }
 
-  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[HttpResponse] = {
+  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
       teams.map(_.toJson).toJson
     )
-  }
 
-  def setTemplateScriptUser(templateId: Template.ID, scriptUser: User)(implicit session: HttpSession): Future[HttpResponse] = {
+  def setTemplateScriptUser(templateId: Template.ID, scriptUser: User)(implicit session: HttpSession): Future[HttpResponse] =
     putJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId), JsObject(
       "id" -> JsNull,
       "scheduledStartDate" -> DateTime.now().toJson,
@@ -76,33 +69,40 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
       "scriptUsername" -> scriptUser.username.toJson,
       "scriptUserPassword" -> scriptUser.password.toJson
     ))
-  }
 
-  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] = {
+  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "create"),
       release.toJson
     )
-  }
 
-  def startRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[HttpResponse] = {
+  def startRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId / "start"), JsNull)
-  }
 
-  def getTaskByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: HttpSession): Future[JsValue] = {
-    val baseQuery = Uri.Query(
+  def getTaskByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: HttpSession): Future[JsValue] =
+    Uri.Query(
       "releaseId" -> s"Applications/$releaseId",
       "taskTitle" -> taskTitle
-    )
-    getJSON(serverUri.withPath(xlrApiPath / "tasks" / "byTitle").withQuery(
-      phaseTitle.fold(baseQuery)(pt => ("phaseTitle" -> pt) +: baseQuery)
-    ))
-  }
+    ) match { case baseQuery =>
+      getJSON(serverUri.withPath(xlrApiPath / "tasks" / "byTitle").withQuery(
+        phaseTitle.fold(baseQuery)(pt => ("phaseTitle" -> pt) +: baseQuery)
+      ))
+    }
 
-  def pollTask(taskId: String)(implicit session: HttpSession): Future[HttpResponse] = {
+  def pollTask(taskId: String)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(serverUri.path / "tasks" / "poll"), JsObject(
       "ids" -> Seq(taskId).toJson
     ))
-  }
+
+  def assignTaskTo(taskId: Task.ID, assignee: User.ID)(implicit session: HttpSession): Future[HttpResponse] =
+    postJSON(
+      serverUri.withPath(xlrApiPath / "tasks" / "Applications" / taskId.releaseId / taskId.phaseId.phaseId / taskId.taskId / "assign" / assignee),
+      JsNull
+    )
+
+  def completeTask(taskId: Task.ID, comment: Option[String])(implicit session: HttpSession): Future[HttpResponse] =
+    postJSON(serverUri.withPath(xlrApiPath / "tasks" / "Applications" / taskId.releaseId / taskId.phaseId.phaseId / taskId.taskId / "complete"),
+      comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
+    )
 
   def getJSON(uri: Uri)(implicit session: HttpSession): Future[JsValue] = {
     Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies.toList))

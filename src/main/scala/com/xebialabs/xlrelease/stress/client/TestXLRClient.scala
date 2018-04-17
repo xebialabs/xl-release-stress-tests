@@ -7,7 +7,9 @@ import com.xebialabs.xlrelease.stress.client.akkaClient.{AkkaHttpXlrClient, Rele
 import com.xebialabs.xlrelease.stress.parsers.dataset._
 import com.xebialabs.xlrelease.stress.parsers.dataset.Permission._
 import freestyle.free._
+// (begging) DO NOT REMOVE THIS IMPORT
 import freestyle.free.implicits._
+
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 
@@ -62,6 +64,7 @@ object TestXLRClient {
       )
       taskIds <- releases.getTasksByTitle(userSession, releaseId, "UI")
       taskId = taskIds.head
+      _ <- tasks.assignTo(userSession, taskId, user1.username)
       _ <- releases.start(userSession, releaseId)
       _ <- tasks.waitFor(userSession, taskId)
       _ <- tasks.complete(userSession, taskId)

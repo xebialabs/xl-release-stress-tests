@@ -74,6 +74,8 @@ package object akkaClient {
       resp.discardEntityBytes()
       a
     }
+
+    def discardU(implicit ec: ExecutionContext, m: Materializer): Future[Unit] = discard(_ => ())
   }
 
 }
