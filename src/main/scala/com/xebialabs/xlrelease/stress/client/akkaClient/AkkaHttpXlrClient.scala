@@ -2,22 +2,24 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import java.nio.file.Path
 
+import com.github.nscala_time.time.Imports._
 import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip`}
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.{DateTime => _, _}
+import akka.http.scaladsl.model.headers.Accept
 import akka.stream.ActorMaterializer
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.client.utils.DateFormat
 import com.xebialabs.xlrelease.stress.parsers.dataset._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with DefaultJsonProtocol {
+class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with DefaultJsonProtocol with DateFormat {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -65,6 +67,16 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     )
   }
 
+  def setTemplateScriptUser(templateId: Template.ID, scriptUser: User)(implicit session: HttpSession): Future[HttpResponse] = {
+    putJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId), JsObject(
+      "id" -> JsNull,
+      "scheduledStartDate" -> DateTime.now().toJson,
+      "type" -> "xlrelease.Release".toJson,
+      "scriptUsername" -> scriptUser.username.toJson,
+      "scriptUserPassword" -> scriptUser.password.toJson
+    ))
+  }
+
   def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] = {
     postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "create"),
       release.toJson
@@ -92,6 +104,13 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
 
   def postJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] = {
     Http().singleRequest(HttpRequest(POST, uri,
+      entity = HttpEntity(`application/json`, entity.compactPrint),
+      headers = Accept(`application/json`) :: session.cookies.toList
+    ))
+  }
+
+  def putJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] = {
+    Http().singleRequest(HttpRequest(PUT, uri,
       entity = HttpEntity(`application/json`, entity.compactPrint),
       headers = Accept(`application/json`) :: session.cookies.toList
     ))

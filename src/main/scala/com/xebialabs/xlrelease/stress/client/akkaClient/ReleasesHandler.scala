@@ -5,6 +5,7 @@ import cats.implicits._
 import com.xebialabs.xlrelease.stress.client.Releases
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.parsers.dataset.Team.{releaseAdmin, templateOwner}
+import com.xebialabs.xlrelease.stress.parsers.dataset.Template.ID
 import com.xebialabs.xlrelease.stress.parsers.dataset.User.Session
 import com.xebialabs.xlrelease.stress.parsers.dataset._
 import spray.json._
@@ -16,7 +17,7 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
   implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] with DefaultJsonProtocol {
     protected def importTemplate(session: User.Session, owner: User, template: Template): Future[Template.ID] =
       for {
-        templateId <- importTemplateOnly(template)(session)
+        templateId <- importTemplate0(template)(session)
         _ <- client.setTemplateTeams(templateId, List(templateOwner(owner, templateId), releaseAdmin(owner, templateId)))(session)
       } yield templateId
 
@@ -39,6 +40,9 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
           .map(_.toMap)
           .getOrElse(Map.empty)
       }
+
+    protected def setTemplateScriptUser(session: Session, templateId: ID, scriptUser: Option[User]): Future[Unit] =
+      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session).discard(_ => ())
 
     protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Release.ID] =
       client.createRelease(templateId, createReleaseArgs)(session)
@@ -76,7 +80,7 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
       }
   }
 
-  def importTemplateOnly(template: Template)(implicit session: User.Session): Future[Release.ID] = {
+  def importTemplate0(template: Template)(implicit session: User.Session): Future[Release.ID] = {
     client.importTemplate(template)
       .asJson
       .map[Option[String]] {

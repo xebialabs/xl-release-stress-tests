@@ -54,6 +54,7 @@ object TestXLRClient {
       _ <- users.createUser(user1)
       _ <- users.createRole(role1)
       templateId <- releases.importTemplate(session, user1, template2)
+      _ <- releases.setTemplateScriptUser(session, templateId)
       userSession <- users.login(user1)
       releaseId <- releases.create(userSession, templateId, CreateReleaseArgs(
         title = "test dsl",
