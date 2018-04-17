@@ -55,9 +55,15 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
         case _ => Future.failed(new RuntimeException("not a Js object"))
       }
 
-    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] =
-      client.startRelease(releaseId)(session)
-        .discard(_ => releaseId)
+    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] = {
+      for {
+        _ <- Future.successful {
+          println(s"Starting release: ${releaseId}")
+        }
+        releaseId <- client.startRelease(releaseId)(session)
+          .discard(_ => releaseId)
+      } yield releaseId
+    }
 
     protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): Future[Set[Task.ID]] =
       client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).collect {

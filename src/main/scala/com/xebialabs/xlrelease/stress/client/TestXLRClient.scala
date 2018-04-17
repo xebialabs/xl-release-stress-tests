@@ -47,7 +47,7 @@ object TestXLRClient {
   val template2: Template = dsl.template("test", Paths.get(this.getClass.getClassLoader.getResource("DSL.xlr").getPath))
 
   def scenario1[F[_]](implicit C: XLRClient[F]): FreeS[F, (Template.ID, Set[Task.ID])] = {
-    import C.{users, releases}
+    import C.{users, releases, tasks}
 
     for {
       session <- users.admin()
@@ -61,7 +61,10 @@ object TestXLRClient {
         variables = Map("var1" -> "Happy!"))
       )
       taskIds <- releases.getTasksByTitle(userSession, releaseId, "UI")
+      taskId = taskIds.head
       _ <- releases.start(userSession, releaseId)
+      _ <- tasks.waitFor(userSession, taskId)
+      _ <- tasks.complete(userSession, taskId)
     } yield (templateId, taskIds)
   }
 

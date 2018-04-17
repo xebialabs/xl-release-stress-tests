@@ -3,6 +3,7 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 import java.nio.file.Path
 
 import com.github.nscala_time.time.Imports._
+import cats.Show
 import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -94,6 +95,12 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     )
     getJSON(serverUri.withPath(xlrApiPath / "tasks" / "byTitle").withQuery(
       phaseTitle.fold(baseQuery)(pt => ("phaseTitle" -> pt) +: baseQuery)
+    ))
+  }
+
+  def pollTask(taskId: String)(implicit session: HttpSession): Future[HttpResponse] = {
+    postJSON(serverUri.withPath(serverUri.path / "tasks" / "poll"), JsObject(
+      "ids" -> Seq(taskId).toJson
     ))
   }
 
