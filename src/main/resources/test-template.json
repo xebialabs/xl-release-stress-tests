@@ -1,5 +1,5 @@
 {
-  "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471",
+  "id": "DONT REALLY CARE",
   "type": "xlrelease.Release",
   "title": "T1",
   "scheduledStartDate": "2018-04-13T09:00:00+02:00",
@@ -9,11 +9,11 @@
   "releaseTriggers": [],
   "teams": [
     {
-      "id": "Applications/Releasef8e13d9075ad4e4cb33ba611faa9b471/Team44daa899984443dea19a19a667ccd2c5",
+      "id": "WHATEVER DUDE",
       "type": "xlrelease.Team",
       "teamName": "Template Owner",
       "members": [
-        "admin"
+        "whoever created this template"
       ],
       "roles": [],
       "permissions": [

@@ -3,9 +3,6 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 import java.nio.file.Path
 
 import cats.implicits._
-import cats.instances.option._
-import cats.instances.future._
-import cats.syntax.traverse._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -78,12 +75,25 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
   }
 
-  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[Unit] = {
-    postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
+  def setTemplateTeams(templateId: Template.ID, teams: List[Team])(implicit session: HttpSession): Future[Map[String, String]] = {
+    postJSONasJson(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "teams"),
       teams.map(_.toJson).toJson
-    ).map { resp =>
-      resp.discardEntityBytes()
-      ()
+    ).map {
+      case JsArray(arr) =>
+        arr.toList.collect {
+          case team: JsObject =>
+            team.getFields("teamName", "id") match {
+              case Seq(JsString(teamName), JsString(id)) => Option(teamName -> id)
+              case _ => None
+            }
+          case _ => None
+        }
+      case _ => List.empty
+    }.map { teamIds: List[Option[(String, String)]] =>
+      teamIds
+        .sequence
+        .map(_.toMap)
+        .getOrElse(Map.empty)
     }
   }
 

@@ -6,4 +6,6 @@ case class Role(rolename: Role.ID,
 
 object Role {
   type ID = String
+
+
 }

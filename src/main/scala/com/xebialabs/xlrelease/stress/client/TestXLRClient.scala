@@ -61,5 +61,8 @@ object TestXLRClient {
       100 seconds
     )
     Await.ready(client.shutdown(), 30 seconds)
+
   }
+
+
 }
