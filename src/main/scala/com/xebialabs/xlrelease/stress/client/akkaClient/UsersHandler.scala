@@ -44,6 +44,20 @@ class UsersHandler(val client: AkkaHttpXlrClient, val admin: User)(implicit ec: 
         roleId <- client.createRole(role)(adminSession).discard(_ => role.rolename)
       } yield roleId
     }
+
+    protected def deleteUser(userId: User.ID): Future[Unit] = {
+      for {
+        adminSession <- admin()
+        _ <- client.deleteUser(userId)(adminSession)
+      } yield ()
+    }
+
+    protected def deleteRole(roleId: Role.ID): Future[Unit] = {
+      for {
+        adminSession <- admin()
+        _ <- client.deleteRole(roleId)(adminSession)
+      } yield ()
+    }
   }
 
 }

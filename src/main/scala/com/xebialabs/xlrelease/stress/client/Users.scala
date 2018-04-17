@@ -10,4 +10,7 @@ import freestyle.free._
   def createUser(user: User): FS[User.ID]
   def login(user: User): FS[HttpSession]
   def createRole(role: Role): FS[Role.ID]
+
+  def deleteUser(id: User.ID): FS[Unit]
+  def deleteRole(id: Role.ID): FS[Unit]
 }

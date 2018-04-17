@@ -48,6 +48,15 @@ object TestXLRClient {
   val template1: Template = dsl.template("test", Paths.get(this.getClass.getClassLoader.getResource("test-template.xlr").getPath))
   val template2: Template = dsl.template("test", Paths.get(this.getClass.getClassLoader.getResource("DSL.xlr").getPath))
 
+  private def cleanup[F[_]](implicit C: XLRClient[F]): FreeS[F, Unit] = {
+    import C.{users}
+
+    for {
+      _ <- users.deleteRole(role1.rolename)
+      _ <- users.deleteUser(user1.username)
+    } yield ()
+  }
+
   def scenario1[F[_]](implicit C: XLRClient[F]): FreeS[F, (Template.ID, Set[Task.ID])] = {
     import C.{users, releases, tasks}
 
@@ -72,6 +81,10 @@ object TestXLRClient {
   }
 
   def main(args: Array[String]): Unit = {
+    Await.ready(
+      cleanup[XLRClient.Op].interpret[Future],
+      30 seconds
+    )
     Await.result(
       scenario1[XLRClient.Op].interpret[Future].map { case (templateId, taskIds) =>
         println("templateId: "+ templateId)

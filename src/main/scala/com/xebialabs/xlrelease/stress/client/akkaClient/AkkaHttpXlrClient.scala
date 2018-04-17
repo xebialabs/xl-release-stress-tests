@@ -36,6 +36,9 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
       "password" -> user.password.toJson
     ))
 
+  def deleteUser(userId: User.ID)(implicit session: HttpSession): Future[HttpResponse] =
+    delete(serverUri.withPath(xlrApiPath / "users" / userId))
+
   def login(user: User): Future[HttpResponse] =
     Http().singleRequest(HttpRequest(POST, serverUri.withPath(serverUri.path / "login"),
       entity = HttpEntity(`application/json`, JsObject(
@@ -50,6 +53,9 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
       "permissions" -> role.permissions.map(_.permission.toJson).toJson,
       "principals" -> role.principals.map(username => JsObject("username" -> username.toJson)).toJson
     ))
+
+  def deleteRole(roleId: Role.ID)(implicit session: HttpSession): Future[HttpResponse] =
+    delete(serverUri.withPath(xlrApiPath / "roles" / roleId))
 
   def importTemplate(template: Template)(implicit session: HttpSession): Future[HttpResponse] =
     postZip(serverUri.withPath(xlrApiPath / "templates" / "import"),
@@ -129,6 +135,12 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     )
     Http().singleRequest(HttpRequest(POST, uri,
       entity = payload.toEntity(),
+      headers = Accept(`application/json`) :: session.cookies.toList
+    ))
+  }
+
+  def delete(uri: Uri)(implicit session: HttpSession): Future[HttpResponse] = {
+    Http().singleRequest(HttpRequest(DELETE, uri,
       headers = Accept(`application/json`) :: session.cookies.toList
     ))
   }
