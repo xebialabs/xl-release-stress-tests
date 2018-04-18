@@ -1,8 +1,6 @@
-package com.xebialabs.xlrelease.stress.parsers.dataset
+package com.xebialabs.xlrelease.stress.domain
 
 import java.nio.file.Path
-
-import com.xebialabs.xlrelease.stress.parsers.dataset.Member.UserMember
 
 
 case class Template(name: String, xlrTemplate: Path)

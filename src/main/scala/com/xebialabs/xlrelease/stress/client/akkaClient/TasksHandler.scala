@@ -1,15 +1,15 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import akka.stream.Materializer
+import akka.util.Timeout
 import cats.Show
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.client.Tasks
-import com.xebialabs.xlrelease.stress.parsers.dataset.User.Session
-import com.xebialabs.xlrelease.stress.parsers.dataset._
+import com.xebialabs.xlrelease.stress.domain.{Comment, Task, TaskStatus, User}
+import com.xebialabs.xlrelease.stress.domain.User.Session
 import spray.json._
 
-import scala.annotation.tailrec
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -31,33 +31,29 @@ class TasksHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionCont
 
     protected def skip(session: User.Session, taskId: Task.ID, comment: String): Future[Comment.ID] = notImplemented("skip")
 
-    @tailrec
-    protected def waitFor(session: Session, taskId: Task.ID, expectedStatus: TaskStatus = TaskStatus.InProgress): Future[Unit] = {
-      val found = Await.result(
-        client.pollTask(taskId.show)(session).asJson
-          .map(matchesTaskStatus(expectedStatus)),
-        10 seconds
-      )
-      if (found) {
-        Future.successful(())
-      } else {
-        Thread.sleep(5 * 1000)
-        waitFor(session, taskId, expectedStatus)
-      }
-    }
 
+    protected def waitFor(session: Session, taskId: Task.ID, expectedStatus: TaskStatus = TaskStatus.InProgress): Future[Unit] = {
+      implicit val timeout: Timeout = Timeout(10 seconds)
+
+      getTaskStatus(taskId)(session)
+        .until(_.contains(expectedStatus), interval = 5 seconds, retries = Some(20))
+    }
   }
 
-  def getTaskStatus: JsValue => Option[TaskStatus] = {
-    case obj: JsObject =>
-      obj.getFields("status").headOption.map(_.convertTo[TaskStatus])
+  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => Future[Option[TaskStatus]] =
+    () => client.pollTask(taskId.show)(session).asJson.map(readTaskStatus)
+
+
+  def readTaskStatus: JsValue => Option[TaskStatus] = {
+    case JsObject(fields) =>
+      fields.get("status").map(_.convertTo[TaskStatus])
     case _ => None
   }
 
   def matchesTaskStatus(expectedStatus: TaskStatus): JsValue => Boolean = {
     case JsArray(arr) =>
       arr.headOption
-        .flatMap(getTaskStatus)
+        .flatMap(readTaskStatus)
         .contains(expectedStatus)
     case _ => false
   }

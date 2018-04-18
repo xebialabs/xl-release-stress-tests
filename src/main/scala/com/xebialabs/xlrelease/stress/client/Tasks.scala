@@ -1,6 +1,6 @@
 package com.xebialabs.xlrelease.stress.client
 
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Comment, Task, TaskStatus, User}
+import com.xebialabs.xlrelease.stress.domain.{Comment, Task, TaskStatus, User}
 import freestyle.free._
 
 @free trait Tasks {

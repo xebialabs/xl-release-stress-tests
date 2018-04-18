@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.parsers.dataset
+package com.xebialabs.xlrelease.stress.domain
 
 import cats.Show
 import spray.json._

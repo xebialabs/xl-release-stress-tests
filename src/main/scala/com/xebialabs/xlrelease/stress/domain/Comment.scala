@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.parsers.dataset
+package com.xebialabs.xlrelease.stress.domain
 
 case class Comment(commentId: Comment.ID, comment: String)
 

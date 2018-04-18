@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.parsers.dataset
+package com.xebialabs.xlrelease.stress.domain
 
 case class Role(rolename: Role.ID,
                 permissions: Set[Permission],

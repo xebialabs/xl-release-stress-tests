@@ -3,28 +3,22 @@ package com.xebialabs.xlrelease.stress.client
 import java.nio.file.Paths
 
 import akka.http.scaladsl.model.Uri
-import com.xebialabs.xlrelease.stress.client.akkaClient.{AkkaHttpXlrClient, ReleasesHandler, TasksHandler, UsersHandler}
-import com.xebialabs.xlrelease.stress.parsers.dataset._
-import com.xebialabs.xlrelease.stress.parsers.dataset.Permission._
-import freestyle.free._
-// (begging) DO NOT REMOVE THIS IMPORT
-import freestyle.free.implicits._
-
 import cats.implicits._
+import com.xebialabs.xlrelease.stress.client.akkaClient.{AkkaHttpXlrClient, ReleasesHandler, TasksHandler, UsersHandler}
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.domain.{Role, Task, Template, User}
+import com.xebialabs.xlrelease.stress.domain.Permission._
+import com.xebialabs.xlrelease.stress.parsers.dataset.DatasetDSL
+import freestyle.free._
+// DO NOT REMOVE THIS IMPORT
+import freestyle.free.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-@module trait XLRClient {
-  val users: Users
-  val releases: Releases
-  val tasks: Tasks
-}
-
-object TestXLRClient {
+object XLRClientTest {
 
   object dsl extends DatasetDSL
 
@@ -58,7 +52,7 @@ object TestXLRClient {
   }
 
   def scenario1[F[_]](implicit C: XLRClient[F]): FreeS[F, (Template.ID, Set[Task.ID])] = {
-    import C.{users, releases, tasks}
+    import C.{releases, tasks, users}
 
     for {
       session <- users.admin()
@@ -100,3 +94,4 @@ object TestXLRClient {
 
 
 }
+

@@ -13,6 +13,7 @@ import akka.http.scaladsl.model.headers.Accept
 import akka.stream.ActorMaterializer
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.client.utils.DateFormat
+import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.parsers.dataset._
 import spray.json._
 
@@ -80,6 +81,9 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "create"),
       release.toJson
     )
+
+  def getRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[JsValue] =
+    getJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId))
 
   def startRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId / "start"), JsNull)

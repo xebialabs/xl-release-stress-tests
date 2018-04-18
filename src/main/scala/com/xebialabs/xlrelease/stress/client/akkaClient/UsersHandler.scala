@@ -3,7 +3,7 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import akka.stream.Materializer
 import com.xebialabs.xlrelease.stress.client.Users
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Role, User}
+import com.xebialabs.xlrelease.stress.domain.{Role, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 import spray.json._

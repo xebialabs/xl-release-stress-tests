@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.client
 
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.parsers.dataset._
+import com.xebialabs.xlrelease.stress.domain._
 import freestyle.free._
 
 @free trait Releases {
@@ -15,5 +15,6 @@ import freestyle.free._
   def getTasksByTitle(session: User.Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None): FS[Set[Task.ID]]
 //  def abortRelease(session: User.Session, releaseId: Release.ID): FS[Unit]
 //  def poll(session: User.Session, releaseId: Release.ID): FS[Set[Task.ID]]
+  def waitFor(session: User.Session, releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed): FS[Unit]
 
 }

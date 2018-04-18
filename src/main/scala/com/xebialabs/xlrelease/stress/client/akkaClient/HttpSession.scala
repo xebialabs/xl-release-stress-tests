@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import akka.http.scaladsl.model.headers.Cookie
-import com.xebialabs.xlrelease.stress.parsers.dataset.User
+import com.xebialabs.xlrelease.stress.domain.User
 
 case class HttpSession(user: User, cookies: Seq[Cookie])
 

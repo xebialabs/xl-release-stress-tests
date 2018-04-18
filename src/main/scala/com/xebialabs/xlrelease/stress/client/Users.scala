@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.client
 
 import com.xebialabs.xlrelease.stress.client.akkaClient.HttpSession
-import com.xebialabs.xlrelease.stress.parsers.dataset.{Permission, Role, User}
+import com.xebialabs.xlrelease.stress.domain.{Role, User}
 import freestyle.free._
 
 

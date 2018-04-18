@@ -1,11 +1,8 @@
-package com.xebialabs.xlrelease.stress.parsers.dataset
+package com.xebialabs.xlrelease.stress.domain
 
-import com.xebialabs.xlrelease.stress.parsers.dataset.Member.UserMember
-import com.xebialabs.xlrelease.stress.parsers.dataset.Permission._
 import spray.json._
-
-
-
+import com.xebialabs.xlrelease.stress.domain.Permission._
+import com.xebialabs.xlrelease.stress.domain.Member._
 
 case class Team(teamName: String,
                 members: Seq[Member],

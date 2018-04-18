@@ -2,6 +2,8 @@ package com.xebialabs.xlrelease.stress.parsers.dataset
 
 import java.nio.file.Path
 
+import com.xebialabs.xlrelease.stress.domain._
+
 
 trait DatasetDSL {
   def user(username: User.ID, fullname: String, email: String, password: String): User =

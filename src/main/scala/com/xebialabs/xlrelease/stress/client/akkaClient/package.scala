@@ -5,8 +5,10 @@ import java.io.ByteArrayOutputStream
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
+import akka.util.Timeout
 import spray.json._
 
+import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
@@ -76,6 +78,32 @@ package object akkaClient {
     }
 
     def discardU(implicit ec: ExecutionContext, m: Materializer): Future[Unit] = discard(_ => ())
+  }
+
+  def doUntil[A](cond: A => Boolean, interval: Duration, retries: Option[Int] = None)
+              (get: () => Future[A])
+              (implicit timeout: Timeout): Future[Unit] = {
+    @tailrec
+    def loop(attempts: Int): Future[Unit] = {
+      retries match {
+        case Some(n) if attempts >= n =>
+          Future.failed(new RuntimeException(s"Ran out of retries after $attempts attempts"))
+        case _ =>
+          val found = Await.result(get(), timeout.duration)
+          if (cond(found)) {
+            Future.successful(())
+          } else {
+            Thread.sleep(interval.toMillis)
+            loop(attempts + 1)
+          }
+      }
+    }
+    loop(0)
+  }
+
+  implicit class FutureOps[A](val doFuture: () => Future[A]) extends AnyVal {
+    def until(cond: A => Boolean, interval: Duration, retries: Option[Int] = None)(implicit timeout: Timeout): Future[Unit] =
+      doUntil(cond, interval, retries)(doFuture)
   }
 
 }
