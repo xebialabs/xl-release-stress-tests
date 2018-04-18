@@ -71,7 +71,12 @@ object XLRClientTest {
       _ <- releases.start(userSession, releaseId)
       _ <- tasks.waitFor(userSession, taskId)
       _ <- tasks.complete(userSession, taskId)
+      _ <- releases.waitFor(userSession, releaseId).map { res =>
+        println(s"Release $releaseId successfully completed")
+        res
+      }
     } yield (templateId, taskIds)
+
   }
 
   def main(args: Array[String]): Unit = {
