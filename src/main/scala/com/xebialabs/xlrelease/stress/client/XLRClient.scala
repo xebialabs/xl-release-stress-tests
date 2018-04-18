@@ -1,8 +1,7 @@
 package com.xebialabs.xlrelease.stress.client
 
 import freestyle.free._
-// (begging) DO NOT REMOVE THIS IMPORT
-//import freestyle.free.implicits._
+import freestyle.free.logging._
 
 import scala.language.postfixOps
 
@@ -10,5 +9,7 @@ import scala.language.postfixOps
   val users: Users
   val releases: Releases
   val tasks: Tasks
+
+  val log: LoggingM
 }
 

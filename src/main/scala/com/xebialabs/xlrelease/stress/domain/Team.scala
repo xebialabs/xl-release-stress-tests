@@ -43,16 +43,16 @@ object Team extends DefaultJsonProtocol {
     LockReleaseTask
   )
 
-  def templateOwner(owner: User, templateId: Template.ID) =
+  def templateOwner(members: Seq[Member]) =
     Team("Template Owner",
-      Seq(UserMember(owner.username)),
+      members,
       templateOwnerPermissions.toSeq,
       systemTeam = true
     )
 
-  def releaseAdmin(owner: User, templateId: Template.ID) =
+  def releaseAdmin(members: Seq[Member]) =
     Team("Release Admin",
-      Seq(UserMember(owner.username)),
+      members,
       releaseAdminPermissions.toSeq,
       systemTeam = true
     )

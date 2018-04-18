@@ -52,7 +52,7 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     postJSON(serverUri.withPath(xlrApiPath / "roles" / role.rolename), JsObject(
       "name" -> role.rolename.toJson,
       "permissions" -> role.permissions.map(_.permission.toJson).toJson,
-      "principals" -> role.principals.map(username => JsObject("username" -> username.toJson)).toJson
+      "principals" -> role.principals.map(user => JsObject("username" -> user.username.toJson)).toJson
     ))
 
   def deleteRole(roleId: Role.ID)(implicit session: HttpSession): Future[HttpResponse] =

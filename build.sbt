@@ -22,6 +22,7 @@ addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M10" cross CrossVersion.
 
 libraryDependencies ++= Seq(
   "io.frees" %% "frees-core" % "0.8.0",
+  "io.frees" %% "frees-logging" % "0.8.0",
   "org.typelevel" %% "cats-core" % "1.0.1",
   "com.typesafe.akka" %% "akka-http" % "10.1.1",
   "com.typesafe.akka" %% "akka-stream" % "2.5.11",

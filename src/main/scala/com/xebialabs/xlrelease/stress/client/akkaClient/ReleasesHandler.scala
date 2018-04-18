@@ -3,11 +3,9 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 import akka.stream.Materializer
 import akka.util.Timeout
 import cats.implicits._
-import cats.syntax._
 import com.xebialabs.xlrelease.stress.client.Releases
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Release.ID
-import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.domain.User.Session
 import spray.json._
@@ -19,13 +17,19 @@ import scala.language.postfixOps
 class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionContext, m: Materializer) {
 
   implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] with DefaultJsonProtocol {
-    protected def importTemplate(session: User.Session, owner: User, template: Template): Future[Template.ID] =
-      for {
-        templateId <- importTemplate0(template)(session)
-        _ <- client.setTemplateTeams(templateId, List(templateOwner(owner, templateId), releaseAdmin(owner, templateId)))(session)
-      } yield templateId
+    protected def importTemplate(session: User.Session, template: Template): Future[Template.ID] =
+      client.importTemplate(template)(session)
+        .asJson
+        .map[Option[String]] {
+        case JsArray(ids) =>
+          ids.headOption.flatMap(_.asJsObject.fields.get("id")).flatMap {
+            case JsString(id) => Some(id)
+            case _ => Option.empty[Template.ID]
+          }
+        case _ => Option.empty[Template.ID]
+      }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
 
-    protected def setTemplateTeam(session: Session, templateId: Template.ID, teams: Set[Team]): Future[Map[String, String]] =
+    protected def setTemplateTeams(session: Session, templateId: Template.ID, teams: Seq[Team]): Future[Map[String, String]] =
       client.setTemplateTeams(templateId, teams.toList)(session)
         .asJson.map {
         case JsArray(arr) =>
@@ -59,15 +63,9 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
           case _ => Future.failed(new RuntimeException("not a Js object"))
         }
 
-    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] = {
-      for {
-        _ <- Future.successful {
-          println(s"Starting release: $releaseId")
-        }
-        releaseId <- client.startRelease(releaseId)(session)
+    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] =
+        client.startRelease(releaseId)(session)
           .discard(_ => releaseId)
-      } yield releaseId
-    }
 
     protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): Future[Set[Task.ID]] =
       client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).collect {
@@ -89,25 +87,13 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
         }.sequence.map(_.toSet).getOrElse(Set.empty)
       }
 
-    override protected def waitFor(session: Session, releaseId: ID, expectedStatus: ReleaseStatus): Future[Unit] = {
+    override protected def waitFor(session: Session, releaseId: ID, expectedStatus: ReleaseStatus,
+                                   interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): Future[Unit] = {
       implicit val timeout: Timeout = Timeout(10 seconds)
 
       getReleaseStatus(releaseId)(session)
-        .until(_.contains(expectedStatus), interval = 5 seconds, retries = Some(20))
+        .until(_.contains(expectedStatus), interval, retries)
     }
-  }
-
-  def importTemplate0(template: Template)(implicit session: User.Session): Future[Release.ID] = {
-    client.importTemplate(template)
-      .asJson
-      .map[Option[String]] {
-      case JsArray(ids) =>
-        ids.headOption.flatMap(_.asJsObject.fields.get("id")).flatMap {
-          case JsString(id) => Some(id)
-          case _ => Option.empty[Template.ID]
-        }
-      case _ => Option.empty[Template.ID]
-    }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
   }
 
   def getReleaseStatus(releaseId: Release.ID)(implicit session: User.Session): () => Future[Option[ReleaseStatus]] =
