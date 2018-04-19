@@ -32,7 +32,7 @@ object XLREngineTest {
     )
 
     Runner.runIO {
-      TestScenarios.fullScenario(template, numUsers = 20)
+      TestScenarios.fullScenario(template, numUsers = 10)
     }.unsafeRunSync()
 
     shutdown()
