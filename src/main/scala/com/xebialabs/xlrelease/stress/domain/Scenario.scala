@@ -7,11 +7,13 @@ import com.xebialabs.xlrelease.stress.client.akkaClient.{AkkaHttpXlrClient, Runn
 import freestyle.free._
 import freestyle.free.implicits._
 
+import scala.concurrent.ExecutionContext
+
 case class Scenario[A](name: String, program: Program[A])
 
 object Scenario {
   implicit class ScenarioOps[A](val scenario: Scenario[A]) extends AnyVal {
-    def runIO(implicit client: AkkaHttpXlrClient, API: XLRClient[XLRClient.Op]): IO[A] =
+    def runIO(implicit client: AkkaHttpXlrClient, API: XLRClient[XLRClient.Op], ec: ExecutionContext): IO[A] =
       Runner.runIO[A] {
         for {
           _ <- API.log.info(s"Starting scenario ${scenario.name}")

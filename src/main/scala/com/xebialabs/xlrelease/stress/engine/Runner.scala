@@ -11,10 +11,11 @@ import com.xebialabs.xlrelease.stress.client.{Releases, Tasks, Users}
 import com.xebialabs.xlrelease.stress.domain.User
 import com.xebialabs.xlrelease.stress.engine.ioEngine.EngineHandler
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
+
 
 object Runner {
-  def runIO[A](program: HiProgram[A])(implicit client: AkkaHttpXlrClient, API: XLREngine[XLREngine.Op]): IO[A] = {
+  def runIO[A](program: HiProgram[A])(implicit client: AkkaHttpXlrClient, API: XLREngine[XLREngine.Op], ec: ExecutionContext): IO[A] = {
     import client.materializer
 
     val usersInterpreter = new UsersHandler(User("admin", "", "", "admin"))

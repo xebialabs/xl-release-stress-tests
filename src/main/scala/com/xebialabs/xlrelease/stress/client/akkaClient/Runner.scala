@@ -9,10 +9,10 @@ import freestyle.free.nondeterminism._
 import com.xebialabs.xlrelease.stress.client.{Program, Releases, Tasks, Users, XLRClient}
 import com.xebialabs.xlrelease.stress.domain.User
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 object Runner {
-  def runIO[A](program: Program[A])(implicit client: AkkaHttpXlrClient, API: XLRClient[XLRClient.Op]): IO[A] = {
+  def runIO[A](program: Program[A])(implicit client: AkkaHttpXlrClient, API: XLRClient[XLRClient.Op], ec: ExecutionContext): IO[A] = {
     import client.materializer
 
     val usersInterpreter = new UsersHandler(User("admin", "", "", "admin"))
