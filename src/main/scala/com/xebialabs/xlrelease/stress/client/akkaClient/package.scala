@@ -6,6 +6,7 @@ import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.Timeout
+import cats.effect.IO
 import spray.json._
 
 import scala.annotation.tailrec
@@ -101,9 +102,13 @@ package object akkaClient {
     loop(0)
   }
 
-  implicit class FutureOps[A](val doFuture: () => Future[A]) extends AnyVal {
+  implicit class DoFutureOps[A](val doFuture: () => Future[A]) extends AnyVal {
     def until(cond: A => Boolean, interval: Duration, retries: Option[Int] = None)(implicit timeout: Timeout): Future[Unit] =
       doUntil(cond, interval, retries)(doFuture)
+  }
+
+  implicit class FutureOps[A](val future: Future[A]) extends AnyVal {
+    def io: IO[A] = IO.fromFuture(IO(future))
   }
 
 }

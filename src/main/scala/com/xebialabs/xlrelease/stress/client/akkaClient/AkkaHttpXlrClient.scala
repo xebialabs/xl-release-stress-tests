@@ -14,7 +14,6 @@ import akka.stream.ActorMaterializer
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.client.utils.DateFormat
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.parsers.dataset._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}

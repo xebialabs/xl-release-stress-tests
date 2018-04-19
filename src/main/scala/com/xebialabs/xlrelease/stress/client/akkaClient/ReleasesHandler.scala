@@ -2,6 +2,7 @@ package com.xebialabs.xlrelease.stress.client.akkaClient
 
 import akka.stream.Materializer
 import akka.util.Timeout
+import cats.effect.IO
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.client.Releases
 import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
@@ -14,12 +15,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionContext, m: Materializer) {
+class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer) {
 
-  implicit def releasesHandler: Releases.Handler[Future] = new Releases.Handler[Future] with DefaultJsonProtocol {
-    protected def importTemplate(session: User.Session, template: Template): Future[Template.ID] =
+  implicit def releasesHandler: Releases.Handler[IO] = new Releases.Handler[IO] with DefaultJsonProtocol {
+    protected def importTemplate(session: User.Session, template: Template): IO[Template.ID] =
       client.importTemplate(template)(session)
         .asJson
+        .io
         .map[Option[String]] {
         case JsArray(ids) =>
           ids.headOption.flatMap(_.asJsObject.fields.get("id")).flatMap {
@@ -27,11 +29,13 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
             case _ => Option.empty[Template.ID]
           }
         case _ => Option.empty[Template.ID]
-      }.flatMap(_.fold(Future.failed[Template.ID](new RuntimeException("Cannot extract Template ID")))(Future.successful))
+      }.flatMap(_.fold(IO.raiseError[Template.ID](new RuntimeException("Cannot extract Template ID")))(IO.pure))
 
-    protected def setTemplateTeams(session: Session, templateId: Template.ID, teams: Seq[Team]): Future[Map[String, String]] =
+    protected def setTemplateTeams(session: Session, templateId: Template.ID, teams: Seq[Team]): IO[Map[String, String]] =
       client.setTemplateTeams(templateId, teams.toList)(session)
-        .asJson.map {
+        .asJson
+        .io
+        .map {
         case JsArray(arr) =>
           arr.toList.collect {
             case team: JsObject =>
@@ -49,29 +53,33 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
           .getOrElse(Map.empty)
       }
 
-    protected def setTemplateScriptUser(session: Session, templateId: ID, scriptUser: Option[User]): Future[Unit] =
-      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session).discardU
+    protected def setTemplateScriptUser(session: Session, templateId: ID, scriptUser: Option[User]): IO[Unit] =
+      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session)
+        .discardU
+        .io
 
-    protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): Future[Release.ID] =
+    protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): IO[Release.ID] =
       client.createRelease(templateId, createReleaseArgs)(session)
         .asJson
+        .io
         .flatMap {
           case JsObject(r) => r.get("id") match {
-            case Some(JsString(id)) => Future.successful(id.replaceFirst("Applications/", ""))
-            case _ => Future.failed(new RuntimeException("Cannot extract Release ID"))
+            case Some(JsString(id)) => IO.pure(id.replaceFirst("Applications/", ""))
+            case _ => IO.raiseError(new RuntimeException("Cannot extract Release ID"))
           }
-          case _ => Future.failed(new RuntimeException("not a Js object"))
+          case _ => IO.raiseError(new RuntimeException("not a Js object"))
         }
 
-    protected def start(session: Session, releaseId: Release.ID): Future[Release.ID] =
-        client.startRelease(releaseId)(session)
-          .discard(_ => releaseId)
+    protected def start(session: Session, releaseId: Release.ID): IO[Release.ID] =
+      client.startRelease(releaseId)(session)
+        .discard(_ => releaseId)
+        .io
 
-    protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): Future[Set[Task.ID]] =
-      client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).collect {
+    protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): IO[Set[Task.ID]] =
+      client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).io.map {
         case JsArray(tasks) => tasks.toList.collect {
-          case task: JsObject =>
-            task.fields.get("id").flatMap {
+          case JsObject(fields) =>
+            fields.get("id").flatMap {
               case JsString(fullId) => fullId.split("/").toList match {
                 case "Applications" :: `releaseId` :: phaseId :: Nil =>
                   println("No task id!!")
@@ -84,15 +92,18 @@ class ReleasesHandler(val client: AkkaHttpXlrClient)(implicit val ec: ExecutionC
               }
               case _ => None
             }
+          case _ => None
         }.sequence.map(_.toSet).getOrElse(Set.empty)
+        case _ => Set.empty
       }
 
     override protected def waitFor(session: Session, releaseId: ID, expectedStatus: ReleaseStatus,
-                                   interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): Future[Unit] = {
+                                   interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): IO[Unit] = {
       implicit val timeout: Timeout = Timeout(10 seconds)
 
       getReleaseStatus(releaseId)(session)
         .until(_.contains(expectedStatus), interval, retries)
+        .io
     }
   }
 
