@@ -1,5 +1,7 @@
 package com.xebialabs.xlrelease.stress.client.akkaClient
 
+import java.io.File
+import java.net.URI
 import java.nio.file.Path
 
 import com.github.nscala_time.time.Imports._
@@ -132,9 +134,9 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     ))
   }
 
-  def postZip(uri: Uri, path: Path)(implicit session: HttpSession): Future[HttpResponse] = {
+  def postZip(uri: Uri, content: File)(implicit session: HttpSession): Future[HttpResponse] = {
     val payload = Multipart.FormData(
-      Multipart.FormData.BodyPart.fromPath("file", `application/zip`, path)
+      Multipart.FormData.BodyPart.fromFile(name = "file", `application/zip`, content)
     )
     Http().singleRequest(HttpRequest(POST, uri,
       entity = payload.toEntity(),

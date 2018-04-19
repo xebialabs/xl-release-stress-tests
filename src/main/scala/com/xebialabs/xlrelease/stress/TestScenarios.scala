@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.client
+package com.xebialabs.xlrelease.stress
 
 import java.nio.file.Paths
 
@@ -8,7 +8,7 @@ import com.xebialabs.xlrelease.stress.domain._
 import cats._
 import cats.implicits._
 import cats.syntax._
-import com.xebialabs.xlrelease.stress.{client, engine}
+import com.xebialabs.xlrelease.stress.client.Program
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
 import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
 import com.xebialabs.xlrelease.stress.engine.HiProgram
@@ -17,6 +17,7 @@ import freestyle.free.implicits._
 import freestyle.free.nondeterminism._
 import freestyle.free.logging._
 import freestyle.free.loggingJVM.log4s.implicits._
+
 
 object TestScenarios {
 
@@ -42,7 +43,7 @@ object TestScenarios {
   }
 
   def simpleScenario(templateId: Template.ID, user: User)(implicit API: client.API): Program[Unit] = {
-    import API.{releases, tasks, users, log}
+    import API.{log, releases, tasks, users}
 
     def msg(s: String) = log.info(s"${user.username}: $s")
 

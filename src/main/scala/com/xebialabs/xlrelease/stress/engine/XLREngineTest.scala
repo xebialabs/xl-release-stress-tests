@@ -1,41 +1,69 @@
 package com.xebialabs.xlrelease.stress.engine
 
-import java.nio.file.Paths
+import java.io.{File, FileOutputStream}
 import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
-import com.xebialabs.xlrelease.stress.client.TestScenarios
+import com.xebialabs.xlrelease.stress.TestScenarios
 import com.xebialabs.xlrelease.stress.client.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.client.utils.ResourceManagement.using
 import com.xebialabs.xlrelease.stress.domain.Template
+import org.apache.commons.io.IOUtils
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 
 object XLREngineTest {
-  val xlrServer = Uri("http://aiki.xebialabs.com:5516")
+  val usage: String =
+    """
+      |    sbt run xlReleaseUrl numUsers
+      |
+      |example:
+      |    sbt run http://xl-release.xebialabs.com:5516 100
+    """.stripMargin
+
+
+  def shutdown(client: AkkaHttpXlrClient): Unit = {
+    println("shutting down")
+    Await.ready(client.shutdown(), 20 seconds)
+    println("shutting down complete")
+    System.exit(0)
+  }
+
 
   def main(args: Array[String]): Unit = {
-    implicit val client: AkkaHttpXlrClient = new AkkaHttpXlrClient(xlrServer)
-
-    val template: Template = Template("test", Paths.get(this.getClass.getClassLoader.getResource("DSL_1mb.xlr").getPath))
-
-    def shutdown(): Unit = {
-      println("shutting down")
-      Await.ready(client.shutdown(), 5 seconds)
-      println("shutting down complete")
-      System.exit(0)
+    if (args.length < 2) {
+      println(usage)
+      System.exit(-1)
     }
 
+    val hostname = Uri(args(0))
+    val numUsers = args(1).toInt
+
+    implicit val client: AkkaHttpXlrClient = new AkkaHttpXlrClient(hostname)
+
+    val templateFile: File = {
+      val in = this.getClass.getClassLoader.getResourceAsStream("DSL_1mb.xlr")
+      val tmpFile = File.createTempFile("stress-test", ".xlr")
+      tmpFile.deleteOnExit()
+      using(new FileOutputStream(tmpFile)) { out =>
+        IOUtils.copy(in, out)
+      }
+      tmpFile
+    }
+
+    val template: Template = Template("test", templateFile)
+
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(200)
+      Executors.newFixedThreadPool(2 * numUsers)
     )
 
     Runner.runIO {
-      TestScenarios.fullScenario(template, numUsers = 10)
+      TestScenarios.fullScenario(template, numUsers)
     }.unsafeRunSync()
 
-    shutdown()
+    shutdown(client)
 
   }
 

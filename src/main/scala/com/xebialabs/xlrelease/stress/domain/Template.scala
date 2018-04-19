@@ -1,9 +1,9 @@
 package com.xebialabs.xlrelease.stress.domain
 
-import java.nio.file.Path
+import java.io.File
 
 
-case class Template(name: String, xlrTemplate: Path)
+case class Template(name: String, xlrTemplate: File)
 
 object Template {
   type ID = String
