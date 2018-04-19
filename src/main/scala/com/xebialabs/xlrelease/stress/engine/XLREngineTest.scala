@@ -18,7 +18,7 @@ object XLREngineTest {
   def main(args: Array[String]): Unit = {
     implicit val client: AkkaHttpXlrClient = new AkkaHttpXlrClient(xlrServer)
 
-    val template: Template = Template("test", Paths.get(this.getClass.getClassLoader.getResource("DSL2.xlr").getPath))
+    val template: Template = Template("test", Paths.get(this.getClass.getClassLoader.getResource("DSL_1mb.xlr").getPath))
 
     def shutdown(): Unit = {
       println("shutting down")
