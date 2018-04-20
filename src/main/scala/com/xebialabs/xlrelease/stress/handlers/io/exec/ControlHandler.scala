@@ -1,18 +1,23 @@
-package com.xebialabs.xlrelease.stress.handlers.exec.io
+package com.xebialabs.xlrelease.stress.handlers.io.exec
 
 
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.Runner
 import com.xebialabs.xlrelease.stress.api.{API, Program}
-import com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
 import com.xebialabs.xlrelease.stress.api.exec.Control
-import com.xebialabs.xlrelease.stress.domain.AdminPassword
+import com.xebialabs.xlrelease.stress.domain.{AdminPassword, XlrServer}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 
 
-class ControlHandler(implicit client: AkkaHttpXlrClient, admin: AdminPassword, API: API, ec: ExecutionContext) extends Runner {
+class ControlHandler(implicit
+                     server: XlrServer,
+                     admin: AdminPassword,
+                     client: AkkaHttpXlrClient,
+                     API: API,
+                     ec: ExecutionContext) extends Runner {
 
   implicit def controlHandler: Control.Handler[IO] = new Control.Handler[IO] {
 

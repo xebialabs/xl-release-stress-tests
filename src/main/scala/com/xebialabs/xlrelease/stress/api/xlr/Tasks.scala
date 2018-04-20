@@ -13,6 +13,6 @@ import scala.language.postfixOps
   def retry(taskId: Task.ID, comment: String)(implicit session: User.Session): FS[Comment.ID]
   def skip(taskId: Task.ID, comment: String)(implicit session: User.Session): FS[Comment.ID]
   def waitFor(taskId: Task.ID, status: TaskStatus = TaskStatus.InProgress,
-              interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+              interval: FiniteDuration = 5 seconds, retries: Option[Int] = Some(20))
              (implicit session: User.Session): FS[Unit]
 }

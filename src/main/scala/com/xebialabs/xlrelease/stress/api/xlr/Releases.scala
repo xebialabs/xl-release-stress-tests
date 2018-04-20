@@ -20,7 +20,7 @@ import scala.language.postfixOps
 //  def abortRelease(releaseId: Release.ID): FS[Unit]
 //  def poll(releaseId: Release.ID): FS[Set[Task.ID]]
   def waitFor(releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed,
-              interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+              interval: FiniteDuration = 5 seconds, retries: Option[Int] = Some(20))
              (implicit session: User.Session): FS[Unit]
 
 }

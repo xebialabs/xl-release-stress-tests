@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient
+package com.xebialabs.xlrelease.stress.handlers.io.xlr
 
 import akka.stream.Materializer
 import akka.util.Timeout
@@ -7,14 +7,21 @@ import cats.implicits._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.xlr.Tasks
 import com.xebialabs.xlrelease.stress.domain._
+import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer, s: Show[TaskStatus]) {
+class TasksHandler()
+                  (implicit val
+                   server: XlrServer,
+                   client: AkkaHttpXlrClient,
+                   ec: ExecutionContext,
+                   m: Materializer,
+                   s: Show[TaskStatus]) extends XlrRest with DefaultJsonProtocol {
 
   def notImplemented[A](name: String): IO[A] = IO.raiseError(new RuntimeException("not implemented: "+ name))
 
@@ -22,20 +29,31 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
 
     protected def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)
                                   (implicit session: User.Session): IO[Task.ID] =
-      client.appendScriptTask(phaseId, title, taskType, script)
-        .asJson
-        .io >>= readTaskId(sep = "/")
+      client.postJSON(
+        api(_ / "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+        JsObject(
+          "id" -> JsNull,
+          "title" -> title.toJson,
+          "type" -> taskType.toJson,
+          "script" -> script.toJson
+        )
+      ).asJson.io >>=
+        readTaskId(sep = "/")
           .toIO(s"appendScriptTask(${phaseId.show}, $title, $taskType): failed to read Task Id")
 
     protected def assignTo(taskId: Task.ID, assignee: User.ID)
                           (implicit session: User.Session): IO[Unit] =
-      client.assignTaskTo(taskId, assignee)
-        .discardU
-        .io
+      client.postJSON(
+        api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "assign" / assignee),
+        JsNull
+      ).discardU.io
 
     protected def complete(taskId: Task.ID, comment: Option[String] = None)
                           (implicit session: User.Session): IO[Boolean] =
-      client.completeTask(taskId, comment).asJson
+      client.postJSON(
+        api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "complete"),
+        comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
+      ).asJson
         .map(matchesTaskStatus(TaskStatus.Completed))
         .io
 
@@ -47,20 +65,21 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
 
 
     protected def waitFor(taskId: Task.ID, expectedStatus: TaskStatus = TaskStatus.InProgress,
-                          interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+                          interval: FiniteDuration = 5 seconds, retries: Option[Int] = Some(20))
                          (implicit session: User.Session): IO[Unit] = {
       implicit val timeout: Timeout = Timeout(10 seconds)
 
       getTaskStatus(taskId)
         .until(_.contains(expectedStatus), interval, retries)
-        .io
     }
   }
 
-  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => Future[JsParsed[TaskStatus]] =
+  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => IO[JsParsed[TaskStatus]] =
     () =>
-      client.pollTask(taskId.show)
-        .asJson
+      client.postJSON(
+        server(_ / "tasks" / "poll"),
+        JsObject("ids" -> Seq(taskId.show).toJson)
+      ).asJson.io
         .map(readFirstTaskStatus)
 
 }

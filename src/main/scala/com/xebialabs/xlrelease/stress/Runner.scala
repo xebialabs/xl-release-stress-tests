@@ -6,9 +6,10 @@ import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.{API, Program}
 import com.xebialabs.xlrelease.stress.api.exec.Control
 import com.xebialabs.xlrelease.stress.api.xlr.{Releases, Tasks, Users}
-import com.xebialabs.xlrelease.stress.domain.{AdminPassword, User}
-import com.xebialabs.xlrelease.stress.handlers.exec.io.ControlHandler
-import com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient.{AkkaHttpXlrClient, ReleasesHandler, TasksHandler, UsersHandler}
+import com.xebialabs.xlrelease.stress.domain.{AdminPassword, User, XlrServer}
+import com.xebialabs.xlrelease.stress.handlers.io.exec.ControlHandler
+import com.xebialabs.xlrelease.stress.handlers.io.xlr.{ReleasesHandler, TasksHandler, UsersHandler}
+import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
 import com.xebialabs.xlrelease.stress.scenarios.Scenario
 import freestyle.free._
 import freestyle.free.implicits._
@@ -17,10 +18,15 @@ import freestyle.free.loggingJVM.log4s.implicits._
 import scala.concurrent.ExecutionContext
 
 trait Runner {
-  def runIO[A](program: Program[A])(implicit client: AkkaHttpXlrClient, admin: AdminPassword, ec: ExecutionContext): IO[A] = {
+  def runIO[A](program: Program[A])
+              (implicit
+               server: XlrServer,
+               admin: AdminPassword,
+               client: AkkaHttpXlrClient,
+               ec: ExecutionContext): IO[A] = {
     import client.materializer
 
-    val usersInterpreter = new UsersHandler(User("admin", "", "", admin.password))
+    val usersInterpreter = new UsersHandler
     val releaseInterpreter = new ReleasesHandler
     val tasksInterpreter = new TasksHandler
     val controlInterpreter = new ControlHandler
@@ -33,7 +39,13 @@ trait Runner {
     program.interpret[IO]
   }
 
-  def runScenario(scenario: Scenario)(implicit client: AkkaHttpXlrClient, admin: AdminPassword, ec: ExecutionContext, api: API): Unit = {
+  def runScenario(scenario: Scenario)
+                 (implicit
+                  server: XlrServer,
+                  admin: AdminPassword,
+                  client: AkkaHttpXlrClient,
+                  ec: ExecutionContext,
+                  api: API): Unit = {
     val execScenario = for {
       _ <- runIO {
         for {

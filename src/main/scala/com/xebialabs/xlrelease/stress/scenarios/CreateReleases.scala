@@ -105,9 +105,9 @@ object CreateReleases extends Scenario {
     api.xlr.users.admin() flatMap { implicit session =>
       for {
         phaseId <- api.xlr.releases.createRelease("test with releasefile")
-        _ <- api.log.info(s"Release created: ${phaseId.releaseId}")
+        _ <- api.log.info(s"Release created: ${phaseId.release}")
         taskId <- api.xlr.tasks.appendScriptTask(phaseId, "dsl", "xlrelease.GroovyScriptTask", releasefile)
-        _ <- api.log.info(s"Task created: ${taskId.taskId}")
+        _ <- api.log.info(s"Task created: ${taskId.task}")
       } yield ()
     }
   }
