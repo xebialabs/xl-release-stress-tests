@@ -16,7 +16,7 @@ import scala.language.postfixOps
   def createFromTemplate(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: User.Session): FS[Release.ID]
   def createRelease(title: String, scriptUser: Option[User] = None)(implicit session: User.Session): FS[Phase.ID]
   def start(releaseId: Release.ID)(implicit session: User.Session): FS[Release.ID]
-  def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: User.Session): FS[Set[Task.ID]]
+  def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: User.Session): FS[Seq[Task.ID]]
 //  def abortRelease(releaseId: Release.ID): FS[Unit]
 //  def poll(releaseId: Release.ID): FS[Set[Task.ID]]
   def waitFor(releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed,

@@ -7,14 +7,14 @@ import cats.implicits._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.xlr.Tasks
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.domain.User.Session
+import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer, s: Show[TaskStatus]) extends jsUtils {
+class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer, s: Show[TaskStatus]) {
 
   def notImplemented[A](name: String): IO[A] = IO.raiseError(new RuntimeException("not implemented: "+ name))
 
@@ -24,8 +24,8 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
                                   (implicit session: User.Session): IO[Task.ID] =
       client.appendScriptTask(phaseId, title, taskType, script)
         .asJson
-        .io
-        .flatMap(js => getId(js).flatMap(getTaskId).toIO(new RuntimeException("Cannot parse task id")))
+        .io >>= readTaskId(sep = "/")
+          .toIO(s"appendScriptTask(${phaseId.show}, $title, $taskType): failed to read Task Id")
 
     protected def assignTo(taskId: Task.ID, assignee: User.ID)
                           (implicit session: User.Session): IO[Unit] =
@@ -57,7 +57,10 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
     }
   }
 
-  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => Future[Option[TaskStatus]] =
-    () => client.pollTask(taskId.show)(session).asJson.map(readFirstTaskStatus)
+  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => Future[JsParsed[TaskStatus]] =
+    () =>
+      client.pollTask(taskId.show)
+        .asJson
+        .map(readFirstTaskStatus)
 
 }

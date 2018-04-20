@@ -7,6 +7,10 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.Timeout
 import cats.effect.IO
+import cats.data._
+import cats.implicits._
+import com.xebialabs.xlrelease.stress.domain.HttpSession
+import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
 import spray.json._
 
 import scala.annotation.tailrec
@@ -111,7 +115,18 @@ package object akkaClient {
     def io: IO[A] = IO.fromFuture(IO(future))
   }
 
-  implicit class OptionOps[A](val option: Option[A]) extends AnyVal {
-    def toIO(ifEmpty: => Throwable): IO[A] = option.map(IO.pure).getOrElse(IO.raiseError(ifEmpty))
+  implicit class JsParsedOps[A, B](val toJsParsed: A => JsParsed[B]) extends AnyVal {
+    def toIO: A => IO[B] = a => IO.fromEither(toJsParsed(a))
+
+    def toIO(msg: String, fields: List[String] = Nil)(implicit session: HttpSession): A => IO[B] = a => IO.fromEither(
+      toJsParsed(a).leftMap { err =>
+        DeserializationException(s"(${session.user.username}) $msg", err, fields)
+      }
+    )
   }
+
+//  implicit class OptionOps[A](val option: Option[A]) extends AnyVal {
+//    def toIO(ifEmpty: => Throwable): IO[A] = option.map(IO.pure).getOrElse(IO.raiseError(ifEmpty))
+//  }
+
 }

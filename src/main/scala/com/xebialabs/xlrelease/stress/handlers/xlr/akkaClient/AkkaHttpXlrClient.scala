@@ -105,7 +105,8 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
   def startRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId / "start"), JsNull)
 
-  def getTaskByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: HttpSession): Future[JsValue] =
+  def getTaskByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)
+                    (implicit session: HttpSession): Future[JsValue] =
     Uri.Query(
       "releaseId" -> s"Applications/$releaseId",
       "taskTitle" -> taskTitle
@@ -120,9 +121,11 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
       "ids" -> Seq(taskId).toJson
     ))
 
-  def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)(implicit session: HttpSession): Future[HttpResponse] =
+  def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)
+                      (implicit session: HttpSession): Future[HttpResponse] =
     postJSON(
-      serverUri.withPath(xlrApiPath / "tasks" / "Applications" / phaseId.releaseId / phaseId.phaseId / "tasks"), JsObject(
+      serverUri.withPath(xlrApiPath / "tasks" / "Applications" / phaseId.releaseId / phaseId.phaseId / "tasks"),
+      JsObject(
         "id" -> JsNull,
         "title" -> title.toJson,
         "type" -> taskType.toJson,
@@ -137,7 +140,8 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     )
 
   def completeTask(taskId: Task.ID, comment: Option[String])(implicit session: HttpSession): Future[HttpResponse] =
-    postJSON(serverUri.withPath(xlrApiPath / "tasks" / "Applications" / taskId.releaseId / taskId.phaseId.phaseId / taskId.taskId / "complete"),
+    postJSON(
+      serverUri.withPath(xlrApiPath / "tasks" / "Applications" / taskId.releaseId / taskId.phaseId.phaseId / taskId.taskId / "complete"),
       comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
     )
 
