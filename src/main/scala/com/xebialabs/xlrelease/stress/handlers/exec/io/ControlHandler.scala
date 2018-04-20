@@ -12,9 +12,9 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 
 
-class ExecHandler(implicit client: AkkaHttpXlrClient, API: API, ec: ExecutionContext) {
+class ControlHandler(implicit client: AkkaHttpXlrClient, API: API, ec: ExecutionContext) {
 
-  implicit def engineHandler: Control.Handler[IO] = new Control.Handler[IO] {
+  implicit def controlHandler: Control.Handler[IO] = new Control.Handler[IO] {
 
     protected def parallel[A](n: Int)(p: Int => Program[A]): IO[List[A]] =
       IO.pure {
