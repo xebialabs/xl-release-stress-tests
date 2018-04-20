@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers.akkaClient
+package com.xebialabs.xlrelease.stress.http
 
 import java.io.File
 
@@ -10,19 +10,16 @@ import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip
 import akka.http.scaladsl.model.{DateTime => _, _}
 import akka.http.scaladsl.model.headers.Accept
 import akka.stream.ActorMaterializer
-import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.domain._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AkkaHttpXlrClient extends SprayJsonSupport with DefaultJsonProtocol {
+class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
-
-  def shutdown(): Future[Unit] = Http().shutdownAllConnectionPools()
 
   def getJSON(uri: Uri)(implicit session: HttpSession): Future[JsValue] =
     Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies))
@@ -59,5 +56,8 @@ class AkkaHttpXlrClient extends SprayJsonSupport with DefaultJsonProtocol {
       headers = Accept(`application/json`) :: session.cookies
     ))
   }
+
+  def shutdown(): Future[Unit] =
+    Http().shutdownAllConnectionPools()
 
 }

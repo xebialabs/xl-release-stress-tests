@@ -9,7 +9,7 @@ import cats.syntax._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.domain.{HttpSession, Task}
 import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
-import com.xebialabs.xlrelease.stress.handlers.akkaClient._
+import com.xebialabs.xlrelease.stress.http._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsValue}
 
 import scala.annotation.tailrec

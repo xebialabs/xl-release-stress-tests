@@ -1,15 +1,15 @@
-package com.xebialabs.xlrelease.stress
+package com.xebialabs.xlrelease.stress.handlers.io
 
-import java.util.concurrent.{ExecutorService, Executors}
-
+import cats._
+import cats.implicits._
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.api.{API, Program}
 import com.xebialabs.xlrelease.stress.api.exec.Control
 import com.xebialabs.xlrelease.stress.api.xlr.{Releases, Tasks, Users}
-import com.xebialabs.xlrelease.stress.domain.{AdminPassword, User, XlrServer}
+import com.xebialabs.xlrelease.stress.api.{API, Program}
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.handlers.io.exec.ControlHandler
 import com.xebialabs.xlrelease.stress.handlers.io.xlr.{ReleasesHandler, TasksHandler, UsersHandler}
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.scenarios.Scenario
 import freestyle.free._
 import freestyle.free.implicits._
@@ -22,7 +22,7 @@ trait Runner {
               (implicit
                server: XlrServer,
                admin: AdminPassword,
-               client: AkkaHttpXlrClient,
+               client: AkkaHttpClient,
                ec: ExecutionContext): IO[A] = {
     import client.materializer
 
@@ -43,24 +43,20 @@ trait Runner {
                  (implicit
                   server: XlrServer,
                   admin: AdminPassword,
-                  client: AkkaHttpXlrClient,
+                  client: AkkaHttpClient,
                   ec: ExecutionContext,
                   api: API): Unit = {
-    val execScenario = for {
-      _ <- runIO {
-        for {
-          _ <- api.log.info(s"Running scenario: ${scenario.name}")
-          _ <- scenario.program
-          _ <- api.log.info(s"Scenario ${scenario.name} done")
-        } yield ()
-      }
-      _ <- shutdown
+
+    val program = for {
+      _ <- api.log.info(s"Running scenario: ${scenario.name}")
+      _ <- scenario.program
+      _ <- api.log.info(s"Scenario ${scenario.name} done")
     } yield ()
 
-    execScenario.unsafeRunSync()
+    (runIO(program) >> shutdown).unsafeRunSync()
   }
 
-  def shutdown(implicit client: AkkaHttpXlrClient, admin: AdminPassword): IO[Unit] = {
+  def shutdown(implicit client: AkkaHttpClient, admin: AdminPassword): IO[Unit] = {
     for {
       _ <- IO(println("Shutting down akka-http client..."))
       _ <- IO.fromFuture(IO(client.shutdown()))
@@ -68,8 +64,4 @@ trait Runner {
     } yield ()
   }
 
-}
-
-object Runner {
-  object instance extends Runner
 }

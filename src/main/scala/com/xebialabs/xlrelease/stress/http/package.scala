@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers
+package com.xebialabs.xlrelease.stress
 
 import java.io.ByteArrayOutputStream
 
@@ -12,7 +12,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 
-package object akkaClient {
+package object http {
 
   implicit class EntityOps(val entity: HttpEntity) extends AnyVal {
     def asByteArray(implicit m: Materializer, ec: ExecutionContext): Future[Array[Byte]] = {

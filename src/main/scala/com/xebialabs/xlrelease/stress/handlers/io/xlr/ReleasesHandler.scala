@@ -10,23 +10,24 @@ import cats.syntax._
 import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.api.xlr.Releases
 import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class ReleasesHandler()
                      (implicit val
                       server: XlrServer,
-                      client: AkkaHttpXlrClient,
+                      client: AkkaHttpClient,
                       ec: ExecutionContext,
-                      m: Materializer) extends XlrRest {
+                      m: Materializer) extends XlrRest with DefaultJsonProtocol {
 
   implicit def releasesHandler: Releases.Handler[IO] = new Releases.Handler[IO] with DefaultJsonProtocol with DateFormat {
     protected def importTemplate(template: Template)
@@ -75,7 +76,7 @@ class ReleasesHandler()
                                (implicit session: User.Session): IO[Phase.ID] = {
       val user: User = scriptUser.getOrElse(session.user)
       client.postJSON(
-        server(_ / "releases"),
+        root(_ / "releases"),
         JsObject(
           "templateId" -> JsNull,
           "title" -> title.toJson,

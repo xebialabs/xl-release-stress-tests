@@ -6,8 +6,9 @@ import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import akka.stream.Materializer
 import cats.Show
 import com.xebialabs.xlrelease.stress.api.xlr.Users
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
@@ -17,7 +18,7 @@ class UsersHandler()
                   (implicit val
                    server: XlrServer,
                    adminPassword: AdminPassword,
-                   client: AkkaHttpXlrClient,
+                   client: AkkaHttpClient,
                    ec: ExecutionContext,
                    m: Materializer) extends XlrRest with DefaultJsonProtocol {
 
@@ -37,7 +38,7 @@ class UsersHandler()
 
     protected def login(user: User): IO[User.Session] =
       client.postJSON0(
-        server(_ / "login"),
+        root(_ / "login"),
         JsObject(
           "username" -> user.username.toJson,
           "password" -> user.password.toJson

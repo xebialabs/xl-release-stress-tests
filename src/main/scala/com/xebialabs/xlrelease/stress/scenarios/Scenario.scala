@@ -1,9 +1,9 @@
 package com.xebialabs.xlrelease.stress.scenarios
 
-import com.xebialabs.xlrelease.stress.Runner
 import com.xebialabs.xlrelease.stress.api.{API, Program}
-import com.xebialabs.xlrelease.stress.domain.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
+import com.xebialabs.xlrelease.stress.handlers.io
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 
@@ -24,8 +24,8 @@ object Scenario {
     def run(implicit
             server: XlrServer,
             admin: AdminPassword,
-            client: AkkaHttpXlrClient,
+            client: AkkaHttpClient,
             ec: ExecutionContext): Unit =
-      Runner.instance.runScenario(scenario)
+      io.runScenario(scenario)
   }
 }

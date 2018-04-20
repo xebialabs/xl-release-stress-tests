@@ -3,8 +3,9 @@ package com.xebialabs.xlrelease.stress
 import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
-import com.xebialabs.xlrelease.stress.domain.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
+import com.xebialabs.xlrelease.stress.handlers.io.Runner
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -30,7 +31,7 @@ object Main extends Runner {
     val numUsers = args(2).toInt
 
     implicit val server: XlrServer = XlrServer(hostname)
-    implicit val client: AkkaHttpXlrClient = new AkkaHttpXlrClient()
+    implicit val client: AkkaHttpClient = new AkkaHttpClient()
     implicit val admin: AdminPassword = AdminPassword(adminPassword)
 
     val pool: ExecutorService = Executors.newFixedThreadPool(2 * numUsers)

@@ -6,8 +6,9 @@ import cats.Show
 import cats.implicits._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.xlr.Tasks
+import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
@@ -18,7 +19,7 @@ import scala.language.postfixOps
 class TasksHandler()
                   (implicit val
                    server: XlrServer,
-                   client: AkkaHttpXlrClient,
+                   client: AkkaHttpClient,
                    ec: ExecutionContext,
                    m: Materializer,
                    s: Show[TaskStatus]) extends XlrRest with DefaultJsonProtocol {
@@ -77,7 +78,7 @@ class TasksHandler()
   def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => IO[JsParsed[TaskStatus]] =
     () =>
       client.postJSON(
-        server(_ / "tasks" / "poll"),
+        root(_ / "tasks" / "poll"),
         JsObject("ids" -> Seq(taskId.show).toJson)
       ).asJson.io
         .map(readFirstTaskStatus)
