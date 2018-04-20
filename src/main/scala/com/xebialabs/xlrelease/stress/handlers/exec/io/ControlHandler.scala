@@ -6,12 +6,13 @@ import com.xebialabs.xlrelease.stress.Runner
 import com.xebialabs.xlrelease.stress.api.{API, Program}
 import com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient.AkkaHttpXlrClient
 import com.xebialabs.xlrelease.stress.api.exec.Control
+import com.xebialabs.xlrelease.stress.domain.AdminPassword
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 
 
-class ControlHandler(implicit client: AkkaHttpXlrClient, API: API, ec: ExecutionContext) extends Runner {
+class ControlHandler(implicit client: AkkaHttpXlrClient, admin: AdminPassword, API: API, ec: ExecutionContext) extends Runner {
 
   implicit def controlHandler: Control.Handler[IO] = new Control.Handler[IO] {
 

@@ -23,7 +23,9 @@ case class CompleteReleases(numUsers: Int) extends Scenario {
       params <- setup(dsl_1mb, numUsers)
       (role, templateId) = params
       users = role.principals.toList
-      _ <- api.control.parallel(numUsers)(n => simple(templateId, users(n)))
+      _ <- api.control.parallel(numUsers)(n =>
+        simple(templateId, users(n))
+      )
       _ <- cleanup(role)
     } yield ()
   }
@@ -42,7 +44,8 @@ case class CompleteReleases(numUsers: Int) extends Scenario {
 
 
   protected def simple(templateId: Template.ID, user: User): Program[Unit] = {
-    def msg(s: String): api.log.FS[Unit] = api.log.info(s"${user.username}: $s")
+    def msg(s: String): api.log.FS[Unit] =
+      api.log.info(s"${user.username}: $s")
 
     api.xlr.users.login(user) flatMap { implicit session =>
       for {
@@ -50,8 +53,8 @@ case class CompleteReleases(numUsers: Int) extends Scenario {
         _ <- msg("Creating release from template")
         releaseId <- api.xlr.releases.create(templateId, CreateReleaseArgs(
           title = s"${user.username}'s test dsl",
-          variables = Map("var1" -> "Happy!"))
-        )
+          variables = Map("var1" -> "Happy!")
+        ))
         taskIds <- api.xlr.releases.getTasksByTitle(releaseId, "UI")
         taskId = taskIds.head
         _ <- msg(s"Assigning task ${taskId.show} to ${user.username}")
