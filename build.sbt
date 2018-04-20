@@ -39,3 +39,5 @@ publishTo := {
   else
     Some("releases"  at nexus + "content/repositories/releases")
 }
+
+trapExit := false
