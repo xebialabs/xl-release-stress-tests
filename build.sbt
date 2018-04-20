@@ -12,6 +12,7 @@ scalacOptions ++= Seq(
   "-language:higherKinds"
 )
 
+fork in (IntegrationTest, run) := true
 
 addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M10" cross CrossVersion.full)
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6")

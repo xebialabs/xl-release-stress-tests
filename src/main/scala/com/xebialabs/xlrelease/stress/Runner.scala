@@ -1,5 +1,7 @@
 package com.xebialabs.xlrelease.stress
 
+import java.util.concurrent.{ExecutorService, Executors}
+
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.{API, Program}
 import com.xebialabs.xlrelease.stress.api.exec.Control
@@ -36,7 +38,7 @@ trait Runner {
 //  }
 
   def runScenario(scenario: Scenario)(implicit client: AkkaHttpXlrClient, ec: ExecutionContext, api: API): Unit = {
-    for {
+    val execScenario = for {
       _ <- runIO {
         for {
           _ <- api.log.info(s"Running scenario: ${scenario.name}")
@@ -46,7 +48,9 @@ trait Runner {
       }
       _ <- shutdown
     } yield ()
-  }.unsafeRunSync()
+
+    execScenario.unsafeRunSync()
+  }
 
   def shutdown(implicit client: AkkaHttpXlrClient): IO[Unit] = {
     for {

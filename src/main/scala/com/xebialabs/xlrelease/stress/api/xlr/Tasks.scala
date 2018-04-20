@@ -7,10 +7,11 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 @free trait Tasks {
-  def assignTo(session: User.Session, taskId: Task.ID, assignee: User.ID): FS[Unit]
-  def complete(session: User.Session, taskId: Task.ID, comment: Option[String] = None): FS[Boolean]
-  def retry(session: User.Session, taskId: Task.ID, comment: String): FS[Comment.ID]
-  def skip(session: User.Session, taskId: Task.ID, comment: String): FS[Comment.ID]
-  def waitFor(session: User.Session, taskId: Task.ID, status: TaskStatus = TaskStatus.InProgress,
-                  interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
+  def assignTo(taskId: Task.ID, assignee: User.ID)(implicit session: User.Session): FS[Unit]
+  def complete(taskId: Task.ID, comment: Option[String] = None)(implicit session: User.Session): FS[Boolean]
+  def retry(taskId: Task.ID, comment: String)(implicit session: User.Session): FS[Comment.ID]
+  def skip(taskId: Task.ID, comment: String)(implicit session: User.Session): FS[Comment.ID]
+  def waitFor(taskId: Task.ID, status: TaskStatus = TaskStatus.InProgress,
+              interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+             (implicit session: User.Session): FS[Unit]
 }

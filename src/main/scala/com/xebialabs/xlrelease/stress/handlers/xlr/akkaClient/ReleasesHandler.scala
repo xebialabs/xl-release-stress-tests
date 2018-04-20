@@ -18,8 +18,9 @@ import scala.language.postfixOps
 class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer) {
 
   implicit def releasesHandler: Releases.Handler[IO] = new Releases.Handler[IO] with DefaultJsonProtocol {
-    protected def importTemplate(session: User.Session, template: Template): IO[Template.ID] =
-      client.importTemplate(template)(session)
+    protected def importTemplate(template: Template)
+                                (implicit session: User.Session): IO[Template.ID] =
+      client.importTemplate(template)
         .asJson
         .io
         .map[Option[String]] {
@@ -31,8 +32,9 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
         case _ => Option.empty[Template.ID]
       }.flatMap(_.fold(IO.raiseError[Template.ID](new RuntimeException("Cannot extract Template ID")))(IO.pure))
 
-    protected def setTemplateTeams(session: Session, templateId: Template.ID, teams: Seq[Team]): IO[Map[String, String]] =
-      client.setTemplateTeams(templateId, teams.toList)(session)
+    protected def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])
+                                  (implicit session: User.Session): IO[Map[String, String]] =
+      client.setTemplateTeams(templateId, teams.toList)
         .asJson
         .io
         .map {
@@ -53,13 +55,15 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
           .getOrElse(Map.empty)
       }
 
-    protected def setTemplateScriptUser(session: Session, templateId: ID, scriptUser: Option[User]): IO[Unit] =
-      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))(session)
+    protected def setTemplateScriptUser(templateId: ID, scriptUser: Option[User])
+                                       (implicit session: User.Session): IO[Unit] =
+      client.setTemplateScriptUser(templateId, scriptUser.getOrElse(session.user))
         .discardU
         .io
 
-    protected def create(session: User.Session, templateId: Template.ID, createReleaseArgs: CreateReleaseArgs): IO[Release.ID] =
-      client.createRelease(templateId, createReleaseArgs)(session)
+    protected def create(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)
+                        (implicit session: User.Session): IO[Release.ID] =
+      client.createRelease(templateId, createReleaseArgs)
         .asJson
         .io
         .flatMap {
@@ -70,13 +74,15 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
           case _ => IO.raiseError(new RuntimeException("not a Js object"))
         }
 
-    protected def start(session: Session, releaseId: Release.ID): IO[Release.ID] =
-      client.startRelease(releaseId)(session)
+    protected def start(releaseId: Release.ID)
+                       (implicit session: User.Session): IO[Release.ID] =
+      client.startRelease(releaseId)
         .discard(_ => releaseId)
         .io
 
-    protected def getTasksByTitle(session: Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String]): IO[Set[Task.ID]] =
-      client.getTaskByTitle(releaseId, taskTitle, phaseTitle)(session).io.map {
+    protected def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String])
+                                 (implicit session: User.Session): IO[Set[Task.ID]] =
+      client.getTaskByTitle(releaseId, taskTitle, phaseTitle).io.map {
         case JsArray(tasks) => tasks.toList.collect {
           case JsObject(fields) =>
             fields.get("id").flatMap {
@@ -95,11 +101,12 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
         case _ => Set.empty
       }
 
-    override protected def waitFor(session: Session, releaseId: ID, expectedStatus: ReleaseStatus,
-                                   interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): IO[Unit] = {
+    override protected def waitFor(releaseId: ID, expectedStatus: ReleaseStatus,
+                                   interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+                                  (implicit session: User.Session): IO[Unit] = {
       implicit val timeout: Timeout = Timeout(10 seconds)
 
-      getReleaseStatus(releaseId)(session)
+      getReleaseStatus(releaseId)
         .until(_.contains(expectedStatus), interval, retries)
         .io
     }

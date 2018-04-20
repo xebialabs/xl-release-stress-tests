@@ -20,26 +20,31 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
 
   implicit def tasksHandler: Tasks.Handler[IO] = new Tasks.Handler[IO] with DefaultJsonProtocol {
 
-    protected def assignTo(session: User.Session, taskId: Task.ID, assignee: User.ID): IO[Unit] =
-      client.assignTaskTo(taskId, assignee)(session)
+    protected def assignTo(taskId: Task.ID, assignee: User.ID)
+                          (implicit session: User.Session): IO[Unit] =
+      client.assignTaskTo(taskId, assignee)
         .discardU
         .io
 
-    protected def complete(session: User.Session, taskId: Task.ID, comment: Option[String] = None): IO[Boolean] =
-      client.completeTask(taskId, comment)(session).asJson
+    protected def complete(taskId: Task.ID, comment: Option[String] = None)
+                          (implicit session: User.Session): IO[Boolean] =
+      client.completeTask(taskId, comment).asJson
         .map(matchesTaskStatus(TaskStatus.Completed))
         .io
 
-    protected def retry(session: User.Session, taskId: Task.ID, comment: String): IO[Comment.ID] = notImplemented("retry")
+    protected def retry(taskId: Task.ID, comment: String)
+                       (implicit session: User.Session): IO[Comment.ID] = notImplemented("retry")
 
-    protected def skip(session: User.Session, taskId: Task.ID, comment: String): IO[Comment.ID] = notImplemented("skip")
+    protected def skip(taskId: Task.ID, comment: String)
+                      (implicit session: User.Session): IO[Comment.ID] = notImplemented("skip")
 
 
-    protected def waitFor(session: Session, taskId: Task.ID, expectedStatus: TaskStatus = TaskStatus.InProgress,
-                          interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): IO[Unit] = {
+    protected def waitFor(taskId: Task.ID, expectedStatus: TaskStatus = TaskStatus.InProgress,
+                          interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+                         (implicit session: User.Session): IO[Unit] = {
       implicit val timeout: Timeout = Timeout(10 seconds)
 
-      getTaskStatus(taskId)(session)
+      getTaskStatus(taskId)
         .until(_.contains(expectedStatus), interval, retries)
         .io
     }

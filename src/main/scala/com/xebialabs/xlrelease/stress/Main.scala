@@ -27,18 +27,18 @@ object Main extends Runner {
     val hostname = Uri(args(0))
     val numUsers = args(1).toInt
 
-
-    implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(2 * numUsers)
-    )
-
     implicit val client: AkkaHttpXlrClient = new AkkaHttpXlrClient(hostname)
 
-    println("MAIN: running scenario...")
-    scenarios.CompleteReleases(numUsers).run
-    println("MAIN: done")
+    val pool: ExecutorService = Executors.newFixedThreadPool(2 * numUsers)
+    implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    System.exit(0)
+    scenarios
+      .CompleteReleases(numUsers)
+      .run
+
+    pool.shutdown()
+
+    sys.exit(0)
   }
 
 

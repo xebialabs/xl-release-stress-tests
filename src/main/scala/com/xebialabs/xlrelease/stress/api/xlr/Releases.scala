@@ -8,17 +8,18 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 @free trait Releases {
-  def importTemplate(session: User.Session, template: Template): FS[Template.ID]
-  def setTemplateTeams(session: User.Session, templateId: Template.ID, teams: Seq[Team]): FS[Map[String, String]]
-  def setTemplateScriptUser(session: User.Session, templateId: Template.ID, scriptUser: Option[User] = None): FS[Unit]
-//  def deleteTemplate(session: User.Session, templateId: Template.ID): FS[Unit]
+  def importTemplate(template: Template)(implicit session: User.Session): FS[Template.ID]
+  def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])(implicit session: User.Session): FS[Map[String, String]]
+  def setTemplateScriptUser(templateId: Template.ID, scriptUser: Option[User] = None)(implicit session: User.Session): FS[Unit]
+//  def deleteTemplate(templateId: Template.ID): FS[Unit]
 
-  def create(session: User.Session, templateId: Template.ID, release: CreateReleaseArgs): FS[Release.ID]
-  def start(session: User.Session, releaseId: Release.ID): FS[Release.ID]
-  def getTasksByTitle(session: User.Session, releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None): FS[Set[Task.ID]]
-//  def abortRelease(session: User.Session, releaseId: Release.ID): FS[Unit]
-//  def poll(session: User.Session, releaseId: Release.ID): FS[Set[Task.ID]]
-  def waitFor(session: User.Session, releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed,
-                     interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
+  def create(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: User.Session): FS[Release.ID]
+  def start(releaseId: Release.ID)(implicit session: User.Session): FS[Release.ID]
+  def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)(implicit session: User.Session): FS[Set[Task.ID]]
+//  def abortRelease(releaseId: Release.ID): FS[Unit]
+//  def poll(releaseId: Release.ID): FS[Set[Task.ID]]
+  def waitFor(releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed,
+              interval: Duration = 5 seconds, retries: Option[Int] = Some(20))
+             (implicit session: User.Session): FS[Unit]
 
 }
