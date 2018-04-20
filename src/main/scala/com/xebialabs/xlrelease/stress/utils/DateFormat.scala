@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.client.utils
+package com.xebialabs.xlrelease.stress.utils
 
 import com.github.nscala_time.time.Imports._
 

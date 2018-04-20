@@ -1,11 +1,11 @@
-package com.xebialabs.xlrelease.stress.client.akkaClient
+package com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient
 
 import akka.stream.Materializer
 import akka.util.Timeout
 import cats.Show
 import cats.implicits._
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.client.Tasks
+import com.xebialabs.xlrelease.stress.api.xlr.Tasks
 import com.xebialabs.xlrelease.stress.domain.{Comment, Task, TaskStatus, User}
 import com.xebialabs.xlrelease.stress.domain.User.Session
 import spray.json._

@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.client
+package com.xebialabs.xlrelease.stress.handlers.xlr
 
 import java.io.ByteArrayOutputStream
 

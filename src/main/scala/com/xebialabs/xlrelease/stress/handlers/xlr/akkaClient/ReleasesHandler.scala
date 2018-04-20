@@ -1,11 +1,11 @@
-package com.xebialabs.xlrelease.stress.client.akkaClient
+package com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient
 
 import akka.stream.Materializer
 import akka.util.Timeout
 import cats.effect.IO
 import cats.implicits._
-import com.xebialabs.xlrelease.stress.client.Releases
-import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.api.xlr.Releases
+import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.domain.User.Session

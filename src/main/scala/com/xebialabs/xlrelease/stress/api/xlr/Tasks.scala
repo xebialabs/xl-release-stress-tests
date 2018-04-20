@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.client
+package com.xebialabs.xlrelease.stress.api.xlr
 
 import com.xebialabs.xlrelease.stress.domain.{Comment, Task, TaskStatus, User}
 import freestyle.free._
@@ -12,5 +12,5 @@ import scala.language.postfixOps
   def retry(session: User.Session, taskId: Task.ID, comment: String): FS[Comment.ID]
   def skip(session: User.Session, taskId: Task.ID, comment: String): FS[Comment.ID]
   def waitFor(session: User.Session, taskId: Task.ID, status: TaskStatus = TaskStatus.InProgress,
-              interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
+                  interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
 }

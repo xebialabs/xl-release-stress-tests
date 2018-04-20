@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.client.akkaClient
+package com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient
 
 import java.io.File
 import java.net.URI
@@ -13,8 +13,8 @@ import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip
 import akka.http.scaladsl.model.{DateTime => _, _}
 import akka.http.scaladsl.model.headers.Accept
 import akka.stream.ActorMaterializer
-import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.client.utils.DateFormat
+import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.domain._
 import spray.json._
 

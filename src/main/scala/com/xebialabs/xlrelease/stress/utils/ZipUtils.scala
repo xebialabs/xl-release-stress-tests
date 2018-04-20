@@ -1,9 +1,9 @@
-package com.xebialabs.xlrelease.stress.client.utils
+package com.xebialabs.xlrelease.stress.utils
 
 import java.io.{File, FileOutputStream, InputStream}
 import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
 
-import com.xebialabs.xlrelease.stress.client.utils.ResourceManagement._
+import com.xebialabs.xlrelease.stress.utils.ResourceManagement._
 import org.apache.commons.io.IOUtils
 
 import scala.util.Try

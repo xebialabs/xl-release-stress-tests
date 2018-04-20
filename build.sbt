@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
   "com.github.nscala-time" %% "nscala-time" % "2.18.0"
 )
 
-mainClass := Some("com.xebialabs.xlrelease.stress.engine.XLREngineTest")
+mainClass := Some("com.xebialabs.xlrelease.stress.Main")
 
 publishTo := {
   val nexus = "https://nexus.xebialabs.com/nexus"

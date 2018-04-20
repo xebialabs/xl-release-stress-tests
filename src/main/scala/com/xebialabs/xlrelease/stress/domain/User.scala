@@ -1,7 +1,5 @@
 package com.xebialabs.xlrelease.stress.domain
 
-import com.xebialabs.xlrelease.stress.client.akkaClient.HttpSession
-
 case class User(username: User.ID,
                 fullname: String,
                 email: String,

@@ -1,20 +1,19 @@
-package com.xebialabs.xlrelease.stress.engine
+package com.xebialabs.xlrelease.stress
 
 import java.io.{File, FileOutputStream}
 import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
-import com.xebialabs.xlrelease.stress.TestScenarios
-import com.xebialabs.xlrelease.stress.client.akkaClient.AkkaHttpXlrClient
-import com.xebialabs.xlrelease.stress.client.utils.ResourceManagement.using
 import com.xebialabs.xlrelease.stress.domain.Template
+import com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient.AkkaHttpXlrClient
+import com.xebialabs.xlrelease.stress.utils.ResourceManagement.using
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 
-object XLREngineTest {
+object Main {
   val usage: String =
     """
       |    sbt run xlReleaseUrl numUsers

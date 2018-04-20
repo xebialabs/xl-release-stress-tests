@@ -1,7 +1,6 @@
-package com.xebialabs.xlrelease.stress.client
+package com.xebialabs.xlrelease.stress.api.xlr
 
-import com.xebialabs.xlrelease.stress.client.akkaClient.HttpSession
-import com.xebialabs.xlrelease.stress.domain.{Role, User}
+import com.xebialabs.xlrelease.stress.domain.{HttpSession, Role, User}
 import freestyle.free._
 
 

@@ -1,7 +1,7 @@
-package com.xebialabs.xlrelease.stress.client.protocol
+package com.xebialabs.xlrelease.stress.api.xlr.protocol
 
 import com.github.nscala_time.time.Imports._
-import com.xebialabs.xlrelease.stress.client.utils.DateFormat
+import com.xebialabs.xlrelease.stress.utils.DateFormat
 import spray.json._
 
 

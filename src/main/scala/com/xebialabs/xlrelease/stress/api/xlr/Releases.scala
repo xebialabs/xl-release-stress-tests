@@ -1,6 +1,6 @@
-package com.xebialabs.xlrelease.stress.client
+package com.xebialabs.xlrelease.stress.api.xlr
 
-import com.xebialabs.xlrelease.stress.client.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain._
 import freestyle.free._
 
@@ -19,6 +19,6 @@ import scala.language.postfixOps
 //  def abortRelease(session: User.Session, releaseId: Release.ID): FS[Unit]
 //  def poll(session: User.Session, releaseId: Release.ID): FS[Set[Task.ID]]
   def waitFor(session: User.Session, releaseId: Release.ID, status: ReleaseStatus = ReleaseStatus.Completed,
-              interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
+                     interval: Duration = 5 seconds, retries: Option[Int] = Some(20)): FS[Unit]
 
 }
