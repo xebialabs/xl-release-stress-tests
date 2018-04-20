@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress
+package com.xebialabs.xlrelease.stress.scenarios
 
 import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTemplate, CreateTopLevelFolder}
@@ -9,14 +9,26 @@ import cats.syntax._
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
 import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
 import com.xebialabs.xlrelease.stress.api.{API, Program}
+import com.xebialabs.xlrelease.stress.utils.TmpResource
 import freestyle.free._
 import freestyle.free.implicits._
-import freestyle.free.nondeterminism._
 
+case class CompleteReleases(numUsers: Int) extends Scenario {
+  val name = s"Simple scenario ($numUsers users)"
 
-object TestScenarios {
+  val dsl_1mb: Template = Template("Simple Template", TmpResource("DSL_1mb.xlr"))
 
-  def setup(template: Template, numUsers: Int)(implicit api: API): Program[(Role, Template.ID)] = {
+  def program: Program[Unit] = {
+    for {
+      params <- setup(dsl_1mb, numUsers)
+      (role, templateId) = params
+      users = role.principals.toList
+      _ <- api.control.parallel(numUsers)(n => simple(templateId, users(n)))
+      _ <- cleanup(role)
+    } yield ()
+  }
+
+  protected def setup(template: Template, numUsers: Int): Program[(Role, Template.ID)] = {
     for {
       admin       <- api.xlr.users.admin()
       role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
@@ -27,14 +39,7 @@ object TestScenarios {
     } yield (role, templateId)
   }
 
-  def cleanup(role: Role)(implicit api: API): Program[Unit] = {
-    for {
-      _ <- deleteUsers(role.principals.map(_.username).toList)
-      _ <- api.xlr.users.deleteRole(role.rolename)
-    } yield ()
-  }
-
-  def simpleScenario(templateId: Template.ID, user: User)(implicit api: API): Program[Unit] = {
+  protected def simple(templateId: Template.ID, user: User): Program[Unit] = {
     def msg(s: String): api.log.FS[Unit] = api.log.info(s"${user.username}: $s")
 
     for {
@@ -52,42 +57,39 @@ object TestScenarios {
       _ <- msg(s"Starting release $releaseId")
       _ <- api.xlr.releases.start(userSession, releaseId)
       _ <- msg(s"Waiting for task ${taskId.show}")
-      _ <- api.xlr.tasks.waitFor(userSession, taskId, TaskStatus.InProgress, retries = Some(10))
+      _ <- api.xlr.tasks.waitFor(userSession, taskId, TaskStatus.InProgress, retries = None)
       _ <- msg(s"Completing task ${taskId.show}")
       _ <- api.xlr.tasks.complete(userSession, taskId)
       _ <- msg("Waiting for release to complete")
-      _ <- api.xlr.releases.waitFor(userSession, releaseId, ReleaseStatus.Completed)
+      _ <- api.xlr.releases.waitFor(userSession, releaseId, ReleaseStatus.Completed, retries = None)
     } yield ()
   }
 
-  def fullScenario(template: Template, numUsers: Int)(implicit api: API): Program[Unit] = {
+  protected def cleanup(role: Role): Program[Unit] = {
     for {
-      params <- setup(template, numUsers)
-      (role, templateId) = params
-      users = role.principals.toList
-      _ <- api.control.parallel(numUsers) {
-        n: Int => simpleScenario(templateId, users(n))
-      }
-      _ <- cleanup(role)
+      _ <- deleteUsers(role.principals.map(_.username).toList)
+      _ <- api.xlr.users.deleteRole(role.rolename)
     } yield ()
   }
 
-  def generateUsers(n: Int): List[User] = (0 to n).toList.map(i => User(s"user$i", "", "", s"user$i"))
-
-  def createUsers(n: Int)(implicit api: API): Program[List[User]] = {
-    generateUsers(n).map(u =>
-      api.xlr.users.createUser(u).map(_ => u)
-    ).sequence
-  }
-
-  def deleteUsers(users: List[User.ID])(implicit api: API): Program[Unit] = {
-    users.map(api.xlr.users.deleteUser).sequence.map(_ => ())
-  }
-
-  def createGlobalRole(rolename: Role.ID)(users: List[User])(implicit api: API): Program[Role] = {
+  protected def createGlobalRole(rolename: Role.ID)(users: List[User])(implicit api: API): Program[Role] = {
 
     val role = Role(rolename, Set(CreateTemplate, CreateRelease, CreateTopLevelFolder), users.toSet)
 
     api.xlr.users.createRole(role).map(_ => role)
   }
+
+  protected def generateUsers(n: Int): List[User] =
+    (0 to n).toList.map(i => User(s"user$i", "", "", s"user$i"))
+
+  protected def createUsers(n: Int)(implicit api: API): Program[List[User]] = {
+    generateUsers(n).map(u =>
+      api.xlr.users.createUser(u).map(_ => u)
+    ).sequence
+  }
+
+  protected def deleteUsers(users: List[User.ID]): Program[Unit] = {
+    users.map(api.xlr.users.deleteUser).sequence.map(_ => ())
+  }
+
 }

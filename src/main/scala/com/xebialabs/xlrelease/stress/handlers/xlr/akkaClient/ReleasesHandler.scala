@@ -82,12 +82,10 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
             fields.get("id").flatMap {
               case JsString(fullId) => fullId.split("/").toList match {
                 case "Applications" :: `releaseId` :: phaseId :: Nil =>
-                  println("No task id!!")
                   None
                 case "Applications" :: `releaseId` :: phaseId :: taskId =>
                   Some(Task.ID(Phase.ID(releaseId, phaseId), taskId.mkString("/")))
-                case otherId =>
-                  println("Task Id does not match Applications/releaseId/phaseId/...")
+                case _ =>
                   None
               }
               case _ => None

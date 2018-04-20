@@ -7,15 +7,15 @@ import com.xebialabs.xlrelease.stress.api.xlr.{Releases, Tasks, Users}
 import com.xebialabs.xlrelease.stress.domain.User
 import com.xebialabs.xlrelease.stress.handlers.exec.io.ControlHandler
 import com.xebialabs.xlrelease.stress.handlers.xlr.akkaClient.{AkkaHttpXlrClient, ReleasesHandler, TasksHandler, UsersHandler}
+import com.xebialabs.xlrelease.stress.scenarios.Scenario
 import freestyle.free._
 import freestyle.free.implicits._
 import freestyle.free.loggingJVM.log4s.implicits._
 
 import scala.concurrent.ExecutionContext
 
-
-object Runner {
-  def runIO[A](program: Program[A])(implicit client: AkkaHttpXlrClient, API: API, ec: ExecutionContext): IO[A] = {
+trait Runner {
+  def runIO[A](program: Program[A])(implicit client: AkkaHttpXlrClient, ec: ExecutionContext): IO[A] = {
     import client.materializer
 
     val usersInterpreter = new UsersHandler(User("admin", "", "", "admin"))
@@ -30,4 +30,34 @@ object Runner {
 
     program.interpret[IO]
   }
+//
+//  def run[A](program: Program[A])(implicit client: AkkaHttpXlrClient, ec: ExecutionContext): IO[Unit] = {
+//    runIO(program)
+//  }
+
+  def runScenario(scenario: Scenario)(implicit client: AkkaHttpXlrClient, ec: ExecutionContext, api: API): Unit = {
+    for {
+      _ <- runIO {
+        for {
+          _ <- api.log.info(s"Running scenario: ${scenario.name}")
+          _ <- scenario.program
+          _ <- api.log.info(s"Scenario ${scenario.name} done")
+        } yield ()
+      }
+      _ <- shutdown
+    } yield ()
+  }.unsafeRunSync()
+
+  def shutdown(implicit client: AkkaHttpXlrClient): IO[Unit] = {
+    for {
+      _ <- IO(println("Shutting down akka-http client..."))
+      _ <- IO.fromFuture(IO(client.shutdown()))
+      _ <- IO(println("Shut down complete."))
+    } yield ()
+  }
+
+}
+
+object Runner {
+  object instance extends Runner
 }
