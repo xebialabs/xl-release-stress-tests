@@ -15,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer) {
+class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer) extends jsUtils {
 
   implicit def releasesHandler: Releases.Handler[IO] = new Releases.Handler[IO] with DefaultJsonProtocol {
     protected def importTemplate(template: Template)
@@ -61,16 +61,32 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
         .discardU
         .io
 
-    protected def create(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)
-                        (implicit session: User.Session): IO[Release.ID] =
-      client.createRelease(templateId, createReleaseArgs)
+    protected def createFromTemplate(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)
+                                    (implicit session: User.Session): IO[Release.ID] =
+      client.createReleaseFromTemplate(templateId, createReleaseArgs)
+        .asJson
+        .io
+        .flatMap(js => getId(js).map(IO.pure).getOrElse(IO.raiseError(new RuntimeException("Cannot parse release id"))))
+
+    protected def createRelease(title: String, scriptUser: Option[User])
+                               (implicit session: User.Session): IO[Phase.ID] =
+      client.createRelease(title, scriptUser.getOrElse(session.user))
         .asJson
         .io
         .flatMap {
-          case JsObject(r) => r.get("id") match {
-            case Some(JsString(id)) => IO.pure(id.replaceFirst("Applications/", ""))
-            case _ => IO.raiseError(new RuntimeException("Cannot extract Release ID"))
-          }
+          case JsObject(r) => r.get("phases").flatMap {
+            case JsArray(phases) => phases.headOption
+            case _ => None
+          }.flatMap(getId).flatMap {
+            fullId => fullId.split("-").toList match {
+              case _ :: Nil =>
+                None
+              case releaseId :: phaseId :: Nil =>
+                Some(Phase.ID(releaseId, phaseId))
+              case _ =>
+                None
+            }
+          }.map(IO.pure).getOrElse(IO.raiseError(new RuntimeException("Cannot parse phase id")))
           case _ => IO.raiseError(new RuntimeException("not a Js object"))
         }
 
@@ -115,20 +131,5 @@ class ReleasesHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionConte
   def getReleaseStatus(releaseId: Release.ID)(implicit session: User.Session): () => Future[Option[ReleaseStatus]] =
     () => client.getRelease(releaseId)
       .map(readReleaseStatus)
-
-
-  def readReleaseStatus: JsValue => Option[ReleaseStatus] = {
-    case JsObject(fields) =>
-      fields.get("status").map(_.convertTo[ReleaseStatus])
-    case _ => None
-  }
-
-  def matchesReleaseStatus(expectedStatus: ReleaseStatus): JsValue => Boolean = {
-    case JsArray(arr) =>
-      arr.headOption
-        .flatMap(readReleaseStatus)
-        .contains(expectedStatus)
-    case _ => false
-  }
 
 }

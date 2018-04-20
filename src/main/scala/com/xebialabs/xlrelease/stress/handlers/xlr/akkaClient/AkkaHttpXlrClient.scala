@@ -78,10 +78,26 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
       "scriptUserPassword" -> scriptUser.password.toJson
     ))
 
-  def createRelease(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] =
+  def createReleaseFromTemplate(templateId: Template.ID, release: CreateReleaseArgs)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(serverUri.withPath(xlrApiPath / "templates" / "Applications" / templateId / "create"),
       release.toJson
     )
+
+  def createRelease(title: String, scriptUser: User)(implicit session: HttpSession): Future[HttpResponse] =
+    postJSON(serverUri.withPath(serverUri.path/ "releases"), JsObject(
+      "templateId" -> JsNull,
+      "title" -> title.toJson,
+      "scheduledStartDate" -> DateTime.now().toJson,
+      "dueDate" -> DateTime.now().plus(5.hours.toDuration).toJson,
+      "type" -> "xlrelease.Release".toJson,
+      "owner" -> JsObject(
+        "username" -> session.user.username.toJson
+      ),
+      "scriptUsername" -> JsObject(
+        "username" -> scriptUser.username.toJson
+      ),
+      "scriptUserPassword" -> scriptUser.password.toJson
+    ))
 
   def getRelease(releaseId: Release.ID)(implicit session: HttpSession): Future[JsValue] =
     getJSON(serverUri.withPath(xlrApiPath / "releases" / "Applications" / releaseId))
@@ -103,6 +119,16 @@ class AkkaHttpXlrClient(val serverUri: Uri) extends SprayJsonSupport with Defaul
     postJSON(serverUri.withPath(serverUri.path / "tasks" / "poll"), JsObject(
       "ids" -> Seq(taskId).toJson
     ))
+
+  def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)(implicit session: HttpSession): Future[HttpResponse] =
+    postJSON(
+      serverUri.withPath(xlrApiPath / "tasks" / "Applications" / phaseId.releaseId / phaseId.phaseId / "tasks"), JsObject(
+        "id" -> JsNull,
+        "title" -> title.toJson,
+        "type" -> taskType.toJson,
+        "script" -> script.toJson
+      )
+    )
 
   def assignTaskTo(taskId: Task.ID, assignee: User.ID)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON(

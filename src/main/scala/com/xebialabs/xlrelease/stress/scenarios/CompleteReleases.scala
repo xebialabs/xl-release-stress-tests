@@ -51,7 +51,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario {
       for {
         _ <- msg(s"logged in as ${user.username}...")
         _ <- msg("Creating release from template")
-        releaseId <- api.xlr.releases.create(templateId, CreateReleaseArgs(
+        releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(
           title = s"${user.username}'s test dsl",
           variables = Map("var1" -> "Happy!")
         ))

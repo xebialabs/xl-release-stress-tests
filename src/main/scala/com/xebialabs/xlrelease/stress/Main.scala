@@ -36,7 +36,8 @@ object Main extends Runner {
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
     scenarios
-      .CompleteReleases(numUsers)
+//      .CompleteReleases(numUsers)
+      .CreateReleases
       .run
 
     pool.shutdown()

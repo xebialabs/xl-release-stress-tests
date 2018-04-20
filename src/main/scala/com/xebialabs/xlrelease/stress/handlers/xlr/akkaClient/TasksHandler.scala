@@ -6,7 +6,7 @@ import cats.Show
 import cats.implicits._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.api.xlr.Tasks
-import com.xebialabs.xlrelease.stress.domain.{Comment, Task, TaskStatus, User}
+import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.domain.User.Session
 import spray.json._
 
@@ -14,11 +14,18 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer, s: Show[TaskStatus]) {
+class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext, m: Materializer, s: Show[TaskStatus]) extends jsUtils {
 
   def notImplemented[A](name: String): IO[A] = IO.raiseError(new RuntimeException("not implemented: "+ name))
 
   implicit def tasksHandler: Tasks.Handler[IO] = new Tasks.Handler[IO] with DefaultJsonProtocol {
+
+    protected def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)
+                                  (implicit session: User.Session): IO[Task.ID] =
+      client.appendScriptTask(phaseId, title, taskType, script)
+        .asJson
+        .io
+        .flatMap(js => getId(js).flatMap(getTaskId).toIO(new RuntimeException("Cannot parse task id")))
 
     protected def assignTo(taskId: Task.ID, assignee: User.ID)
                           (implicit session: User.Session): IO[Unit] =
@@ -53,21 +60,4 @@ class TasksHandler(implicit val client: AkkaHttpXlrClient, ec: ExecutionContext,
   def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => Future[Option[TaskStatus]] =
     () => client.pollTask(taskId.show)(session).asJson.map(readFirstTaskStatus)
 
-
-  def readTaskStatus: JsValue => Option[TaskStatus] = {
-    case JsObject(fields) =>
-      fields.get("status").map(_.convertTo[TaskStatus])
-    case _ =>
-      None
-  }
-
-  def readFirstTaskStatus: JsValue => Option[TaskStatus] = {
-    case JsArray(arr) =>
-      arr.headOption
-        .flatMap(readTaskStatus)
-    case _ => None
-  }
-
-  def matchesTaskStatus(expectedStatus: TaskStatus): JsValue => Boolean =
-    readFirstTaskStatus andThen (_.contains(expectedStatus))
 }

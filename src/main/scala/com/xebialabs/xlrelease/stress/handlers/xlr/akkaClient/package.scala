@@ -111,4 +111,7 @@ package object akkaClient {
     def io: IO[A] = IO.fromFuture(IO(future))
   }
 
+  implicit class OptionOps[A](val option: Option[A]) extends AnyVal {
+    def toIO(ifEmpty: => Throwable): IO[A] = option.map(IO.pure).getOrElse(IO.raiseError(ifEmpty))
+  }
 }
