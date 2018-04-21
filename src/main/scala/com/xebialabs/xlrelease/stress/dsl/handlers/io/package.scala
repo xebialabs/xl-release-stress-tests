@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers
+package com.xebialabs.xlrelease.stress.dsl.handlers
 
 import cats._
 import cats.implicits._
@@ -7,9 +7,9 @@ import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.dsl.xlr.{Releases, Tasks, Users}
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.io.exec.ControlHandler
-import com.xebialabs.xlrelease.stress.handlers.io.xlr.{ReleasesHandler, TasksHandler, UsersHandler}
-import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.dsl.handlers.io.exec.ControlHandler
+import com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr.{ReleasesHandler, TasksHandler, UsersHandler}
+import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.scenarios.Scenario
 import freestyle.free._
 import freestyle.free.implicits._

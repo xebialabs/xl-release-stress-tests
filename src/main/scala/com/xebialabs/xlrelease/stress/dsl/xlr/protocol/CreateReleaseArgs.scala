@@ -1,5 +1,6 @@
 package com.xebialabs.xlrelease.stress.dsl.xlr.protocol
 
+import cats.Show
 import com.github.nscala_time.time.Imports._
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import spray.json._
@@ -20,4 +21,11 @@ object CreateReleaseArgs extends DefaultJsonProtocol with DateFormat {
       "releasePasswordVariables" -> cra.passwordVariables.toJson,
       "scheduledStartDate" -> cra.scheduledStartDate.toJson
     )
+
+  implicit val showCreateReleaseArgs: Show[CreateReleaseArgs] = {
+    case CreateReleaseArgs(title, variables, passwordVariables, scheduledStartDate, autoStart) => {
+      val vars: String = (variables ++ passwordVariables).map({ case (k,v) => s"$k:$v"}).mkString("{", " ", "}")
+      s"$title $vars @${scheduledStartDate.toString} [auto: $autoStart]"
+    }
+  }
 }

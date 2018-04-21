@@ -20,6 +20,7 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6")
 libraryDependencies ++= Seq(
   "io.frees" %% "frees-core" % "0.8.0",
   "io.frees" %% "frees-logging" % "0.8.0",
+  "io.frees" %% "frees-effects" % "0.8.0",
   "org.typelevel" %% "cats-core" % "1.1.0",
   "org.typelevel" %% "cats-free" % "1.1.0",
   "org.typelevel" %% "cats-effect" % "1.0.0-RC",

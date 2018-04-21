@@ -4,8 +4,8 @@ import cats.Show
 import com.xebialabs.xlrelease.stress.dsl
 import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.io
-import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.dsl.handlers.io
+import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 

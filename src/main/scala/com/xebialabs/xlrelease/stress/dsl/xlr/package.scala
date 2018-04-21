@@ -1,8 +1,15 @@
 package com.xebialabs.xlrelease.stress.dsl
 
-import freestyle.free.FreeS
+import freestyle.free.{FreeS, module}
 
 package object xlr {
-  type API = com.xebialabs.xlrelease.stress.dsl.xlr.Module[Module.Op]
-  type Program[A] = FreeS[Module.Op, A]
+  @module trait Xlr {
+    val users: Users
+    val releases: Releases
+    val tasks: Tasks
+  }
+
+
+  type API = com.xebialabs.xlrelease.stress.dsl.xlr.Xlr[Xlr.Op]
+  type Program[A] = FreeS[Xlr.Op, A]
 }

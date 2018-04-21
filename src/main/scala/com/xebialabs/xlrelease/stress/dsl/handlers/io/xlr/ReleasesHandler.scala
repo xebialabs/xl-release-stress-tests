@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers.io.xlr
+package com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr
 
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
@@ -13,7 +13,7 @@ import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
@@ -137,10 +137,4 @@ class ReleasesHandler()
 
   implicit val showTeams: Show[Seq[Team]] = _.map(_.teamName).mkString("[", ", ", "]")
 
-  implicit val showCreateReleaseArgs: Show[CreateReleaseArgs] = {
-    case CreateReleaseArgs(title, variables, passwordVariables, scheduledStartDate, autoStart) => {
-      val vars: String = (variables ++ passwordVariables).map({ case (k,v) => s"$k:$v"}).mkString("{", " ", "}")
-      s"$title $vars @${scheduledStartDate.toString} [auto: $autoStart]"
-    }
-  }
 }

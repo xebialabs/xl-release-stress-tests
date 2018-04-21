@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.handlers.io
+package com.xebialabs.xlrelease.stress.dsl.handlers.io
 
 import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.model.Uri.Path./
@@ -9,7 +9,7 @@ import cats.syntax._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.domain.{HttpSession, Task}
 import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
-import com.xebialabs.xlrelease.stress.http._
+import com.xebialabs.xlrelease.stress.http.handlers.future._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsValue}
 
 import scala.annotation.tailrec
