@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.api.xlr
+package com.xebialabs.xlrelease.stress.dsl.xlr
 
 import com.xebialabs.xlrelease.stress.domain._
 import freestyle.free._

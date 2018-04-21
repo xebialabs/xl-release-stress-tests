@@ -5,7 +5,7 @@ import akka.util.Timeout
 import cats.Show
 import cats.implicits._
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.api.xlr.Tasks
+import com.xebialabs.xlrelease.stress.dsl.xlr.Tasks
 import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.http.AkkaHttpClient

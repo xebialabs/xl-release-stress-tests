@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.api.xlr
+package com.xebialabs.xlrelease.stress.dsl.xlr
 
 import com.xebialabs.xlrelease.stress.domain.{HttpSession, Role, User}
 import freestyle.free._

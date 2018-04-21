@@ -5,7 +5,7 @@ import cats.effect.IO
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import akka.stream.Materializer
 import cats.Show
-import com.xebialabs.xlrelease.stress.api.xlr.Users
+import com.xebialabs.xlrelease.stress.dsl.xlr.Users
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
@@ -87,10 +87,4 @@ class UsersHandler()
       }
   }
 
-  implicit val showUser: Show[User] = {
-    case User (username, fullname, email, _) =>
-      val mail = if (email.isEmpty) "" else s" <$email>"
-      val full = if (fullname.isEmpty) "" else s" ($fullname$mail)"
-      s"$username$full"
-  }
 }

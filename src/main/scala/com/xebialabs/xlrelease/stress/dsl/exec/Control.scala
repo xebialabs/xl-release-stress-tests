@@ -1,6 +1,6 @@
-package com.xebialabs.xlrelease.stress.api.exec
+package com.xebialabs.xlrelease.stress.dsl.exec
 
-import com.xebialabs.xlrelease.stress.api.Program
+import com.xebialabs.xlrelease.stress.dsl.Program
 import freestyle.free._
 
 import scala.concurrent.duration.Duration

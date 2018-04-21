@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.api.xlr.protocol
+package com.xebialabs.xlrelease.stress.dsl.xlr.protocol
 
 import com.github.nscala_time.time.Imports._
 import com.xebialabs.xlrelease.stress.utils.DateFormat

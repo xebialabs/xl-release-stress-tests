@@ -1,12 +1,22 @@
 package com.xebialabs.xlrelease.stress.domain
 
+import cats.Show
 import spray.json._
 
-sealed abstract class Permission(val permission: String)
+sealed abstract class Permission(val permission: String) {
+  def isGlobal: Boolean
+  def isLocal: Boolean
+}
 
 object Permission extends DefaultJsonProtocol {
-  sealed trait Global { self: Permission => }
-  sealed trait Local { self: Permission => }
+  sealed trait Global { self: Permission =>
+    override def isGlobal = true
+    def isLocal = false
+  }
+  sealed trait Local { self: Permission =>
+    override def isLocal = true
+    def isGlobal = false
+  }
 
   case object Admin extends Permission("admin") with Global
   case object EditSecurity extends Permission("security#edit") with Global
@@ -65,5 +75,10 @@ object Permission extends DefaultJsonProtocol {
 
   implicit val localPermissionWriter: RootJsonWriter[Permission with Local] = p => permissionWriter.write(p)
   implicit val globalPermissionWriter: RootJsonWriter[Permission with Global] = p => permissionWriter.write(p)
+
+  implicit val showPermission: Show[Permission] = {
+    case p: Permission if p.isLocal => "(local) " + p.permission
+    case p: Permission => p.permission
+  }
 
 }

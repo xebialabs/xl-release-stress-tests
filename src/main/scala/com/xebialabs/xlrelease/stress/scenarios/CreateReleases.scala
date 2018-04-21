@@ -1,10 +1,12 @@
 package com.xebialabs.xlrelease.stress.scenarios
 
+import cats.Show
 import cats.implicits._
-import com.xebialabs.xlrelease.stress.api.Program
+import com.xebialabs.xlrelease.stress.dsl
+import com.xebialabs.xlrelease.stress.dsl.Program
 import freestyle.free._
 
-object CreateReleases extends Scenario {
+object CreateReleases extends Scenario[Unit] {
   override val name: String = s"Simple scenario to create release from groovy"
 
   val releasefile: String = s"""xlr {
@@ -92,7 +94,9 @@ object CreateReleases extends Scenario {
   }
 }""".stripMargin
 
-  override def program: Program[Unit] =
+  override val setup: Program[Unit] = dsl.nop
+
+  override def program(params: Unit): Program[Unit] =
     api.xlr.users.admin() flatMap { implicit session =>
       for {
         phaseId <- api.xlr.releases.createRelease("test with releasefile")
@@ -101,4 +105,6 @@ object CreateReleases extends Scenario {
         _ <- api.log.info(s"Task created: ${taskId.task}")
       } yield ()
     }
+
+  implicit val showParams: Show[Unit] = _ => ""
 }

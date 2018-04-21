@@ -8,8 +8,8 @@ import cats.effect.IO
 import cats.implicits._
 import cats.syntax._
 import com.github.nscala_time.time.Imports.DateTime
-import com.xebialabs.xlrelease.stress.api.xlr.Releases
-import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.dsl.xlr.Releases
+import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._

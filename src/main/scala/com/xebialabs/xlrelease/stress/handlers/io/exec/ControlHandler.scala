@@ -2,9 +2,9 @@ package com.xebialabs.xlrelease.stress.handlers.io.exec
 
 
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.api.{API, Program}
+import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
-import com.xebialabs.xlrelease.stress.api.exec.Control
+import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.handlers.io.runIO
 
