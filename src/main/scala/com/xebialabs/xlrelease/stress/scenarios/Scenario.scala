@@ -8,7 +8,7 @@ import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 import scala.concurrent.ExecutionContext
 
 trait Scenario {
-  lazy val api: API = implicitly[API]
+  val api: API = implicitly[API]
 
   def name: String
 
@@ -17,8 +17,10 @@ trait Scenario {
 }
 
 object Scenario {
-  case class Simple(name: String, program: Program[Unit]) extends Scenario
-  def apply(name: String, program: Program[Unit]): Scenario = Simple(name, program)
+  case class Simple(name: String, program: Program[Unit])(override implicit val api: API) extends Scenario
+
+  def apply(name: String, program: Program[Unit])
+           (implicit api: API): Scenario = Simple(name, program)(api)
 
   implicit class ScenarioOps(val scenario: Scenario) extends AnyVal {
     def run(implicit

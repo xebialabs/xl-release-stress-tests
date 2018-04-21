@@ -24,8 +24,6 @@ class TasksHandler()
                    m: Materializer,
                    s: Show[TaskStatus]) extends XlrRest with DefaultJsonProtocol {
 
-  def notImplemented[A](name: String): IO[A] = IO.raiseError(new RuntimeException("not implemented: "+ name))
-
   implicit def tasksHandler: Tasks.Handler[IO] = new Tasks.Handler[IO] with DefaultJsonProtocol {
 
     protected def appendScriptTask(phaseId: Phase.ID, title: String, taskType: String, script: String)
@@ -82,5 +80,8 @@ class TasksHandler()
         JsObject("ids" -> Seq(taskId.show).toJson)
       ).asJson.io
         .map(readFirstTaskStatus)
+
+  def notImplemented[A](name: String): IO[A] =
+    IO.raiseError(new RuntimeException("not implemented: "+ name))
 
 }

@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.stress.utils
 
-import cats.effect.IO
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.domain._
 import spray.json._
@@ -78,22 +77,18 @@ object JsUtils {
         )
       }
 
-  def getIdString: JsValue => JsParsed[String] =
+  def readIdString: JsValue => JsParsed[String] =
     json =>
-      getStringField("id")(json) map (_.value)
+      getStringField("id")(json) map (_.value.replaceFirst("Applications/", ""))
 
-  def getFirstId: JsValue => JsParsed[String] =
+  def readFirstId: JsValue => JsParsed[String] =
     json =>
       getFirst(json) >>=
-        getIdString
-
-  def readReleaseId: JsValue => JsParsed[Release.ID] =
-    json =>
-      getIdString(json) map (_.replaceFirst("Applications/", ""))
+        readIdString
 
   def readTaskId(sep: String): JsValue => JsParsed[Task.ID] =
     json =>
-      getIdString(json) >>=
+      readIdString(json) >>=
         parseTaskId(sep)
 
   def readTaskIds(sep: String): JsValue => JsParsed[List[Task.ID]] =
@@ -103,7 +98,7 @@ object JsUtils {
   def readTaskIdsInner(sep: String): Seq[JsValue] => JsParsed[List[Task.ID]] =
     elements =>
       elements.toList
-        .map(e => getIdString(e) >>= parseTaskId(sep))
+        .map(e => readIdString(e) >>= parseTaskId(sep))
         .sequence[JsParsed, Task.ID]
 
   def getStatus: JsValue => JsParsed[JsValue] =
@@ -115,7 +110,8 @@ object JsUtils {
 
   def readFirstTaskStatus: JsValue => JsParsed[TaskStatus] =
     json =>
-      getFirst(json) map toTaskStatus
+      getFirst(json) >>=
+        readTaskStatus
 
   def matchesTaskStatus(expectedStatus: TaskStatus): JsValue => Boolean =
     json =>
@@ -129,14 +125,14 @@ object JsUtils {
   def readFirstPhaseId(sep: String): JsValue => JsParsed[Phase.ID] =
     json =>
       getField("phases")(json) >>=
-        getFirstId >>=
+        readFirstId >>=
         parsePhaseId(sep)
 
   def getTeamIdEntry: JsValue => JsParsed[(String, String)] =
     json =>
       jsObject(json) >>= { obj =>
         for {
-          teamName <- getStringField("teamNam")(obj)
+          teamName <- getStringField("teamName")(obj)
           id <- getStringField("id")(obj)
         } yield teamName.value -> id.value
       }

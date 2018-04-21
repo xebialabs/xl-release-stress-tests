@@ -4,13 +4,12 @@ import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.io.Runner
 import com.xebialabs.xlrelease.stress.http.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 
-object Main extends Runner {
+object Main {
   val usage: String =
     """
       |    sbt "run xlReleaseUrl adminPassword numUsers"
@@ -39,7 +38,6 @@ object Main extends Runner {
 
     scenarios
       .CompleteReleases(numUsers)
-//      .CreateReleases
       .run
 
     pool.shutdown()

@@ -3,9 +3,7 @@ package com.xebialabs.xlrelease.stress.scenarios
 import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTemplate, CreateTopLevelFolder}
 import com.xebialabs.xlrelease.stress.domain._
-import cats._
 import cats.implicits._
-import cats.syntax._
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
 import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
 import com.xebialabs.xlrelease.stress.api.{API, Program}
@@ -14,11 +12,11 @@ import freestyle.free._
 import freestyle.free.implicits._
 
 case class CompleteReleases(numUsers: Int) extends Scenario {
-  val name = s"Simple scenario ($numUsers users)"
+  override val name: String = s"Simple scenario ($numUsers users)"
 
   val dsl_1mb: Template = Template("Simple Template", TmpResource("DSL_1mb.xlr"))
 
-  def program: Program[Unit] = {
+  override def program: Program[Unit] = {
     for {
       params <- setup(dsl_1mb, numUsers)
       (role, templateId) = params

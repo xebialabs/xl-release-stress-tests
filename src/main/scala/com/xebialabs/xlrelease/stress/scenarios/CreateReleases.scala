@@ -1,22 +1,13 @@
 package com.xebialabs.xlrelease.stress.scenarios
 
-import com.xebialabs.xlrelease.stress.api.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTemplate, CreateTopLevelFolder}
-import com.xebialabs.xlrelease.stress.domain._
-import cats._
 import cats.implicits._
-import cats.syntax._
-import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
-import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
-import com.xebialabs.xlrelease.stress.api.{API, Program}
-import com.xebialabs.xlrelease.stress.utils.TmpResource
+import com.xebialabs.xlrelease.stress.api.Program
 import freestyle.free._
-import freestyle.free.implicits._
 
 object CreateReleases extends Scenario {
-  val name = s"Simple scenario to create release from groovy"
+  override val name: String = s"Simple scenario to create release from groovy"
 
-  val releasefile = s"""xlr {
+  val releasefile: String = s"""xlr {
   release('DSL') {
     variables {
       stringVariable('var1') {
@@ -101,7 +92,7 @@ object CreateReleases extends Scenario {
   }
 }""".stripMargin
 
-  def program: Program[Unit] = {
+  override def program: Program[Unit] =
     api.xlr.users.admin() flatMap { implicit session =>
       for {
         phaseId <- api.xlr.releases.createRelease("test with releasefile")
@@ -110,5 +101,4 @@ object CreateReleases extends Scenario {
         _ <- api.log.info(s"Task created: ${taskId.task}")
       } yield ()
     }
-  }
 }

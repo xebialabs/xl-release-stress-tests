@@ -36,7 +36,7 @@ class ReleasesHandler()
         api(_ / "templates" / "import"),
         template.xlrTemplate
       ).asJson.io >>=
-        getFirstId
+        readFirstId
           .toIO(s"importTemplate(${template.name}): could not read Template Id")
 
     protected def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])
@@ -69,7 +69,7 @@ class ReleasesHandler()
         api(_ / "templates" / "Applications" / templateId / "create"),
         createReleaseArgs.toJson
       ).asJson.io >>=
-        readReleaseId
+        readIdString
           .toIO(s"createFromTemplate($templateId, ${createReleaseArgs.show}): Cannot read Release Id")
 
     protected def createRelease(title: String, scriptUser: Option[User])

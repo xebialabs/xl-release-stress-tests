@@ -60,7 +60,7 @@ class UsersHandler()
           )
         ).asJson.io >>=
           readUsername
-          .toIO(s"createUser(${user.show}): Cannot read username")
+            .toIO(s"createUser(${user.show}): Cannot read username")
       }
 
     protected def createRole(role: Role): IO[Role.ID] =
