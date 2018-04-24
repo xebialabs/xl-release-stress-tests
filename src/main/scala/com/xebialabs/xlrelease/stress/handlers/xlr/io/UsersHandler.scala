@@ -35,8 +35,6 @@ class UsersHandler()
       }
     }
 
-    adminLogin()
-
     protected def admin(): IO[User.Session] =
       _adminSession.fold(adminLogin())(IO.pure)
 
@@ -58,19 +56,26 @@ class UsersHandler()
       }.io
     }
 
+    protected def createUser0(user: User)(implicit session: User.Session): IO[User.ID] =
+      client.postJSON(
+        api(_ / "users" / user.username),
+        JsObject(
+          "fullName" -> user.fullname.toJson,
+          "email" -> user.email.toJson,
+          "loginAllowed" -> true.toJson,
+          "password" -> user.password.toJson
+        )
+      ).asJson.io >>=
+        readUsername
+          .toIO(s"createUser(${user.show}): Cannot read username")
+
     protected def createUser(user: User): IO[User.ID] =
       admin() >>= { implicit session =>
-        client.postJSON(
-          api(_ / "users" / user.username),
-          JsObject(
-            "fullName" -> user.fullname.toJson,
-            "email" -> user.email.toJson,
-            "loginAllowed" -> true.toJson,
-            "password" -> user.password.toJson
-          )
-        ).asJson.io >>=
-          readUsername
-            .toIO(s"createUser(${user.show}): Cannot read username")
+        createUser0(user)
+          .recover {
+            case _ => user.username
+              // deleteUser(user.username).flatMap(unused => createUser0(user)) // deleteUser(user.username) >> createUser0(user)
+          }
       }
 
     protected def createRole(role: Role): IO[Role.ID] =

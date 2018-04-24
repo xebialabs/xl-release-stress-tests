@@ -70,7 +70,7 @@ class TasksHandler()
       implicit val timeout: Timeout = Timeout(10 seconds)
 
       getTaskStatus(taskId)
-        .until(_.contains(expectedStatus), interval, retries)
+        .until(_ == expectedStatus, interval, retries)
     }
 
     protected def getComments(taskId: Task.ID)
@@ -80,13 +80,15 @@ class TasksHandler()
           .toIO("")
   }
 
-  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => IO[JsParsed[TaskStatus]] =
+  def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => IO[TaskStatus] =
     () =>
       client.postJSON(
         root(_ / "tasks" / "poll"),
         JsObject("ids" -> Seq(taskId.show).toJson)
-      ).asJson.io
-        .map(readFirstTaskStatus)
+      ).asJson.io map readFirstTaskStatus flatMap {
+        case Left(err) => IO.raiseError(err)
+        case Right(value) => IO.pure(value)
+      }
 
   def notImplemented[A](name: String): IO[A] =
     IO.raiseError(new RuntimeException("not implemented: "+ name))

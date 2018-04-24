@@ -12,19 +12,31 @@ import com.xebialabs.xlrelease.stress.utils.TmpResource
 import freestyle.free._
 import freestyle.free.implicits._
 
-case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] {
+import scala.io.Source
+
+case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils[(Role, Template.ID)] {
   override val name: String = s"Simple scenario ($numUsers users)"
 
   val dsl_1mb: Template = Template("Simple Template", TmpResource("DSL_1mb.xlr"))
+
+  val template = Source.fromResource("DSL-template.groovy")
+    .getLines()
+    .mkString("\n")
 
   override def setup: Program[(Role, Template.ID)] =
     api.xlr.users.admin() flatMap { implicit session =>
       for {
         role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
         members     = Seq(RoleMember(role.rolename))
-        templateId  <- api.xlr.releases.importTemplate(dsl_1mb)
-        _           <- api.xlr.releases.setTemplateScriptUser(templateId, scriptUser = Some(session.user))
-        _           <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner(members), releaseAdmin(members)))
+        templateId  <- createReleaseFromGroovy(
+          "Title of the Release that will Create Template from groovy",
+          template,
+          "###ADMIN_PASSWORD###",
+          session.user.password
+        )
+//        _ <- api.log.info("template created: "+ templateId)
+        _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner(members), releaseAdmin(members)))
+//        _ <- api.log.info("template teams setup correctly")
       } yield (role, templateId)
     }
 
