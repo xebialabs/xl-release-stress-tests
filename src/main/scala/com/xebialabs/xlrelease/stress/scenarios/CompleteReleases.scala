@@ -14,7 +14,7 @@ import freestyle.free.implicits._
 
 import scala.io.Source
 
-case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils[(Role, Template.ID)] {
+case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils {
   override val name: String = s"Simple scenario ($numUsers users)"
 
   val dsl_1mb: Template = Template("Simple Template", TmpResource("DSL_1mb.xlr"))

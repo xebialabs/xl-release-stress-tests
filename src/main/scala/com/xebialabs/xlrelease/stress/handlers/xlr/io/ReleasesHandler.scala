@@ -10,11 +10,10 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.dsl.xlr.Releases
 import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
-import com.xebialabs.xlrelease.stress.utils.DateFormat
+import com.xebialabs.xlrelease.stress.utils.{AkkaHttpClient, DateFormat}
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 

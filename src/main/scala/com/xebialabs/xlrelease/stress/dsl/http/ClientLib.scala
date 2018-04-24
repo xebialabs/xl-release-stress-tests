@@ -3,11 +3,10 @@ package com.xebialabs.xlrelease.stress.dsl.http
 import java.io.File
 
 import akka.http.scaladsl.model.MediaTypes.{`application/json`, `application/zip`}
-import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.Accept
 import com.xebialabs.xlrelease.stress.domain.HttpSession
 import freestyle.free._
-import freestyle.free.implicits._
 import spray.json._
 
 class ClientLib[F[_]]()(implicit api: Client[F]) {

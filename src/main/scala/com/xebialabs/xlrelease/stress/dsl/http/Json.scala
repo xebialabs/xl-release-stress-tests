@@ -1,7 +1,5 @@
 package com.xebialabs.xlrelease.stress.dsl.http
 
-import cats._
-import cats.implicits._
 import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
 import freestyle.free._
 import spray.json._

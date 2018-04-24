@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.stress.dsl.http
 
-import cats._
 import cats.implicits._
 import freestyle.free._
 import freestyle.free.implicits._

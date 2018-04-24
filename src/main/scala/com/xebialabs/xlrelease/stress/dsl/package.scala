@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.stress
 
-import cats.implicits._
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.dsl.xlr.Xlr
 import freestyle.free.logging.LoggingM

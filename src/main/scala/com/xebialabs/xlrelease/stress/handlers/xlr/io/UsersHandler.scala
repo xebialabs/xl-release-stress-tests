@@ -6,9 +6,9 @@ import cats.effect.IO
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.dsl.xlr.Users
 import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
+import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 

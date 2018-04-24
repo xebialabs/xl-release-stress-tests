@@ -4,7 +4,7 @@ import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps

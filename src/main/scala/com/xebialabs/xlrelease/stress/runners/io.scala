@@ -1,24 +1,22 @@
-package com.xebialabs.xlrelease.stress.handlers
+package com.xebialabs.xlrelease.stress.runners
 
-import cats._
-import cats.implicits._
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.dsl.{API, Program}
+import cats.implicits._
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.dsl.xlr.{Releases, Tasks, Users}
-import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.exec.ControlHandler
-import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.dsl.{API, Program}
+import com.xebialabs.xlrelease.stress.handlers.exec.io.ControlHandler
 import com.xebialabs.xlrelease.stress.handlers.xlr.io.{ReleasesHandler, TasksHandler, UsersHandler}
 import com.xebialabs.xlrelease.stress.scenarios.Scenario
+import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 import freestyle.free._
 import freestyle.free.implicits._
-import freestyle.free.loggingJVM.log4s.implicits._
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
-package object io {
+object io {
   class RunnerContext()(implicit
                         val usersHandler: Users.Handler[IO],
                         val releasesHandler: Releases.Handler[IO],
@@ -26,14 +24,14 @@ package object io {
                         val ec: ExecutionContext)
 
   object RunnerContext {
-    def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = new ControlHandler().controlHandler
+    def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = ControlHandler.controlHandler
   }
 
-  def runner(implicit
-             server: XlrServer,
-             admin: AdminPassword,
-             client: AkkaHttpClient,
-             ec: ExecutionContext): RunnerContext = {
+  def runnerContext(implicit
+                    server: XlrServer,
+                    admin: AdminPassword,
+                    client: AkkaHttpClient,
+                    ec: ExecutionContext): RunnerContext = {
     import client.materializer
 
     val usersInterpreter = new UsersHandler
@@ -50,7 +48,8 @@ package object io {
   def runIO[A](program: Program[A])
               (implicit ctx: RunnerContext): IO[A] = {
     import ctx._
-    implicit val ctrl: Control.Handler[IO] = RunnerContext.controlHandler
+    import ControlHandler.controlHandler
+    import freestyle.free.loggingJVM.log4s.implicits.taglessLoggingApplicative
 
     program.interpret[IO]
   }

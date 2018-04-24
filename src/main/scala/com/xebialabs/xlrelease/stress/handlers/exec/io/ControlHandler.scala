@@ -1,16 +1,14 @@
-package com.xebialabs.xlrelease.stress.handlers.exec
-
+package com.xebialabs.xlrelease.stress.handlers.exec.io
 
 import cats.effect.IO
-import com.xebialabs.xlrelease.stress.dsl.{API, Program}
+import com.xebialabs.xlrelease.stress.dsl.Program
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
-import com.xebialabs.xlrelease.stress.handlers.io.{RunnerContext, runIO}
+import com.xebialabs.xlrelease.stress.runners.io.{RunnerContext, runIO}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext
 
 
-class ControlHandler {
+object ControlHandler {
 
   implicit def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = new Control.Handler[IO] {
 

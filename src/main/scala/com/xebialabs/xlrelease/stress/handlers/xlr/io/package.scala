@@ -1,13 +1,12 @@
 package com.xebialabs.xlrelease.stress.handlers.xlr
 
-import akka.http.scaladsl.model.Uri.Path./
-import akka.http.scaladsl.model.{HttpResponse, Uri}
+import akka.http.scaladsl.model.HttpResponse
 import akka.stream.Materializer
 import akka.util.Timeout
 import cats.effect.IO
 import cats.implicits._
-import com.xebialabs.xlrelease.stress.domain.{HttpSession, Task}
-import com.xebialabs.xlrelease.stress.handlers.http.future._
+import com.xebialabs.xlrelease.stress.domain.HttpSession
+import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient.EntityOps
 import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsValue}
 
@@ -104,7 +103,4 @@ package object io {
     )
   }
 
-  implicit class TaskIdOps(val taskId: Task.ID) extends AnyVal {
-    def path: Uri.Path = / / taskId.release / taskId.phase / taskId.task
-  }
 }

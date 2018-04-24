@@ -12,7 +12,7 @@ import scala.util.matching.Regex
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-trait ScenarioUtils[A] { scenario: Scenario[A] =>
+trait ScenarioUtils { scenario: Scenario[_] =>
   import scenario.api
 
   protected val idFromCommentRegex: Regex =

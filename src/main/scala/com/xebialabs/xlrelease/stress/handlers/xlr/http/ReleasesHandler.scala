@@ -5,10 +5,10 @@ import cats.implicits._
 import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
+import com.xebialabs.xlrelease.stress.dsl.http.{Client, Http, HttpLib}
 import com.xebialabs.xlrelease.stress.dsl.xlr
 import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.dsl.http.{Client, HttpLib, Http}
+import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import freestyle.free._

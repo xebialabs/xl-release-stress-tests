@@ -3,12 +3,11 @@ package com.xebialabs.xlrelease.stress.dsl
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.MediaTypes.`application/json`
 import akka.http.scaladsl.model.headers.Accept
-import freestyle.free._
 import freestyle.free.effects.error.ErrorM
 import freestyle.free.logging.LoggingM
+import freestyle.free.{FreeS, module}
 
 package object http {
-  val defaultHeaders: List[HttpHeader] = List(Accept(`application/json`))
 
   @module trait Http {
     val client: Client
@@ -23,4 +22,6 @@ package object http {
   type Program[A] = FreeS[Http.Op, A]
 
   type HttpProgram[A] = FreeS[Client.Op, A]
+
+  val defaultHeaders: List[HttpHeader] = List(Accept(`application/json`))
 }
