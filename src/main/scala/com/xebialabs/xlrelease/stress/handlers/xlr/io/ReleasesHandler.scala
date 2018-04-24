@@ -39,6 +39,15 @@ class ReleasesHandler()
         readFirstId
           .toIO(s"importTemplate(${template.name}): could not read Template Id")
 
+
+    protected def getTemplateTeams(releaseId: Release.ID)
+                                  (implicit session: User.Session): IO[Seq[Team]] =
+      client.getJSON(api(_ / "templates" / releaseId / "teams"))
+        .io >>=
+          readTeams
+          .toIO(s"getTemplateTeams($releaseId): could not read Teams")
+
+
     protected def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])
                                   (implicit session: User.Session): IO[Map[String, String]] =
       client.postJSON(

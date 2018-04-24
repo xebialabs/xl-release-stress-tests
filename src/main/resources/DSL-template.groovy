@@ -77,6 +77,14 @@ xlr {
             }
         }
         teams {
+            team('Template Owner') {
+                roles 'superDuperRole'
+                permissions 'template#edit', 'template#lock_task', 'template#view', 'template#edit_triggers', 'template#edit_security', 'template#create_release'
+            }
+            team('Release Admin') {
+                roles 'superDuperRole'
+                permissions 'release#edit', 'release#lock_task', 'release#start', 'release#reassign_task', 'release#edit_blackout', 'template#view', 'release#edit_security', 'release#abort', 'release#view', 'release#edit_task'
+            }
         }
     }
 }

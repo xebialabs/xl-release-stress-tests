@@ -1,15 +1,10 @@
 package com.xebialabs.xlrelease.stress.handlers.xlr.http
 
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import cats.implicits._
-import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.dsl.xlr
-import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.dsl.http
 import com.xebialabs.xlrelease.stress.dsl.http.{Client, Http, HttpLib}
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
@@ -26,7 +21,7 @@ class TasksHandler[F[_]]()
                          server: XlrServer,
                          adminPassword: AdminPassword,
                          client: Client[F],
-                         target: Http[F]) extends XlrRest {
+                         http: Http[F]) extends XlrRest {
 
   val httpLib = new HttpLib[F]()
 
@@ -44,8 +39,8 @@ class TasksHandler[F[_]]()
             "type" -> taskType.toJson,
             "script" -> script.toJson
           ))
-        content <- target.client.parseJson(resp)
-        taskId <- target.json.read(readTaskId(sep = "/"))(content)
+        content <- http.client.parseJson(resp)
+        taskId <- http.json.read(readTaskId(sep = "/"))(content)
       } yield taskId
 
     protected def assignTo(taskId: Task.ID, assignee: User.ID)(implicit session: User.Session): Target[Unit] =
@@ -55,7 +50,7 @@ class TasksHandler[F[_]]()
           api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "assign" / assignee),
           JsNull
         )
-        _ <- target.client.discard(resp)
+        _ <- http.client.discard(resp)
       } yield ()
 
     protected def complete(taskId: Task.ID, comment: Option[String] = None)
@@ -66,7 +61,7 @@ class TasksHandler[F[_]]()
           api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "complete"),
           comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
         )
-        content <- target.client.parseJson(resp)
+        content <- http.client.parseJson(resp)
       } yield matchesTaskStatus(TaskStatus.Completed)(content)
 
     protected def retry(taskId: Task.ID, comment: String)
@@ -83,8 +78,8 @@ class TasksHandler[F[_]]()
         for {
           _ <- debug(s"waitFor: getTaskStatus(${taskId.show}, $expectedStatus, $interval, $retries)")
           resp <- httpLib.client.postJSON(root(_ / "tasks" / "poll"), JsObject("ids" -> Seq(taskId.show).toJson))
-          content <- target.client.parseJson(resp)
-          taskStatus <- target.json.read(readFirstTaskStatus)(content)
+          content <- http.client.parseJson(resp)
+          taskStatus <- http.json.read(readFirstTaskStatus)(content)
         } yield taskStatus
 
       httpLib.until[TaskStatus](_ == expectedStatus, interval, retries)(getTaskStatus)
@@ -96,16 +91,16 @@ class TasksHandler[F[_]]()
                              (implicit session: User.Session): Target[Seq[Comment]] =
       for {
         _ <- debug(s"getComments(${taskId.show})")
-        resp <- target.client.get(api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task))
-        content <- target.client.parseJson(resp)
-        comments <- target.json.read(readComments)(content)
+        resp <- http.client.get(api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task))
+        content <- http.client.parseJson(resp)
+        comments <- http.json.read(readComments)(content)
       } yield comments
   }
 
   private def debug(msg: String)(implicit session: User.Session): Target[Unit] =
-    target.log.debug(s"${session.user.username}: $msg")
+    http.log.debug(s"${session.user.username}: $msg")
 
   private def notImplemented[A](name: String): Target[A] =
-    target.error.error[A](new RuntimeException(s"Not implemented: $name"))
+    http.error.error[A](new RuntimeException(s"Not implemented: $name"))
 
 }

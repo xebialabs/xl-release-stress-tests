@@ -1,6 +1,5 @@
 package com.xebialabs.xlrelease.stress.handlers.xlr.http
 
-
 import cats._
 import cats.implicits._
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
@@ -21,7 +20,7 @@ class UsersHandler[F[_]]()
                          server: XlrServer,
                          adminPassword: AdminPassword,
                          client: Client[F],
-                         target: Http[F]) extends XlrRest {
+                         http: Http[F]) extends XlrRest {
 
   val httpLib = new HttpLib[F]()
 
@@ -39,14 +38,14 @@ class UsersHandler[F[_]]()
 
     protected def login(user: User): Target[HttpSession] =
       for {
-        _ <- target.log.debug(s"login(${user.username})")
+        _ <- http.log.debug(s"login(${user.username})")
         resp <- httpLib.client.postJSON0(root(_ / "login"),
           JsObject(
             "username" -> adminUser.username.toJson,
             "password" -> adminUser.password.toJson
           ))
         cookies <- getCookies(resp.headers[`Set-Cookie`])
-        _ <- target.client.discard(resp)
+        _ <- http.client.discard(resp)
         session = HttpSession(user, cookies.map(c => Cookie(c.cookie.name, c.cookie.value)))
       } yield session
 
@@ -64,8 +63,8 @@ class UsersHandler[F[_]]()
               "loginAllowed" -> true.toJson,
               "password" -> user.password.toJson
             ))
-          content <- target.client.parseJson(resp)
-          userId <- target.json.read(readUsername)(content)
+          content <- http.client.parseJson(resp)
+          userId <- http.json.read(readUsername)(content)
         } yield userId
       }
 
@@ -79,7 +78,7 @@ class UsersHandler[F[_]]()
               "permissions" -> role.permissions.map(_.permission.toJson).toJson,
               "principals" -> role.principals.map(user => JsObject("username" -> user.username.toJson)).toJson
             ))
-          _ <- target.client.discard(resp)
+          _ <- http.client.discard(resp)
         } yield role.rolename
       }
 
@@ -87,8 +86,8 @@ class UsersHandler[F[_]]()
       admin() >>= { implicit session =>
         for {
           _ <- debug(s"deleteUser($userId)")
-          resp <- target.client.delete(api(_ / "users" / userId))
-          _ <- target.client.discard(resp)
+          resp <- http.client.delete(api(_ / "users" / userId))
+          _ <- http.client.discard(resp)
         } yield ()
       }
 
@@ -96,8 +95,8 @@ class UsersHandler[F[_]]()
       admin() >>= { implicit session =>
         for {
           _ <- debug(s"deleteRole($roleId)")
-          resp <- target.client.delete(api(_ / "roles" / roleId))
-          _ <- target.client.discard(resp)
+          resp <- http.client.delete(api(_ / "roles" / roleId))
+          _ <- http.client.discard(resp)
         } yield ()
       }
   }
@@ -105,10 +104,10 @@ class UsersHandler[F[_]]()
 
   private def getCookies(headers: Seq[`Set-Cookie`]): Target[NonEmptyList[`Set-Cookie`]] =
     headers.toList.toNel.map(_.pure[Target]).getOrElse {
-      target.error.error[NonEmptyList[`Set-Cookie`]](new RuntimeException("No login cookies!"))
+      http.error.error[NonEmptyList[`Set-Cookie`]](new RuntimeException("No login cookies!"))
     }
 
   private def debug(msg: String)(implicit session: User.Session): Target[Unit] =
-    target.log.debug(s"${session.user.username}: $msg")
+    http.log.debug(s"${session.user.username}: $msg")
 
 }

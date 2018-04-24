@@ -4,6 +4,8 @@ import cats.implicits._
 import com.xebialabs.xlrelease.stress.domain._
 import spray.json._
 
+import scala.util.{Failure, Success, Try}
+
 object JsUtils {
   type JsParsed[A] = Either[DeserializationException, A]
 
@@ -23,6 +25,12 @@ object JsUtils {
     case str: JsString => str.asRight
     case other =>
       wrongType("jsString", "JsString", other)
+  }
+
+  def jsBoolean: JsValue => JsParsed[JsBoolean] = {
+    case b: JsBoolean => b.asRight
+    case other =>
+      wrongType("jsBoolean", "JsBoolean", other)
   }
 
   def getElements: JsValue => JsParsed[Seq[JsValue]] =
@@ -63,6 +71,11 @@ object JsUtils {
     json =>
       getField(key)(json) >>=
         jsArray
+
+  def getBooleanField(key: String): JsValue => JsParsed[JsBoolean] =
+    json =>
+      getField(key)(json) >>=
+        jsBoolean
 
   def getElements(key: String): JsValue => JsParsed[Seq[JsValue]] =
     json =>
@@ -146,6 +159,20 @@ object JsUtils {
       elements.toList
         .map(getTeamIdEntry)
         .sequence[JsParsed, (String, String)]
+
+  def readTeams: JsValue => JsParsed[Seq[Team]] =
+    json =>
+      getElements(json) >>= readTeamsInner
+
+  def readTeamsInner: Seq[JsValue] => JsParsed[List[Team]] =
+    elements =>
+      elements.toList
+      .map(readTeam)
+      .sequence[JsParsed, Team]
+
+  def readTeam(implicit r: JsonReader[Team]): JsValue => JsParsed[Team] =
+    json =>
+      convert[Team](json)
 
   def readUsername: JsValue => JsParsed[User.ID] =
     json =>
@@ -235,4 +262,11 @@ object JsUtils {
     case _: JsBoolean => "JsBoolean"
     case JsNull => "JsNull"
   }
+
+  def convert[A](json: JsValue)(implicit reader: JsonReader[A]): JsParsed[A] =
+    Try(json.convertTo[A]) match {
+      case Failure(d: DeserializationException) => d.asLeft
+      case Failure(err) => DeserializationException("JSON format error", err).asLeft
+      case Success(a) => a.asRight
+    }
 }

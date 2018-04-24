@@ -1,5 +1,10 @@
 package com.xebialabs.xlrelease.stress.domain
 
+import cats._
+import cats.implicits._
+
+import com.xebialabs.xlrelease.stress.utils.JsUtils._
+
 import spray.json._
 
 
@@ -19,4 +24,17 @@ object Member extends DefaultJsonProtocol {
       "type" -> "PRINCIPAL".toJson
     )
   }
+
+  implicit val memberReader: RootJsonReader[Member] = json => {
+    for {
+      name <- getStringField("name")(json).map(_.value)
+      member <- getStringField("type")(json).map(_.value) >>= {
+        case "PRINCIPAL" => UserMember(name).asRight
+        case "ROLE" => RoleMember(name).asRight
+        case other => wrongType(s"wrong team member type: $other", "PRINCIPAL | ROLE", JsString(other))
+      }
+    } yield member
+  }.fold(x => throw x, identity)
+
+  implicit val memberFormat: RootJsonFormat[Member] = rootJsonFormat(memberReader, memberWriter)
 }

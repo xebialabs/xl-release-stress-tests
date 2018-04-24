@@ -9,9 +9,11 @@ import scala.language.postfixOps
 
 @free trait Releases {
   def importTemplate(template: Template)(implicit session: User.Session): FS[Template.ID]
+  def getTemplateTeams(releaseId: Release.ID)(implicit seession: User.Session): FS[Seq[Team]]
   def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])(implicit session: User.Session): FS[Map[String, String]]
   def setTemplateScriptUser(templateId: Template.ID, scriptUser: Option[User] = None)(implicit session: User.Session): FS[Unit]
 //  def deleteTemplate(templateId: Template.ID): FS[Unit]
+
 
   def createFromTemplate(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)(implicit session: User.Session): FS[Release.ID]
   def createRelease(title: String, scriptUser: Option[User] = None)(implicit session: User.Session): FS[Phase.ID]

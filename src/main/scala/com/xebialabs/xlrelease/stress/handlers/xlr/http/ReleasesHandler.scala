@@ -1,7 +1,6 @@
 package com.xebialabs.xlrelease.stress.handlers.xlr.http
 
 import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import cats.implicits._
 import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
@@ -9,7 +8,6 @@ import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.dsl.xlr
 import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.dsl.http
 import com.xebialabs.xlrelease.stress.dsl.http.{Client, HttpLib, Http}
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
@@ -26,7 +24,7 @@ class ReleasesHandler[F[_]]()
                             server: XlrServer,
                             adminPassword: AdminPassword,
                             client: Client[F],
-                            target: Http[F]) extends XlrRest {
+                            http: Http[F]) extends XlrRest {
 
   val httpLib = new HttpLib[F]()
 
@@ -39,17 +37,26 @@ class ReleasesHandler[F[_]]()
       for {
         _ <- debug(s"importTemplate(${template.name})")
         resp <- httpLib.client.postZip(api(_ / "templates" / "import"), template.xlrTemplate)
-        content <- target.client.parseJson(resp)
-        templateId <- target.json.read(readFirstId)(content)
+        content <- http.client.parseJson(resp)
+        templateId <- http.json.read(readFirstId)(content)
       } yield templateId
+
+    protected def getTemplateTeams(templateId: Template.ID)
+                                  (implicit session: User.Session): Target[Seq[Team]] =
+      for {
+        _ <- debug(s"getTemplateTeams($templateId)")
+        resp <- http.client.get(api(_ / "templates" / "Applications" / templateId / "teams"))
+        content <- http.client.parseJson(resp)
+        teams <- http.json.read(readTeams)(content)
+      } yield teams
 
     protected def setTemplateTeams(templateId: Template.ID, teams: Seq[Team])
                                   (implicit session: User.Session): Target[Map[String, String]] =
       for {
         _ <- debug(s"setTemplateTeams($templateId, ${teams.map(_.teamName).mkString("[", ", ", "]")})")
         resp <- httpLib.client.postJSON(api(_ / "templates" / "Applications" / templateId / "teams"), teams.map(_.toJson).toJson)
-        content <- target.client.parseJson(resp)
-        teamIds <- target.json.read(readTeamIds)(content)
+        content <- http.client.parseJson(resp)
+        teamIds <- http.json.read(readTeamIds)(content)
       } yield teamIds
 
     protected def setTemplateScriptUser(templateId: Template.ID, scriptUser: Option[User])
@@ -66,7 +73,7 @@ class ReleasesHandler[F[_]]()
             "scriptUserPassword" -> user.password.toJson
           )
         )
-        _ <- target.client.discard(resp)
+        _ <- http.client.discard(resp)
       } yield ()
     }
 
@@ -75,8 +82,8 @@ class ReleasesHandler[F[_]]()
       for {
         _ <- debug(s"createFromTeamplte($templateId, ${createReleaseArgs.show})")
         resp <- httpLib.client.postJSON(api(_ / "templates" / "Applications" / templateId / "create"), createReleaseArgs.toJson)
-        content <- target.client.parseJson(resp)
-        releaseId <- target.json.read(readIdString)(content)
+        content <- http.client.parseJson(resp)
+        releaseId <- http.json.read(readIdString)(content)
       } yield releaseId
 
     protected def createRelease(title: String, scriptUser: Option[User])
@@ -99,8 +106,8 @@ class ReleasesHandler[F[_]]()
             ),
             "scriptUserPassword" -> user.password.toJson
           ))
-        content <- target.client.parseJson(resp)
-        phaseId <- target.json.read(readFirstPhaseId(sep = "-"))(content)
+        content <- http.client.parseJson(resp)
+        phaseId <- http.json.read(readFirstPhaseId(sep = "-"))(content)
       } yield phaseId
     }
 
@@ -109,7 +116,7 @@ class ReleasesHandler[F[_]]()
       for {
         _ <- debug(s"start($releaseId)")
         resp <- httpLib.client.postJSON(api(_ / "releases" / "Applications" / releaseId / "start"), JsNull)
-        _ <- target.client.discard(resp)
+        _ <- http.client.discard(resp)
       } yield releaseId
     }
 
@@ -127,8 +134,8 @@ class ReleasesHandler[F[_]]()
       }
       for {
         _ <- debug(s"getTasksByTitle($releaseId, $taskTitle, $phaseTitle)")
-        resp <- target.client.get(api(_ / "tasks" / "byTitle").withQuery(query))
-        content <- target.client.parseJson(resp)
+        resp <- http.client.get(api(_ / "tasks" / "byTitle").withQuery(query))
+        content <- http.client.parseJson(resp)
         taskIds <- doReadTaskIds(content)
       } yield taskIds
     }
@@ -138,9 +145,9 @@ class ReleasesHandler[F[_]]()
       def getReleaseStatus: Target[ReleaseStatus] =
         for {
           _ <- debug(s"waitFor: getReleaseStatus($releaseId, $status, $interval, $retries)")
-          resp <- target.client.get(api(_ / "releases" / "Applications" / releaseId))
-          content <- target.client.parseJson(resp)
-          releaseStatus <- target.json.read(readReleaseStatus)(content)
+          resp <- http.client.get(api(_ / "releases" / "Applications" / releaseId))
+          content <- http.client.parseJson(resp)
+          releaseStatus <- http.json.read(readReleaseStatus)(content)
         } yield releaseStatus
 
       httpLib.until[ReleaseStatus](_ == status, interval, retries)(getReleaseStatus)
@@ -149,9 +156,9 @@ class ReleasesHandler[F[_]]()
   }
 
   private def debug(msg: String)(implicit session: User.Session): Target[Unit] =
-    target.log.debug(s"${session.user.username}: $msg")
+    http.log.debug(s"${session.user.username}: $msg")
 
   private def doReadTaskIds(content: JsValue): Target[List[Task.ID]] =
-    target.json.read(readTaskIds(sep = "/"))(content)
+    http.json.read(readTaskIds(sep = "/"))(content)
 
 }

@@ -1,12 +1,16 @@
 package com.xebialabs.xlrelease.stress.domain
 
+import cats._
+import cats.implicits._
 import spray.json._
 import com.xebialabs.xlrelease.stress.domain.Permission._
-import com.xebialabs.xlrelease.stress.domain.Member._
+import com.xebialabs.xlrelease.stress.utils.JsUtils._
+
+import scala.util.Failure
 
 case class Team(teamName: String,
                 members: Seq[Member],
-                permissions: Seq[Permission with Permission.Local] = Seq(Permission.ViewTemplate),
+                permissions: Seq[Permission.Local] = Seq(Permission.ViewTemplate),
                 systemTeam: Boolean = false,
                 id: Team.ID = None)
 
@@ -20,6 +24,16 @@ object Team extends DefaultJsonProtocol {
     "permissions" -> team.permissions.map(Permission.permissionWriter.write).toJson,
     "systemTeam" -> team.systemTeam.toJson
   )
+
+  implicit val teamReader: RootJsonReader[Team] = json => {
+    for {
+      id <- getStringField("id")(json).map(_.value)
+      name <- getStringField("teamName")(json).map(_.value)
+      members <- (getField("members")(json) >>= getElements) map (_.map(_.convertTo[Member]))
+      permissions <- (getField("permissions")(json) >>= getElements) map (_.map(_.convertTo[Permission.Local]))
+      systemTeam <- getBooleanField("systemTeam")(json).map(_.value)
+    } yield Team(name, members, permissions, systemTeam, Some(id))
+  }.fold(x => throw x, x => x)
 
   val templateOwnerPermissions: Set[Permission with Permission.Local] = Set(
     CreateReleaseFromTemplate,
