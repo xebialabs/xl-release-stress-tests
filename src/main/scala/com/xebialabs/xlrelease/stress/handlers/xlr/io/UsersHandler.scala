@@ -26,17 +26,24 @@ class UsersHandler()
 
     protected val adminUser = User("admin", "", "", adminPassword.password)
 
+    println(s"Users handler[IO]: adminUser is $adminUser")
+
     protected var _adminSession: Option[HttpSession] = None
 
-    def adminLogin(): IO[HttpSession] = login(adminUser).map { session =>
-      _adminSession = Some(session)
-      session
+    def adminLogin(): IO[HttpSession] = {
+      println("adminLogin(): _adminSession is: "+ _adminSession)
+      login(adminUser).map { session =>
+        println(s"logged id as admin, got session: $session")
+        _adminSession = Some(session)
+        session
+      }
     }
 
     protected def admin(): IO[User.Session] =
       _adminSession.fold(adminLogin())(IO.pure)
 
-    protected def login(user: User): IO[User.Session] =
+    protected def login(user: User): IO[User.Session] = {
+      println(s"logging in as ${user.username} ...")
       client.postJSON0(
         root(_ / "login"),
         JsObject(
@@ -45,8 +52,16 @@ class UsersHandler()
         )
       ).discard { resp =>
         val cookies = resp.headers[`Set-Cookie`].toList
-        HttpSession(user, cookies.map(sc => Cookie(sc.cookie.name, sc.cookie.value)))
+        cookies.toNel match {
+          case None =>
+            println(s"headers: ${resp.headers.toString}")
+            throw new RuntimeException("No login cookies!")
+          case Some(nel) =>
+            println("got cookies!: " + cookies)
+            HttpSession(user, nel.map(sc => Cookie(sc.cookie.name, sc.cookie.value)))
+        }
       }.io
+    }
 
     protected def createUser(user: User): IO[User.ID] =
       admin() >>= { implicit session =>

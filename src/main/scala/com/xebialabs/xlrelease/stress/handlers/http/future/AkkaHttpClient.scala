@@ -32,22 +32,30 @@ class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
     Http().singleRequest(HttpRequest(PUT, uri, headers, entity))
 
   def getJSON(uri: Uri)(implicit session: HttpSession): Future[JsValue] =
-    Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies))
+    Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies.toList))
       .flatMap(_.entity.asJson[JsValue])
 
   def postJSON0(uri: Uri, entity: JsValue, headers: List[HttpHeader] = List(Accept(`application/json`))): Future[HttpResponse] =
     Http().singleRequest(HttpRequest(POST, uri,
       entity = HttpEntity(`application/json`, entity.compactPrint),
       headers = headers
-    ))
+    )).flatMap(
+      _.onSuccess { entity =>
+        println(s"PostJSON response: $entity")
+        Future.successful(HttpResponse(entity = entity.asInstanceOf[ResponseEntity]))
+      }.onFailure { (status, content) =>
+        println("FAILURE!! "+ status + " "+ content)
+        new RuntimeException(s"Failed: POST ${uri.toString}: $status $content")
+      }
+    )
 
   def postJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] =
-    postJSON0(uri, entity, Accept(`application/json`) :: session.cookies)
+    postJSON0(uri, entity, Accept(`application/json`) :: session.cookies.toList)
 
   def putJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] = {
     Http().singleRequest(HttpRequest(PUT, uri,
       entity = HttpEntity(`application/json`, entity.compactPrint),
-      headers = Accept(`application/json`) :: session.cookies
+      headers = Accept(`application/json`) :: session.cookies.toList
     ))
   }
 
@@ -57,13 +65,13 @@ class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
     )
     Http().singleRequest(HttpRequest(POST, uri,
       entity = payload.toEntity(),
-      headers = Accept(`application/json`) :: session.cookies
+      headers = Accept(`application/json`) :: session.cookies.toList
     ))
   }
 
   def delete(uri: Uri, headers: List[HttpHeader] = defaultHeaders)(implicit session: HttpSession): Future[HttpResponse] = {
     Http().singleRequest(HttpRequest(DELETE, uri,
-      headers = Accept(`application/json`) :: session.cookies
+      headers = Accept(`application/json`) :: session.cookies.toList
     ))
   }
 

@@ -64,9 +64,10 @@ package object io {
 
     def program(params: A): Program[Unit] =
       for {
-        _ <- info(s"Running scenario: ${scenario.name}")
-        _ <- scenario.program(params)
-        _ <- info(s"Scenario ${scenario.name} done")
+        _ <- info(s"Running scenario")
+        r <- scenario.program(params)
+        _ <- info(s"scenario program: $r")
+        _ <- info(s"Scenario done")
       } yield ()
 
     def runProgram(params: A): IO[Unit] =

@@ -34,5 +34,11 @@ class ControlHandler(implicit
       Thread.sleep(duration.toMillis)
       IO.pure(())
     }
+
+    protected def ok[A](value: A): IO[A] =
+      IO.pure(value)
+
+    protected def error[A](error: Throwable): IO[A] =
+      IO.raiseError(error)
   }
 }

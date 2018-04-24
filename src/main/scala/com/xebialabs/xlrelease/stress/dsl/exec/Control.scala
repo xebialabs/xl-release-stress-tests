@@ -9,4 +9,11 @@ import scala.concurrent.duration.Duration
   def parallel[A](n: Int)(p: Int => Program[A]): FS[List[A]]
 
   def pause(duration: Duration): FS[Unit]
+
+  def ok[A](value: A): FS[A]
+
+  def error[A](error: Throwable): FS[A]
+
+  def fail[A](msg: String): FS[A] =
+    error[A](new RuntimeException(msg))
 }

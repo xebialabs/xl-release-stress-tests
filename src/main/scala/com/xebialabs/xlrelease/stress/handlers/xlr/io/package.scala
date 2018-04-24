@@ -22,6 +22,7 @@ package object io {
     def asJson(implicit ec: ExecutionContext, m: Materializer): Future[JsValue] = futureResponse.flatMap(_.entity.asJson[JsValue])
 
     def discard[A](f: HttpResponse => A)(implicit ec: ExecutionContext, m: Materializer): Future[A] = futureResponse.map { resp =>
+      println("discarding response: "+ resp.status + " content: "+ resp.entity)
       val a = f(resp)
       resp.discardEntityBytes()
       a

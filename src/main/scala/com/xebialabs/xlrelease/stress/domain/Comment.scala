@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.domain
 
-case class Comment(commentId: Comment.ID, comment: String)
+case class Comment(commentId: Comment.ID, author: String, date: String, text: String)
 
 object Comment {
-  case class ID(taskId: Task.ID, commentId: String)
+  type ID = String
 }

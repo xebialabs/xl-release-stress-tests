@@ -78,7 +78,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
       s"role"
   }
 
-  protected def createGlobalRole(rolename: Role.ID)(users: List[User])(implicit api: API): Program[Role] = {
+  protected def createGlobalRole(rolename: Role.ID)(users: List[User]): Program[Role] = {
     val role = Role(rolename, Set(CreateTemplate, CreateRelease, CreateTopLevelFolder), users.toSet)
 
     api.log.info(s"Creating global role for ${users.size} users...").flatMap { _ =>
@@ -89,7 +89,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
   protected def generateUsers(n: Int): List[User] =
     (0 to n).toList.map(i => User(s"user$i", "", "", s"user$i"))
 
-  protected def createUsers(n: Int)(implicit api: API): Program[List[User]] = {
+  protected def createUsers(n: Int): Program[List[User]] = {
     (api.log.info(s"Creating $n users..."): Program[Unit]) >> {
       generateUsers(n).map(u =>
         api.xlr.users.createUser(u).map(_ => u)

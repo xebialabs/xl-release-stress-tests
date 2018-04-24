@@ -1,26 +1,19 @@
 package com.xebialabs.xlrelease.stress.handlers.xlr.http
 
 
-import akka.http.scaladsl.model.{HttpResponse, Uri}
 import cats._
 import cats.implicits._
-import com.github.nscala_time.time.Imports.DateTime
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
+import cats.data.NonEmptyList
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.dsl.xlr
-import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.dsl.http
 import com.xebialabs.xlrelease.stress.dsl.http.{Client, Http, HttpLib}
-import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import freestyle.free._
 import freestyle.free.implicits._
 import spray.json._
-
-import scala.concurrent.duration._
-import scala.language.postfixOps
 
 
 class UsersHandler[F[_]]()
@@ -52,7 +45,7 @@ class UsersHandler[F[_]]()
             "username" -> adminUser.username.toJson,
             "password" -> adminUser.password.toJson
           ))
-        cookies = resp.headers[`Set-Cookie`].toList
+        cookies <- getCookies(resp.headers[`Set-Cookie`])
         _ <- target.client.discard(resp)
         session = HttpSession(user, cookies.map(c => Cookie(c.cookie.name, c.cookie.value)))
       } yield session
@@ -108,6 +101,12 @@ class UsersHandler[F[_]]()
         } yield ()
       }
   }
+
+
+  private def getCookies(headers: Seq[`Set-Cookie`]): Target[NonEmptyList[`Set-Cookie`]] =
+    headers.toList.toNel.map(_.pure[Target]).getOrElse {
+      target.error.error[NonEmptyList[`Set-Cookie`]](new RuntimeException("No login cookies!"))
+    }
 
   private def debug(msg: String)(implicit session: User.Session): Target[Unit] =
     target.log.debug(s"${session.user.username}: $msg")

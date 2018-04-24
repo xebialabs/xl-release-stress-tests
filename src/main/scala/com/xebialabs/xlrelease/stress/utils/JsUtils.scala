@@ -151,6 +151,26 @@ object JsUtils {
     json =>
       getStringField("username")(json) map (_.value)
 
+  def readComment: JsValue => JsParsed[Comment] =
+    json =>
+      jsObject(json) >>= { obj =>
+        getStringField("type")(obj) >>= {
+          case JsString("xlrelease.Comment") =>
+            for {
+              id <- getStringField("id")(obj).map(_.value)
+              author <- getStringField("author")(obj).map(_.value)
+              date <- getStringField("date")(obj).map(_.value)
+              text <- getStringField("text")(obj).map(_.value)
+            } yield Comment(id, author, date, text)
+          case _ => wrongType("Not a comment", "type: xlrelease.Comment", obj)
+        }
+      }
+
+  def readComments: JsValue => JsParsed[Seq[Comment]] =
+    json =>
+      getField("comments")(json) >>=
+        getElements >>=
+        (_.toList.map(readComment).sequence[JsParsed, Comment])
 
   def toTaskStatus: JsValue => TaskStatus =
     _.convertTo[TaskStatus]

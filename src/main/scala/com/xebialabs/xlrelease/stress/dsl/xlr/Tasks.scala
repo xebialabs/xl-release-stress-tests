@@ -15,4 +15,5 @@ import scala.language.postfixOps
   def waitFor(taskId: Task.ID, status: TaskStatus = TaskStatus.InProgress,
               interval: FiniteDuration = 5 seconds, retries: Option[Int] = Some(20))
              (implicit session: User.Session): FS[Unit]
+  def getComments(taskId: Task.ID)(implicit session: User.Session): FS[Seq[Comment]]
 }

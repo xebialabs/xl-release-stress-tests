@@ -72,6 +72,12 @@ class TasksHandler()
       getTaskStatus(taskId)
         .until(_.contains(expectedStatus), interval, retries)
     }
+
+    protected def getComments(taskId: Task.ID)
+                             (implicit session: User.Session): IO[Seq[Comment]] =
+      client.getJSON(api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task))
+        .io >>= readComments
+          .toIO("")
   }
 
   def getTaskStatus(taskId: Task.ID)(implicit session: User.Session): () => IO[JsParsed[TaskStatus]] =

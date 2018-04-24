@@ -91,6 +91,15 @@ class TasksHandler[F[_]]()
         .map(_ => ())
 
     }
+
+    protected def getComments(taskId: Task.ID)
+                             (implicit session: User.Session): Target[Seq[Comment]] =
+      for {
+        _ <- debug(s"getComments(${taskId.show})")
+        resp <- target.client.get(api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task))
+        content <- target.client.parseJson(resp)
+        comments <- target.json.read(readComments)(content)
+      } yield comments
   }
 
   private def debug(msg: String)(implicit session: User.Session): Target[Unit] =

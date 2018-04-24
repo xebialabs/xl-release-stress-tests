@@ -28,19 +28,19 @@ class ClientLib[F[_]]()(implicit api: Client[F]) {
 
   def postJSON(uri: Uri, entity: JsValue, headers: List[HttpHeader] = defaultHeaders)
               (implicit session: HttpSession): Target[HttpResponse] =
-    postJSON(uri, entity, Accept(`application/json`) :: session.cookies)
+    postJSON(uri, entity, Accept(`application/json`) :: session.cookies.toList)
 
   def putJSON(uri: Uri, entity: JsValue, headers: List[HttpHeader] = defaultHeaders)
              (implicit session: HttpSession): Target[HttpResponse] =
-    putJSON(uri, entity, headers ++ session.cookies)
+    putJSON(uri, entity, headers ++ session.cookies.toList)
 
   def postZip(uri: Uri, content: File, headers: List[HttpHeader] = defaultHeaders)
              (implicit session: HttpSession): Target[HttpResponse] =
-    postZip(uri, content, headers ++ session.cookies)
+    postZip(uri, content, headers ++ session.cookies.toList)
 
   def delete(uri: Uri, headers: List[HttpHeader] = defaultHeaders)
             (implicit session: HttpSession): Target[HttpResponse] =
-    api.delete(uri, headers ++ session.cookies)
+    api.delete(uri, headers ++ session.cookies.toList)
 
   def jsonEntity(json: JsValue) = HttpEntity(`application/json`, json.compactPrint)
 }
