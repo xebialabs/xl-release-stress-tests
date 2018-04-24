@@ -6,6 +6,7 @@ import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.handlers.io
 import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.handlers.io.RunnerContext
 
 import scala.concurrent.ExecutionContext
 
@@ -30,6 +31,7 @@ object Scenario {
             admin: AdminPassword,
             client: AkkaHttpClient,
             ec: ExecutionContext): Unit = {
+      implicit val ctx: RunnerContext = io.runner
       io.runScenario(scenario)
     }
   }

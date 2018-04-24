@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.matching.Regex
 
-object CreateReleases extends Scenario[Unit] {
+case class CreateReleases() extends Scenario[Unit] {
   override val name: String = s"Simple scenario to create release from groovy"
 
   val releasefile: String = s"""xlr {
@@ -100,16 +100,29 @@ object CreateReleases extends Scenario[Unit] {
   }
 }""".stripMargin
 
-  override val setup: Program[Unit] = dsl.nop
+  override def setup: Program[Unit] =
+    for {
+      _ <- api.log.info("setup")
+      session <- api.xlr.users.admin()
+      _ <- api.log.info(s"end setup: session: $session")
+    } yield ()
 
   val templateIdFromComment: Regex =
     "Created template \\[DSL\\]\\(#\\/templates\\/(.*)\\).".r
 
   override def program(params: Unit): Program[Unit] =
-    api.xlr.users.admin().map { implicit session =>
-      println("LOGGED IN AS ADMIN!: "+ session)
-      ()
-    }
+    for {
+      _ <- api.log.info("program")
+      _ <- api.xlr.users.admin().map { implicit session =>
+        println("LOGGED IN AS ADMIN!: "+ session)
+        ()
+      }
+    } yield ()
+
+  override def cleanup(params: Unit): Program[Unit] =
+    for {
+      _ <- api.log.info("cleanup")
+    } yield ()
 
   def programOrig(params: Unit): Program[Unit] =
     for {

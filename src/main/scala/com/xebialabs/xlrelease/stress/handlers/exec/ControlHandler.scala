@@ -4,22 +4,15 @@ package com.xebialabs.xlrelease.stress.handlers.exec
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
-import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
-import com.xebialabs.xlrelease.stress.handlers.io.runIO
+import com.xebialabs.xlrelease.stress.handlers.io.{RunnerContext, runIO}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 
 
-class ControlHandler(implicit
-                     server: XlrServer,
-                     admin: AdminPassword,
-                     client: AkkaHttpClient,
-                     API: API,
-                     ec: ExecutionContext) {
+class ControlHandler {
 
-  implicit def controlHandler: Control.Handler[IO] = new Control.Handler[IO] {
+  implicit def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = new Control.Handler[IO] {
 
     protected def parallel[A](n: Int)(p: Int => Program[A]): IO[List[A]] =
       IO.pure {

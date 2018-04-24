@@ -18,34 +18,45 @@ import freestyle.free.loggingJVM.log4s.implicits._
 import scala.concurrent.ExecutionContext
 
 package object io {
-  def runIO[A](program: Program[A])
-              (implicit
-               server: XlrServer,
-               admin: AdminPassword,
-               client: AkkaHttpClient,
-               ec: ExecutionContext): IO[A] = {
+  class RunnerContext()(implicit
+                        val usersHandler: Users.Handler[IO],
+                        val releasesHandler: Releases.Handler[IO],
+                        val tasksHandler: Tasks.Handler[IO],
+                        val ec: ExecutionContext)
+
+  object RunnerContext {
+    def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = new ControlHandler().controlHandler
+  }
+
+  def runner(implicit
+             server: XlrServer,
+             admin: AdminPassword,
+             client: AkkaHttpClient,
+             ec: ExecutionContext): RunnerContext = {
     import client.materializer
 
     val usersInterpreter = new UsersHandler
-    val releaseInterpreter = new ReleasesHandler
+    val releasesInterpreter = new ReleasesHandler
     val tasksInterpreter = new TasksHandler
-    val controlInterpreter = new ControlHandler
 
-    implicit val usersHandler: Users.Handler[IO] = usersInterpreter.usersHandler
-    implicit val releasesHandler: Releases.Handler[IO] = releaseInterpreter.releasesHandler
-    implicit val tasksHandler: Tasks.Handler[IO] = tasksInterpreter.tasksHandler
-    implicit val controlHandler: Control.Handler[IO] = controlInterpreter.controlHandler
+    new RunnerContext()(
+      usersInterpreter.usersHandler,
+      releasesInterpreter.releasesHandler,
+      tasksInterpreter.tasksHandler,
+      ec)
+  }
+
+  def runIO[A](program: Program[A])
+              (implicit ctx: RunnerContext): IO[A] = {
+//    import client.materializer
+    import ctx._
+    implicit val ctrl: Control.Handler[IO] = RunnerContext.controlHandler
 
     program.interpret[IO]
   }
 
   def runScenario[A](scenario: Scenario[A])
-                    (implicit
-                     server: XlrServer,
-                     admin: AdminPassword,
-                     client: AkkaHttpClient,
-                     ec: ExecutionContext,
-                     api: API): Unit = {
+                    (implicit ctx: RunnerContext, api: API): Unit = {
     import scenario.showParams
 
     def info(msg: String): api.log.FS[Unit] = api.log.info(s"${scenario.name}: $msg")

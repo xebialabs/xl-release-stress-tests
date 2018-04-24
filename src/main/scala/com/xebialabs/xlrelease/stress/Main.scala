@@ -28,17 +28,18 @@ object Main {
     val hostname = Uri(args(0))
     val adminPassword = args(1)
     val numUsers = args(2).toInt
+    val threads = 2 * Math.max(1, numUsers)
 
     implicit val server: XlrServer = XlrServer(hostname)
     implicit val client: AkkaHttpClient = new AkkaHttpClient()
     implicit val admin: AdminPassword = AdminPassword(adminPassword)
 
-    val pool: ExecutorService = Executors.newFixedThreadPool(2 * numUsers)
+    val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
     scenarios
-      .CompleteReleases(numUsers)
-      .run
+        .CreateReleases().run
+//      .CompleteReleases(numUsers).run
 
     pool.shutdown()
 
