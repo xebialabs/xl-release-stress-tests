@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.http
+package com.xebialabs.xlrelease.stress.dsl.http
 
 import cats._
 import cats.implicits._

@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr
+package com.xebialabs.xlrelease.stress.handlers.xlr.io
 
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
@@ -6,14 +6,14 @@ import akka.util.Timeout
 import cats.Show
 import cats.effect.IO
 import cats.implicits._
-import cats.syntax._
 import com.github.nscala_time.time.Imports.DateTime
-import com.xebialabs.xlrelease.stress.dsl.xlr.Releases
-import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.config.XlrServer
 import com.xebialabs.xlrelease.stress.domain.Release.ID
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.dsl.xlr.Releases
+import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._

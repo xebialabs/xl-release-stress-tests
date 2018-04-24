@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr
+package com.xebialabs.xlrelease.stress.handlers.xlr
 
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.XlrServer

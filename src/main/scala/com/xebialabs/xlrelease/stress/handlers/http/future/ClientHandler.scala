@@ -1,8 +1,9 @@
-package com.xebialabs.xlrelease.stress.http.handlers.future
+package com.xebialabs.xlrelease.stress.handlers.http.future
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{HttpHeader, HttpResponse, RequestEntity, Uri}
-import com.xebialabs.xlrelease.stress.http.Client
+import com.xebialabs.xlrelease.stress.dsl.http.Client
+import com.xebialabs.xlrelease.stress.handlers.http
 import spray.json._
 
 import scala.concurrent.Future

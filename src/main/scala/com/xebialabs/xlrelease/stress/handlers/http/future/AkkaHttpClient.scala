@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.http.handlers.future
+package com.xebialabs.xlrelease.stress.handlers.http.future
 
 import java.io.File
 
@@ -11,7 +11,7 @@ import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.{DateTime => _, _}
 import akka.stream.ActorMaterializer
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.http.defaultHeaders
+import com.xebialabs.xlrelease.stress.dsl.http.defaultHeaders
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}

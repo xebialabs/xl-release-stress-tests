@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.http
+package com.xebialabs.xlrelease.stress.handlers.xlr.http
 
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
@@ -6,11 +6,11 @@ import cats.implicits._
 import com.github.nscala_time.time.Imports.DateTime
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr.XlrRest
+import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.dsl.xlr
 import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
-import com.xebialabs.xlrelease.stress.http
-import com.xebialabs.xlrelease.stress.http.{ClientLib, HttpLib}
+import com.xebialabs.xlrelease.stress.dsl.http
+import com.xebialabs.xlrelease.stress.dsl.http.{Client, HttpLib, Http}
 import com.xebialabs.xlrelease.stress.utils.DateFormat
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import freestyle.free._
@@ -25,14 +25,14 @@ class ReleasesHandler[F[_]]()
                            (implicit val
                             server: XlrServer,
                             adminPassword: AdminPassword,
-                            client: http.Client[F],
-                            target: http.Http[F]) extends XlrRest {
+                            client: Client[F],
+                            target: Http[F]) extends XlrRest {
 
   val httpLib = new HttpLib[F]()
 
   type Target[A] = FreeS[F, A]
 
-  implicit def xlrReleasesHandler: xlr.Releases.Handler[Target] = new xlr.Releases.Handler[Target] with DefaultJsonProtocol with DateFormat {
+  implicit def releasesHandler: xlr.Releases.Handler[Target] = new xlr.Releases.Handler[Target] with DefaultJsonProtocol with DateFormat {
 
     protected def importTemplate(template: Template)
                                 (implicit session: User.Session): Target[Template.ID] =

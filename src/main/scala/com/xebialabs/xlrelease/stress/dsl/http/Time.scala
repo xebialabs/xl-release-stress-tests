@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.http
+package com.xebialabs.xlrelease.stress.dsl.http
 
 import freestyle.free._
 import org.joda.time.{DateTime, Duration}

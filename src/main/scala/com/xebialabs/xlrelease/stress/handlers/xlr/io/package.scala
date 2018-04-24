@@ -1,23 +1,22 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.io
+package com.xebialabs.xlrelease.stress.handlers.xlr
 
-import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.model.Uri.Path./
+import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.stream.Materializer
 import akka.util.Timeout
-import cats.implicits._
-import cats.syntax._
 import cats.effect.IO
+import cats.implicits._
 import com.xebialabs.xlrelease.stress.domain.{HttpSession, Task}
+import com.xebialabs.xlrelease.stress.handlers.http.future._
 import com.xebialabs.xlrelease.stress.utils.JsUtils.JsParsed
-import com.xebialabs.xlrelease.stress.http.handlers.future._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsValue}
 
 import scala.annotation.tailrec
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-package object xlr {
+package object io {
 
   implicit class FutureHttpResponseOps(val futureResponse: Future[HttpResponse]) extends DefaultJsonProtocol {
     def asJson(implicit ec: ExecutionContext, m: Materializer): Future[JsValue] = futureResponse.flatMap(_.entity.asJson[JsValue])

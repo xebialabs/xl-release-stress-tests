@@ -1,6 +1,7 @@
-package com.xebialabs.xlrelease.stress.http.handlers.future
+package com.xebialabs.xlrelease.stress.handlers.http.future
 
-import com.xebialabs.xlrelease.stress.http.Json
+import com.xebialabs.xlrelease.stress.dsl.http.Json
+import com.xebialabs.xlrelease.stress.handlers.http
 import spray.json.{DeserializationException, JsValue}
 
 import scala.concurrent.Future

@@ -1,6 +1,7 @@
-package com.xebialabs.xlrelease.stress.http.handlers.future
+package com.xebialabs.xlrelease.stress.handlers.http.future
 
-import com.xebialabs.xlrelease.stress.http.{Client, Time}
+import com.xebialabs.xlrelease.stress.dsl.http.{Client, Time}
+import com.xebialabs.xlrelease.stress.handlers.http
 import org.joda.time.{DateTime, Duration}
 
 import scala.concurrent.{ExecutionContext, Future}

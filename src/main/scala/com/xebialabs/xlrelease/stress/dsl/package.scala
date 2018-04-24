@@ -10,7 +10,6 @@ package object dsl {
   @module trait DSL {
     val control: Control
     val xlr: Xlr
-
     val log: LoggingM
   }
 

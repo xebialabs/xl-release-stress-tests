@@ -1,12 +1,12 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.io.exec
+package com.xebialabs.xlrelease.stress.handlers.exec
 
 
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.dsl.{API, Program}
 import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
-import com.xebialabs.xlrelease.stress.dsl.handlers.io.runIO
+import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.handlers.io.runIO
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext

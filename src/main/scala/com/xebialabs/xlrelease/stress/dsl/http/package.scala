@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress
+package com.xebialabs.xlrelease.stress.dsl
 
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.MediaTypes.`application/json`

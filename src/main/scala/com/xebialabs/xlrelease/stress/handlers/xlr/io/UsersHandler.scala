@@ -1,14 +1,14 @@
-package com.xebialabs.xlrelease.stress.dsl.handlers.io.xlr
+package com.xebialabs.xlrelease.stress.handlers.xlr.io
 
-import cats.implicits._
-import cats.effect.IO
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import akka.stream.Materializer
-import cats.Show
-import com.xebialabs.xlrelease.stress.dsl.xlr.Users
+import cats.effect.IO
+import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
 import com.xebialabs.xlrelease.stress.domain._
-import com.xebialabs.xlrelease.stress.http.handlers.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.handlers.http.future.AkkaHttpClient
+import com.xebialabs.xlrelease.stress.dsl.xlr.Users
+import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 

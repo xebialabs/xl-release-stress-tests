@@ -1,4 +1,4 @@
-package com.xebialabs.xlrelease.stress.http
+package com.xebialabs.xlrelease.stress.dsl.http
 
 import akka.http.scaladsl.model.{HttpHeader, HttpResponse, RequestEntity, Uri}
 import freestyle.free._
