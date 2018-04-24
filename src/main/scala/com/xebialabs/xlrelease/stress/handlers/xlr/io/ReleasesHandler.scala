@@ -87,6 +87,7 @@ class ReleasesHandler()
             "username" -> session.user.username.toJson
           ),
           "scriptUsername" -> JsObject(
+            "fullName" -> "".toJson,
             "username" -> user.username.toJson
           ),
           "scriptUserPassword" -> user.password.toJson
@@ -101,7 +102,7 @@ class ReleasesHandler()
       client.postJSON(
         api(_ / "releases" / "Applications" / releaseId / "start"),
         JsNull
-      ).discard(_ => releaseId).io
+      ).discard_(_ => releaseId).io
 
     protected def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String])
                                  (implicit session: User.Session): IO[Seq[Task.ID]] = {

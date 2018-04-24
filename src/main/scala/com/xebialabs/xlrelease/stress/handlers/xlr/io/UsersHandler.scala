@@ -12,7 +12,7 @@ import com.xebialabs.xlrelease.stress.handlers.xlr.XlrRest
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class UsersHandler()
                   (implicit val
@@ -26,24 +26,21 @@ class UsersHandler()
 
     protected val adminUser = User("admin", "", "", adminPassword.password)
 
-    println(s"Users handler[IO]: adminUser is $adminUser")
-
     protected var _adminSession: Option[HttpSession] = None
 
     def adminLogin(): IO[HttpSession] = {
-      println("adminLogin(): _adminSession is: "+ _adminSession)
       login(adminUser).map { session =>
-        println(s"logged id as admin, got session: $session")
         _adminSession = Some(session)
         session
       }
     }
 
+    adminLogin()
+
     protected def admin(): IO[User.Session] =
       _adminSession.fold(adminLogin())(IO.pure)
 
     protected def login(user: User): IO[User.Session] = {
-      println(s"logging in as ${user.username} ...")
       client.postJSON0(
         root(_ / "login"),
         JsObject(
@@ -54,11 +51,9 @@ class UsersHandler()
         val cookies = resp.headers[`Set-Cookie`].toList
         cookies.toNel match {
           case None =>
-            println(s"headers: ${resp.headers.toString}")
-            throw new RuntimeException("No login cookies!")
+            Future.failed(new RuntimeException("No login cookies!"))
           case Some(nel) =>
-            println("got cookies!: " + cookies)
-            HttpSession(user, nel.map(sc => Cookie(sc.cookie.name, sc.cookie.value)))
+            Future.successful(HttpSession(user, nel.map(sc => Cookie(sc.cookie.name, sc.cookie.value))))
         }
       }.io
     }
@@ -86,7 +81,7 @@ class UsersHandler()
             "name" -> role.rolename.toJson,
             "permissions" -> role.permissions.map(_.permission.toJson).toJson,
             "principals" -> role.principals.map(user => JsObject("username" -> user.username.toJson)).toJson
-          )).discard(_ => role.rolename).io
+          )).discard_(_ => role.rolename).io
       }
 
     protected def deleteUser(userId: User.ID): IO[Unit] =

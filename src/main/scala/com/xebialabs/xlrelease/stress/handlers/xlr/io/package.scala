@@ -21,14 +21,20 @@ package object io {
   implicit class FutureHttpResponseOps(val futureResponse: Future[HttpResponse]) extends DefaultJsonProtocol {
     def asJson(implicit ec: ExecutionContext, m: Materializer): Future[JsValue] = futureResponse.flatMap(_.entity.asJson[JsValue])
 
-    def discard[A](f: HttpResponse => A)(implicit ec: ExecutionContext, m: Materializer): Future[A] = futureResponse.map { resp =>
-      println("discarding response: "+ resp.status + " content: "+ resp.entity + " headers: "+ resp.headers)
+    def discard_[A](f: HttpResponse => A)(implicit ec: ExecutionContext, m: Materializer): Future[A] = futureResponse.map { resp =>
       val a = f(resp)
       resp.discardEntityBytes()
       a
     }
 
-    def discardU(implicit ec: ExecutionContext, m: Materializer): Future[Unit] = discard(_ => ())
+    def discard[A](f: HttpResponse => Future[A])(implicit ec: ExecutionContext, m: Materializer): Future[A] =
+      futureResponse.flatMap { resp =>
+        val fa = f(resp)
+        resp.discardEntityBytes()
+        fa
+      }
+
+    def discardU(implicit ec: ExecutionContext, m: Materializer): Future[Unit] = discard_(_ => ())
   }
 
   def doUntil[A](cond: A => Boolean, interval: FiniteDuration, retries: Option[Int])

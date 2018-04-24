@@ -39,15 +39,7 @@ class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
     Http().singleRequest(HttpRequest(POST, uri,
       entity = HttpEntity(`application/json`, entity.compactPrint),
       headers = headers
-    )).flatMap { resp =>
-      resp.onSuccess { entity =>
-        println(s"PostJSON response: $entity")
-        Future.successful(resp)
-      }.onFailure { (status, content) =>
-        println("FAILURE!! "+ status + " "+ content)
-        new RuntimeException(s"Failed: POST ${uri.toString}: $status $content")
-      }
-    }
+    ))
 
   def postJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] =
     postJSON0(uri, entity, Accept(`application/json`) :: session.cookies.toList)

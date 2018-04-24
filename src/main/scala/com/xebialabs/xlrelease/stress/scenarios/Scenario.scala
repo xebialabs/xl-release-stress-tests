@@ -19,7 +19,7 @@ trait Scenario[A] {
 
   def program(params: A): Program[Unit]
 
-  def cleanup(params: A): Program[Unit] = dsl.nop
+  def cleanup(params: A): Program[Unit]
 
   implicit val showParams: Show[A]
 }

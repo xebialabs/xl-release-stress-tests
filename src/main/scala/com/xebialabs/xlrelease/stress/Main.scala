@@ -38,8 +38,8 @@ object Main {
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
     scenarios
-        .CreateReleases().run
-//      .CompleteReleases(numUsers).run
+      .CreateReleases(admin).run
+//      .CompleteReleases(1).run
 
     pool.shutdown()
 

@@ -16,6 +16,7 @@ import freestyle.free.implicits._
 import freestyle.free.loggingJVM.log4s.implicits._
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success, Try}
 
 package object io {
   class RunnerContext()(implicit
@@ -48,7 +49,6 @@ package object io {
 
   def runIO[A](program: Program[A])
               (implicit ctx: RunnerContext): IO[A] = {
-//    import client.materializer
     import ctx._
     implicit val ctrl: Control.Handler[IO] = RunnerContext.controlHandler
 
@@ -62,11 +62,6 @@ package object io {
     def info(msg: String): api.log.FS[Unit] = api.log.info(s"${scenario.name}: $msg")
     def warn(msg: String): api.log.FS[Unit] = api.log.warn(s"${scenario.name}: $msg")
 
-    def error(err: => Throwable): Program[Unit] = for {
-      _ <- api.log.error(s"${scenario.name}: Error during scenario execution: ${err.getMessage}")
-      _ <- err.getCause.getStackTrace.map(t => warn(t.toString)).toList.sequence
-    } yield ()
-
     val setup: Program[A] = for {
       _ <- info("setting up...")
       params <- scenario.setup
@@ -76,21 +71,9 @@ package object io {
     def program(params: A): Program[Unit] =
       for {
         _ <- info(s"Running scenario")
-        r <- scenario.program(params)
-        _ <- info(s"scenario program: $r")
+        _ <- scenario.program(params)
         _ <- info(s"Scenario done")
       } yield ()
-
-    def runProgram(params: A): IO[Unit] =
-        runIO(program(params))
-          .runCancelable {
-            case Left(err) =>
-              runIO(error(err))
-            case Right(_) =>
-              ().pure[IO]
-          }.unsafeRunSync()
-
-    val nop: Program[Unit] = ().pure[Program]
 
     def logClean(p: Program[Unit]): Program[Unit] =
       for {
@@ -102,13 +85,16 @@ package object io {
     def runCleanup(params: A): IO[Unit] =
       runIO(logClean(scenario.cleanup(params)))
 
-    val exec: IO[Unit] = for {
-      params <- runIO(setup)
-      _ <- runProgram(params)
-      _ <- runCleanup(params)
-    } yield ()
+    val params: A = runIO(setup).unsafeRunSync()
 
-    exec.unsafeRunSync()
+    Try {
+      runIO(program(params)).unsafeRunSync()
+    }.recoverWith { case err =>
+      println("!! Error while executing program : "+ err)
+      Success(())
+    }.map { _ =>
+      runCleanup(params).unsafeRunSync()
+    }
   }
 
   def shutdown(implicit client: AkkaHttpClient): IO[Unit] = {
