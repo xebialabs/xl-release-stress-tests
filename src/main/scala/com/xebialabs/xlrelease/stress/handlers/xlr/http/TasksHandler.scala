@@ -43,6 +43,20 @@ class TasksHandler[F[_]]()
         taskId <- http.json.read(readTaskId(sep = "/"))(content)
       } yield taskId
 
+    protected def appendManualTask(phaseId: Phase.ID, title: String)
+                                  (implicit session: User.Session): Target[Task.ID] =
+      for {
+        _ <- debug(s"appendManualTask(${phaseId.show}, $title)")
+        resp <- httpLib.client.postJSON(api(_ / "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+          JsObject(
+            "id" -> JsNull,
+            "title" -> title.toJson,
+            "type" -> "xlrelease.Task".toJson
+          ))
+        content <- http.client.parseJson(resp)
+        taskId <- http.json.read(readTaskId(sep = "/"))(content)
+      } yield taskId
+
     protected def assignTo(taskId: Task.ID, assignee: User.ID)(implicit session: User.Session): Target[Unit] =
       for {
         _ <- debug(s"assignTo(${taskId.show}, $assignee")

@@ -3,7 +3,7 @@ package com.xebialabs.xlrelease.stress.domain
 import cats.Show
 import cats.implicits._
 
-case class Role(rolename: Role.ID,
+case class Role(roleName: Role.ID,
                 permissions: Set[Permission],
                 principals: Set[User])
 

@@ -2,11 +2,9 @@ package com.xebialabs.xlrelease.stress.domain
 
 import cats._
 import cats.implicits._
-import spray.json._
 import com.xebialabs.xlrelease.stress.domain.Permission._
 import com.xebialabs.xlrelease.stress.utils.JsUtils._
-
-import scala.util.Failure
+import spray.json._
 
 case class Team(teamName: String,
                 members: Seq[Member],
@@ -16,6 +14,11 @@ case class Team(teamName: String,
 
 object Team extends DefaultJsonProtocol {
   type ID = Option[String]
+
+  implicit val teamShow: Show[Team] = {
+    case Team(name, members, permissions, systemTeam, id) =>
+      s"$name ${members.map(_.show).mkString("[", ", ", "]")} ${permissions.map((_: Permission).show).mkString("{", ", ", "}")} (system: ${systemTeam})"
+  }
 
   implicit val teamWriter: RootJsonWriter[Team] = team => JsObject(
     "id" -> team.id.toJson,
@@ -70,5 +73,4 @@ object Team extends DefaultJsonProtocol {
       releaseAdminPermissions.toSeq,
       systemTeam = true
     )
-
 }

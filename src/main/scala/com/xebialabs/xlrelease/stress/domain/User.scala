@@ -3,7 +3,7 @@ package com.xebialabs.xlrelease.stress.domain
 import cats.Show
 
 case class User(username: User.ID,
-                fullname: String,
+                fullName: String,
                 email: String,
                 password: String)
 

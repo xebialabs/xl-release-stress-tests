@@ -58,7 +58,7 @@ class UsersHandler[F[_]]()
           _ <- debug(s"createUser(${user.username})")
           resp <- httpLib.client.postJSON(api(_ / "users" / user.username),
             JsObject(
-              "fullName" -> user.fullname.toJson,
+              "fullName" -> user.fullName.toJson,
               "email" -> user.email.toJson,
               "loginAllowed" -> true.toJson,
               "password" -> user.password.toJson
@@ -71,15 +71,15 @@ class UsersHandler[F[_]]()
     protected def createRole(role: Role): Target[Role.ID] =
       admin() >>= { implicit session =>
         for {
-          _ <- debug(s"createRole(${role.rolename})")
-          resp <- httpLib.client.postJSON(api(_ / "roles" / role.rolename),
+          _ <- debug(s"createRole(${role.roleName})")
+          resp <- httpLib.client.postJSON(api(_ / "roles" / role.roleName),
             JsObject(
-              "name" -> role.rolename.toJson,
+              "name" -> role.roleName.toJson,
               "permissions" -> role.permissions.map(_.permission.toJson).toJson,
               "principals" -> role.principals.map(user => JsObject("username" -> user.username.toJson)).toJson
             ))
           _ <- http.client.discard(resp)
-        } yield role.rolename
+        } yield role.roleName
       }
 
     protected def deleteUser(userId: User.ID): Target[Unit] =

@@ -119,7 +119,7 @@ object JsUtils {
 
   def readTaskStatus: JsValue => JsParsed[TaskStatus] =
     json =>
-      getStatus(json) map toTaskStatus
+      getStatus(json) >>= toTaskStatus
 
   def readFirstTaskStatus: JsValue => JsParsed[TaskStatus] =
     json =>
@@ -133,7 +133,7 @@ object JsUtils {
 
   def readReleaseStatus: JsValue => JsParsed[ReleaseStatus] =
     json =>
-      getStatus(json) map toReleaseStatus
+      getStatus(json) >>= toReleaseStatus
 
   def readFirstPhaseId(sep: String): JsValue => JsParsed[Phase.ID] =
     json =>
@@ -199,11 +199,13 @@ object JsUtils {
         getElements >>=
         (_.toList.map(readComment).sequence[JsParsed, Comment])
 
-  def toTaskStatus: JsValue => TaskStatus =
-    _.convertTo[TaskStatus]
+  def toTaskStatus: JsValue => JsParsed[TaskStatus] =
+    json =>
+      convert[TaskStatus](json)
 
-  def toReleaseStatus: JsValue => ReleaseStatus =
-    _.convertTo[ReleaseStatus]
+  def toReleaseStatus: JsValue => JsParsed[ReleaseStatus] =
+    json =>
+      convert[ReleaseStatus](json)
 
   def parsePhaseId(sep: String = "/"): String => JsParsed[Phase.ID] =
     fullId =>

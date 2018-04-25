@@ -6,8 +6,7 @@ import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTe
 import com.xebialabs.xlrelease.stress.domain._
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
-import com.xebialabs.xlrelease.stress.domain.Team.{releaseAdmin, templateOwner}
-import com.xebialabs.xlrelease.stress.dsl.{API, Program}
+import com.xebialabs.xlrelease.stress.dsl.Program
 import com.xebialabs.xlrelease.stress.utils.TmpResource
 import freestyle.free._
 import freestyle.free.implicits._
@@ -27,16 +26,28 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
     api.xlr.users.admin() flatMap { implicit session =>
       for {
         role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
-        members     = Seq(RoleMember(role.rolename))
+        members     = Seq(RoleMember(role.roleName))
         templateId  <- createReleaseFromGroovy(
           "Title of the Release that will Create Template from groovy",
           template,
           "###ADMIN_PASSWORD###",
           session.user.password
         )
-//        _ <- api.log.info("template created: "+ templateId)
-        _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner(members), releaseAdmin(members)))
-//        _ <- api.log.info("template teams setup correctly")
+        _ <- api.log.info("template created: "+ templateId)
+        _ <- api.log.info("getting template teams...")
+        teams <- api.xlr.releases.getTemplateTeams(templateId)
+        teamsMap = teams.map(t => t.teamName -> t).toMap
+        templateOwner = teamsMap.get("Template Owner").get match {
+          case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+        }
+        releaseAdmin = teamsMap.get("Release Admin").get match {
+          case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+        }
+        _ <- api.log.info("setting up teams:")
+        _ <- api.log.info(s"template owner: ${templateOwner.show}")
+        _ <- api.log.info(s"release admin: ${releaseAdmin.show}")
+        _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner, releaseAdmin))
+        _ <- api.log.info("template teams setup correctly")
       } yield (role, templateId)
     }
 
@@ -81,7 +92,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
       for {
         _ <- api.log.info("Cleaning up users and role")
         _ <- deleteUsers(role.principals.map(_.username).toList)
-        _ <- api.xlr.users.deleteRole(role.rolename)
+        _ <- api.xlr.users.deleteRole(role.roleName)
       } yield ()
   }
 
@@ -99,7 +110,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
   }
 
   protected def generateUsers(n: Int): List[User] =
-    (0 to n).toList.map(i => User(s"user$i", "", "", s"user$i"))
+    (0 until n).toList.map(i => User(s"user$i", "", "", s"user$i"))
 
   protected def createUsers(n: Int): Program[List[User]] = {
     (api.log.info(s"Creating $n users..."): Program[Unit]) >> {

@@ -41,6 +41,19 @@ class TasksHandler()
         readTaskId(sep = "/")
           .toIO(s"appendScriptTask(${phaseId.show}, $title, $taskType): failed to read Task Id")
 
+    protected def appendManualTask(phaseId: Phase.ID, title: String)
+                                  (implicit session: User.Session): IO[Task.ID] =
+      client.postJSON(
+        api(_ / "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+        JsObject(
+          "id" -> JsNull,
+          "title" -> title.toJson,
+          "type" -> "xlrelease.Task".toJson
+        )
+      ).asJson.io >>=
+        readTaskId(sep = "/")
+          .toIO(s"appendManualTask(${phaseId.show}, $title): failed to read Task Id")
+
     protected def assignTo(taskId: Task.ID, assignee: User.ID)
                           (implicit session: User.Session): IO[Unit] =
       client.postJSON(

@@ -41,7 +41,7 @@ class ReleasesHandler()
 
     protected def getTemplateTeams(releaseId: Release.ID)
                                   (implicit session: User.Session): IO[Seq[Team]] =
-      client.getJSON(api(_ / "templates" / releaseId / "teams"))
+      client.getJSON(api(_ / "templates" / "Applications" / releaseId / "teams"))
         .io >>=
           readTeams
           .toIO(s"getTemplateTeams($releaseId): could not read Teams")

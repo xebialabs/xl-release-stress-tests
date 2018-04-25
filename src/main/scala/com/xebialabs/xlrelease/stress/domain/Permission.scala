@@ -107,15 +107,13 @@ object Permission extends DefaultJsonProtocol {
   val allPermissions: Set[Permission] =
     (allGlobalPermissions.map(x => x): Set[Permission]) union (allLocalPermissions.map(x => x): Set[Permission])
 
-  implicit val showPermission: Show[Permission] = {
-    case p: Permission if p.isLocal => "(local) " + p.permission
-    case p: Permission => p.permission
-  }
+  implicit val showPermission: Show[Permission] = _.permission
+  implicit val showLocalPermission: Show[Local] = showPermission.show(_)
+  implicit val showGlobalPermission: Show[Global] = showPermission.show(_)
 
   implicit val permissionWriter: RootJsonWriter[Permission] = permission => permission.permission.toJson
-
-  implicit val localPermissionWriter: RootJsonWriter[Local] = p => permissionWriter.write(p)
-  implicit val globalPermissionWriter: RootJsonWriter[Global] = p => permissionWriter.write(p)
+  implicit val localPermissionWriter: RootJsonWriter[Local] = permissionWriter.write(_)
+  implicit val globalPermissionWriter: RootJsonWriter[Global] =  permissionWriter.write(_)
 
   implicit val localPermissionReader: RootJsonReader[Local] = json => {
     jsString(json).map(_.value) >>= { str =>

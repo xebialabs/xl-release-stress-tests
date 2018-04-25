@@ -60,7 +60,7 @@ class UsersHandler()
       client.postJSON(
         api(_ / "users" / user.username),
         JsObject(
-          "fullName" -> user.fullname.toJson,
+          "fullName" -> user.fullName.toJson,
           "email" -> user.email.toJson,
           "loginAllowed" -> true.toJson,
           "password" -> user.password.toJson
@@ -81,12 +81,12 @@ class UsersHandler()
     protected def createRole(role: Role): IO[Role.ID] =
       admin() >>= { implicit session =>
         client.postJSON(
-          api(_ / "roles" / role.rolename),
+          api(_ / "roles" / role.roleName),
           JsObject(
-            "name" -> role.rolename.toJson,
+            "name" -> role.roleName.toJson,
             "permissions" -> role.permissions.map(_.permission.toJson).toJson,
             "principals" -> role.principals.map(user => JsObject("username" -> user.username.toJson)).toJson
-          )).discard_(_ => role.rolename).io
+          )).discard_(_ => role.roleName).io
       }
 
     protected def deleteUser(userId: User.ID): IO[Unit] =

@@ -8,11 +8,18 @@ import com.xebialabs.xlrelease.stress.utils.JsUtils._
 import spray.json._
 
 
-sealed trait Member
+trait Member {
+  def id: String
+}
 
 object Member extends DefaultJsonProtocol {
-  case class RoleMember(roleId: Role.ID) extends Member
-  case class UserMember(userId: User.ID) extends Member
+  case class RoleMember(id: Role.ID) extends Member
+  case class UserMember(id: User.ID) extends Member
+
+  implicit val memberShow: Show[Member] = {
+    case RoleMember(id) => s"Role($id)"
+    case UserMember(id) => s"User($id)"
+  }
 
   implicit val memberWriter: RootJsonWriter[Member] = {
     case RoleMember(roleId) => JsObject(
