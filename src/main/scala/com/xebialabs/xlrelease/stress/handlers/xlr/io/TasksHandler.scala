@@ -57,14 +57,14 @@ class TasksHandler()
     protected def assignTo(taskId: Task.ID, assignee: User.ID)
                           (implicit session: User.Session): IO[Unit] =
       client.postJSON(
-        api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "assign" / assignee),
+        api(_ / "tasks" / "Applications" ++ taskId.path / "assign" / assignee),
         JsNull
       ).discardU.io
 
     protected def complete(taskId: Task.ID, comment: Option[String] = None)
                           (implicit session: User.Session): IO[Boolean] =
       client.postJSON(
-        api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task / "complete"),
+        api(_ / "tasks" / "Applications" ++ taskId.path / "complete"),
         comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
       ).asJson
         .map(matchesTaskStatus(TaskStatus.Completed))
@@ -88,7 +88,7 @@ class TasksHandler()
 
     protected def getComments(taskId: Task.ID)
                              (implicit session: User.Session): IO[Seq[Comment]] =
-      client.getJSON(api(_ / "tasks" / "Applications" / taskId.release / taskId.phase / taskId.task))
+      client.getJSON(api(_ / "tasks" / "Applications" ++ taskId.path))
         .io >>= readComments
           .toIO("")
   }
