@@ -17,7 +17,7 @@ trait ScenarioUtils { scenario: Scenario[_] =>
   protected val idFromCommentRegex: Regex =
     "Created (release|template) \\[.*\\]\\(#\\/(releases|templates)\\/(.*)\\).".r
 
-  protected def getIdFromComment(str: String): Option[Template.ID] =
+  def getIdFromComment(str: String): Option[Template.ID] =
     idFromCommentRegex.findFirstMatchIn(str).flatMap { m =>
       if (m.groupCount < 3) {
         None

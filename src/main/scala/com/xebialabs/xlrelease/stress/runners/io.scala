@@ -90,6 +90,7 @@ object io {
       runIO(program(params)).unsafeRunSync()
     }.recoverWith { case err =>
       println("!! Error while executing program : "+ err)
+      err.printStackTrace()
       Success(())
     }.map { _ =>
       runCleanup(params).unsafeRunSync()

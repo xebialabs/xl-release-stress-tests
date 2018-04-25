@@ -18,6 +18,7 @@ import spray.json._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
 class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
   import AkkaHttpClient._
@@ -105,9 +106,17 @@ object AkkaHttpClient {
 
     def asJson[T: JsonReader](implicit m: Materializer, ec: ExecutionContext): Future[T] =
       asString
-        .map(_.parseJson.convertTo[T])
+        .flatMap { content =>
+          Try(content.parseJson.convertTo[T]) match {
+            case Success(json) => Future.successful(json)
+            case Failure(err) =>
+              println(s"cannot parse json:")
+              println(content)
+              err.printStackTrace()
+              Future.failed(err)
+          }
+        }
   }
-
 
   implicit class RespSyntax(val resp: HttpResponse) extends AnyVal {
     def onSuccess[A](f: HttpEntity => Future[A]): SuccessMapped[A] = {

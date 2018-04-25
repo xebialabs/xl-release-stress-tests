@@ -16,7 +16,11 @@ import scala.io.Source
 case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils {
   override val name: String = s"Simple scenario ($numUsers users)"
 
-  val template = Source.fromResource("DSL-template.groovy")
+  val masterAutomationTpl = Source.fromResource("MasterAutomationTemplate.groovy")
+    .getLines()
+    .mkString("\n")
+
+  val masterSeedTpl = Source.fromResource("MasterSeedTemplate.groovy")
     .getLines()
     .mkString("\n")
 
@@ -25,29 +29,41 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
       for {
         role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
         members     = Seq(RoleMember(role.roleName))
-        templateId  <- createReleaseFromGroovy(
-          "Create Mater Performance Template from groovy",
-          template,
+        automationId  <- createReleaseFromGroovy(
+          "Create Master Automation Template from groovy",
+          masterAutomationTpl,
           "###ADMIN_PASSWORD###",
           session.user.password
         )
-        _ <- api.log.info("template created: "+ templateId)
-        _ <- api.log.info("getting template teams...")
-        teams <- api.xlr.releases.getTemplateTeams(templateId)
-        teamsMap = teams.map(t => t.teamName -> t).toMap
-        templateOwner = teamsMap.get("Template Owner").get match {
-          case team => team.copy(members = team.members :+ RoleMember(role.roleName))
-        }
-        releaseAdmin = teamsMap.get("Release Admin").get match {
-          case team => team.copy(members = team.members :+ RoleMember(role.roleName))
-        }
-        _ <- api.log.info("setting up teams:")
-        _ <- api.log.info(s"template owner: ${templateOwner.show}")
-        _ <- api.log.info(s"release admin: ${releaseAdmin.show}")
-        _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner, releaseAdmin))
-        _ <- api.log.info("template teams setup correctly")
-      } yield (role, templateId)
+        seedId <- createReleaseFromGroovy(
+          "Create Master Seed Template from groovy",
+          masterSeedTpl,
+          "###ADMIN_PASSWORD###",
+          session.user.password
+        )
+        _ <- setupTeams(role, automationId)
+        _ <- setupTeams(role, seedId)
+      } yield (role, seedId)
     }
+
+  private def setupTeams(role: Role, templateId: Template.ID)(implicit session: User.Session): Program[Unit] =
+    for {
+      _ <- api.log.info("template created: " + templateId)
+      _ <- api.log.info("getting template teams...")
+      teams <- api.xlr.releases.getTemplateTeams(templateId)
+      teamsMap = teams.map(t => t.teamName -> t).toMap
+      templateOwner = teamsMap.get("Template Owner").get match {
+        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+      }
+      releaseAdmin = teamsMap.get("Release Admin").get match {
+        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+      }
+      _ <- api.log.info("setting up teams:")
+      _ <- api.log.info(templateOwner.show)
+      _ <- api.log.info(releaseAdmin.show)
+      _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner, releaseAdmin))
+      _ <- api.log.info("template teams setup correctly")
+    } yield ()
 
   override def program(params: (Role, Template.ID)): Program[Unit] = params match {
     case (role, templateId) =>
@@ -65,22 +81,33 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
       for {
         _ <- msg(s"logged in as ${user.username}...")
         _ <- msg("Creating release from template")
-        releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(
-          title = s"${user.username}'s test dsl",
-          variables = Map("var1" -> "Happy!")
+        seedRelId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(
+          title = s"Seed release by ${user.username}",
+          variables = Map("user" -> user.username)
         ))
-        taskIds <- api.xlr.releases.getTasksByTitle(releaseId, "UI")
+        _ <- msg(s"Starting release $seedRelId")
+        _ <- api.xlr.releases.start(seedRelId)
+        taskIds <- api.xlr.releases.getTasksByTitle(seedRelId, "CR1")
         taskId = taskIds.head
-        _ <- msg(s"Assigning task ${taskId.show} to ${user.username}")
-        _ <- api.xlr.tasks.assignTo(taskId, user.username)
-        _ <- msg(s"Starting release $releaseId")
-        _ <- api.xlr.releases.start(releaseId)
         _ <- msg(s"Waiting for task ${taskId.show}")
-        _ <- api.xlr.tasks.waitFor(taskId, TaskStatus.InProgress, retries = None)
-        _ <- msg(s"Completing task ${taskId.show}")
-        _ <- api.xlr.tasks.complete(taskId)
+        _ <- api.xlr.tasks.waitFor(taskId, TaskStatus.Completed, retries = None)
+        _ <- api.log.debug(s"getComments(${taskId.show})")
+        comments <- api.xlr.tasks.getComments(taskId)
+        _ <- api.log.debug(s"comments: ${comments.mkString("\n")}")
+        comment <- comments.init.lastOption.map(api.control.ok).getOrElse {
+          api.control.fail(s"No comments in task ${taskId.show}")
+        }
+        _ <- api.log.debug("last comment: "+ comment)
+        createdRelId <- getIdFromComment(comment.text).map(api.control.ok).getOrElse {
+          api.control.fail(s"Cannot extract releaseId from comment: ${comment}")
+        }
+        manualTaskIds <- api.xlr.releases.getTasksByTitle(createdRelId, "UI")
+        uiTaskId = manualTaskIds.head
+        - <- api.xlr.tasks.assignTo(uiTaskId, user.username)
+        _ <- msg(s"Completing task ${uiTaskId.show}")
+        _ <- api.xlr.tasks.complete(uiTaskId)
         _ <- msg("Waiting for release to complete")
-        _ <- api.xlr.releases.waitFor(releaseId, ReleaseStatus.Completed, retries = None)
+        _ <- api.xlr.releases.waitFor(seedRelId, ReleaseStatus.Completed, retries = None)
       } yield ()
     }
   }

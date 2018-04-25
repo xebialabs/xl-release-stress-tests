@@ -6,6 +6,7 @@ import com.xebialabs.xlrelease.stress.dsl.exec.Control
 import com.xebialabs.xlrelease.stress.runners.io.{RunnerContext, runIO}
 
 import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success, Try}
 
 
 object ControlHandler {
@@ -17,8 +18,14 @@ object ControlHandler {
         (0 until n)
           .map(p)
           .par
-            .map(program => runIO(program).unsafeRunSync())
-          .seq.toList
+            .map(program => Try(runIO(program).unsafeRunSync()) match {
+              case Success(a) =>
+                Some(a)
+              case Failure(err) =>
+                err.printStackTrace()
+                None
+            })
+          .seq.toList.flatten
       }
 
     protected def pause(duration: Duration): IO[Unit] = {
