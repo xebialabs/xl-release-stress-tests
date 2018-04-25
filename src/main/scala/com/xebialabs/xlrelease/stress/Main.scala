@@ -3,7 +3,8 @@ package com.xebialabs.xlrelease.stress
 import java.util.concurrent._
 
 import akka.http.scaladsl.model.Uri
-import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
+import com.xebialabs.xlrelease.stress.dsl.DSL
 import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
@@ -30,15 +31,18 @@ object Main {
     val numUsers = args(2).toInt
     val threads = 2 * Math.max(1, numUsers)
 
-    implicit val server: XlrServer = XlrServer(hostname)
-    implicit val client: AkkaHttpClient = new AkkaHttpClient()
-    implicit val admin: AdminPassword = AdminPassword(adminPassword)
+    implicit val config: XlrConfig = XlrConfig(
+      server = XlrServer(hostname),
+      adminPassword = AdminPassword(adminPassword)
+    )
 
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
+    val api: DSL[DSL.Op] = implicitly[DSL[DSL.Op]]
+
     scenarios
-      .CompleteReleases(numUsers).run
+      .CompleteReleases(numUsers)(config, api).run
 
     pool.shutdown()
 

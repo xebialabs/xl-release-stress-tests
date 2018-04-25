@@ -1,0 +1,108 @@
+package com.xebialabs.xlrelease.stress.dsl.libs.xlr
+
+import akka.http.scaladsl.model.Uri
+import cats.implicits._
+import com.github.nscala_time.time.Imports.DateTime
+import com.xebialabs.xlrelease.stress.config.XlrServer
+import com.xebialabs.xlrelease.stress.domain._
+import com.xebialabs.xlrelease.stress.dsl.DSL
+import com.xebialabs.xlrelease.stress.dsl.libs.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.utils.{DateFormat, JsUtils}
+import freestyle.free._
+import freestyle.free.implicits._
+import spray.json._
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+
+class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) extends XlrLib[F] with DefaultJsonProtocol with DateFormat {
+
+  def createFromTemplate(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)
+                        (implicit session: User.Session): Program[Release.ID] =
+    for {
+      _ <- log.debug(s"createFromTeamplte($templateId, ${createReleaseArgs.show})")
+      resp <- lib.http.json.post(server.api(_ / "templates" / "Applications" / templateId / "create"), createReleaseArgs.toJson)
+      content <- api.http.parseJson(resp)
+      releaseId <- lib.json.read(JsUtils.readIdString)(content)
+    } yield releaseId
+
+  def createRelease(title: String, scriptUser: Option[User] = None)
+                   (implicit session: User.Session): Program[Phase.ID] = {
+    val user: User = scriptUser.getOrElse(session.user)
+    for {
+      _ <- log.debug(s"createRelease($title, ${scriptUser.map(_.show)})")
+      resp <- lib.http.json.post(server.root(_ / "releases"),
+        JsObject(
+          "templateId" -> JsNull,
+          "title" -> title.toJson,
+          "scheduledStartDate" -> DateTime.now.toJson,
+          "dueDate" -> (DateTime.now plusHours 5).toJson,
+          "type" -> "xlrelease.Release".toJson,
+          "owner" -> JsObject(
+            "username" -> session.user.username.toJson
+          ),
+          "scriptUsername" -> JsObject(
+            "username" -> user.username.toJson
+          ),
+          "scriptUserPassword" -> user.password.toJson
+        ))
+      content <- api.http.parseJson(resp)
+      phaseId <- lib.json.read(JsUtils.readFirstPhaseId(sep = "-"))(content)
+    } yield phaseId
+  }
+
+  def start(releaseId: Release.ID)
+           (implicit session: User.Session): Program[Release.ID] =
+    for {
+      _ <- log.debug(s"start($releaseId)")
+      resp <- lib.http.json.post(server.api(_ / "releases" / "Applications" / releaseId / "start"), JsNull)
+      _ <- api.http.discard(resp)
+    } yield releaseId
+
+  def abort(releaseId: Release.ID)
+           (implicit session: User.Session): Program[Release.ID] =
+    for {
+      _ <- log.debug(s"abort($releaseId)")
+      resp <- lib.http.json.post(server.api(_ / "releases" / "Applications" / releaseId / "abort"), JsNull)
+      _ <- api.http.discard(resp)
+    } yield releaseId
+
+  def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)
+                     (implicit session: User.Session): Program[Seq[Task.ID]] = {
+    val baseQuery = Uri.Query(
+      "releaseId" -> s"Applications/$releaseId",
+      "taskTitle" -> taskTitle
+    )
+    val query = phaseTitle.fold(baseQuery) { pt =>
+      ("phaseTitle" -> pt) +: baseQuery
+    }
+    for {
+      _ <- log.debug(s"getTasksByTitle($releaseId, $taskTitle, $phaseTitle)")
+      resp <- api.http.get(server.api(_ / "tasks" / "byTitle").withQuery(query))
+      content <- api.http.parseJson(resp)
+      taskIds <- lib.json.read(JsUtils.readTaskIds(sep = "/"))(content)
+    } yield taskIds
+  }
+
+  def waitFor(releaseId: Release.ID, status: ReleaseStatus, interval: FiniteDuration = 5 seconds, retries: Option[Int] = None)
+             (implicit session: User.Session): Program[Unit] =
+    for {
+      _ <- log.debug(s"waitFor($releaseId, $status, $interval, $retries)")
+      _ <- lib.control.until[ReleaseStatus](_ == status, interval, retries) {
+        getReleaseStatus(releaseId)
+      }
+    } yield ()
+
+  def getReleaseStatus(releaseId: Release.ID)
+                      (implicit session: User.Session): Program[ReleaseStatus] =
+    for {
+      _ <- log.debug(s"getReleaseStatus($releaseId)")
+      resp <- api.http.get(server.api(_ / "releases" / "Applications" / releaseId))
+      content <- api.http.parseJson(resp)
+      releaseStatus <- lib.json.read(JsUtils.readReleaseStatus)(content)
+    } yield releaseStatus
+
+
+}
+

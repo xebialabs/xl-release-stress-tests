@@ -185,7 +185,7 @@ object JsUtils {
           case JsString("xlrelease.Comment") =>
             for {
               id <- getStringField("id")(obj).map(_.value)
-              author <- getStringField("author")(obj).map(_.value)
+              author <- getStringField("author")(obj).map(_.value).orElse("".asRight)
               date <- getStringField("date")(obj).map(_.value)
               text <- getStringField("text")(obj).map(_.value)
             } yield Comment(id, author, date, text)

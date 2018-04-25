@@ -1,22 +1,29 @@
 package com.xebialabs.xlrelease.stress.scenarios
 
 import cats.Show
-import com.xebialabs.xlrelease.stress.dsl.xlr.protocol.CreateReleaseArgs
+import com.xebialabs.xlrelease.stress.dsl.libs.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTemplate, CreateTopLevelFolder}
 import com.xebialabs.xlrelease.stress.domain._
 import cats.implicits._
+import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
-import com.xebialabs.xlrelease.stress.dsl.Program
+import com.xebialabs.xlrelease.stress.dsl.DSL
 import com.xebialabs.xlrelease.stress.utils.TmpResource
 import freestyle.free._
 import freestyle.free.implicits._
 
 import scala.io.Source
 
-case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils {
-  override val name: String = s"Simple scenario ($numUsers users)"
+case class CompleteReleases(numUsers: Int)
+                           (implicit
+                            val config: XlrConfig,
+                            val _api: DSL[DSL.Op])
+  extends Scenario[(Role, Template.ID)]
+    with ScenarioUtils {
 
-  val template = Source.fromResource("DSL-template.groovy")
+  val name: String = s"Simple scenario ($numUsers users)"
+
+  val template: String = Source.fromResource("DSL-template.groovy")
     .getLines()
     .mkString("\n")
 
@@ -33,18 +40,18 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
         )
         _ <- api.log.info("template created: "+ templateId)
         _ <- api.log.info("getting template teams...")
-        teams <- api.xlr.releases.getTemplateTeams(templateId)
+        teams <- api.xlr.templates.getTeams(templateId)
         teamsMap = teams.map(t => t.teamName -> t).toMap
-        templateOwner = teamsMap.get("Template Owner").get match {
+        templateOwner = teamsMap("Template Owner") match {
           case team => team.copy(members = team.members :+ RoleMember(role.roleName))
         }
-        releaseAdmin = teamsMap.get("Release Admin").get match {
+        releaseAdmin = teamsMap("Release Admin") match {
           case team => team.copy(members = team.members :+ RoleMember(role.roleName))
         }
         _ <- api.log.info("setting up teams:")
         _ <- api.log.info(s"template owner: ${templateOwner.show}")
         _ <- api.log.info(s"release admin: ${releaseAdmin.show}")
-        _ <- api.xlr.releases.setTemplateTeams(templateId, Seq(templateOwner, releaseAdmin))
+        _ <- api.xlr.templates.setTeams(templateId, Seq(templateOwner, releaseAdmin))
         _ <- api.log.info("template teams setup correctly")
       } yield (role, templateId)
     }
@@ -58,28 +65,25 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
   }
 
   protected def simple(templateId: Template.ID, user: User): Program[Unit] = {
-    def msg(s: String): api.log.FS[Unit] =
-      api.log.info(s"${user.username}: $s")
-
     api.xlr.users.login(user) flatMap { implicit session =>
       for {
-        _ <- msg(s"logged in as ${user.username}...")
-        _ <- msg("Creating release from template")
+        _ <- api.log.info(s"logged in as ${user.username}...")
+        _ <- api.log.info("Creating release from template")
         releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(
           title = s"${user.username}'s test dsl",
           variables = Map("var1" -> "Happy!")
         ))
         taskIds <- api.xlr.releases.getTasksByTitle(releaseId, "UI")
         taskId = taskIds.head
-        _ <- msg(s"Assigning task ${taskId.show} to ${user.username}")
+        _ <- api.log.info(s"Assigning task ${taskId.show} to ${user.username}")
         _ <- api.xlr.tasks.assignTo(taskId, user.username)
-        _ <- msg(s"Starting release $releaseId")
+        _ <- api.log.info(s"Starting release $releaseId")
         _ <- api.xlr.releases.start(releaseId)
-        _ <- msg(s"Waiting for task ${taskId.show}")
+        _ <- api.log.info(s"Waiting for task ${taskId.show}")
         _ <- api.xlr.tasks.waitFor(taskId, TaskStatus.InProgress, retries = None)
-        _ <- msg(s"Completing task ${taskId.show}")
+        _ <- api.log.info(s"Completing task ${taskId.show}")
         _ <- api.xlr.tasks.complete(taskId)
-        _ <- msg("Waiting for release to complete")
+        _ <- api.log.info("Waiting for release to complete")
         _ <- api.xlr.releases.waitFor(releaseId, ReleaseStatus.Completed, retries = None)
       } yield ()
     }

@@ -12,7 +12,7 @@ import akka.http.scaladsl.model.{DateTime => _, _}
 import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, Materializer}
 import com.xebialabs.xlrelease.stress.domain.HttpSession
-import com.xebialabs.xlrelease.stress.dsl.http.defaultHeaders
+import com.xebialabs.xlrelease.stress.config.defaults.http.client.{headers => defaultHeaders}
 import spray.json._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
