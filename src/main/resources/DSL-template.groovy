@@ -3,13 +3,13 @@
 // Date created:         Tue Apr 24 15:52:56 CEST 2018
 
 xlr {
-    template('DSL') {
+    template('Master Performance Template') {
         variables {
             stringVariable('var1') {
 
             }
         }
-        scheduledStartDate Date.parse("yyyy-MM-dd'T'HH:mm:ssZ", '2018-04-24T15:52:43+0200')
+        scheduledStartDate new Date()
         scriptUsername 'admin'
         scriptUserPassword '###ADMIN_PASSWORD###'
         phases {

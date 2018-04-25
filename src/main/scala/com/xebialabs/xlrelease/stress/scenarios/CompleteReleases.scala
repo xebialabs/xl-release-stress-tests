@@ -16,8 +16,6 @@ import scala.io.Source
 case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)] with ScenarioUtils {
   override val name: String = s"Simple scenario ($numUsers users)"
 
-  val dsl_1mb: Template = Template("Simple Template", TmpResource("DSL_1mb.xlr"))
-
   val template = Source.fromResource("DSL-template.groovy")
     .getLines()
     .mkString("\n")
@@ -28,7 +26,7 @@ case class CompleteReleases(numUsers: Int) extends Scenario[(Role, Template.ID)]
         role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
         members     = Seq(RoleMember(role.roleName))
         templateId  <- createReleaseFromGroovy(
-          "Title of the Release that will Create Template from groovy",
+          "Create Mater Performance Template from groovy",
           template,
           "###ADMIN_PASSWORD###",
           session.user.password

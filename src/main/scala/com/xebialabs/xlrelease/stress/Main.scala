@@ -39,7 +39,6 @@ object Main {
 
     scenarios
       .CompleteReleases(numUsers).run
-//      .CreateReleases(admin).run
 
     pool.shutdown()
 
