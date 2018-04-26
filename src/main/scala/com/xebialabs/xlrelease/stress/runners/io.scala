@@ -1,13 +1,12 @@
 package com.xebialabs.xlrelease.stress.runners
 
+
 import cats.effect.IO
 import cats.implicits._
+import cats.~>
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrServer}
-import com.xebialabs.xlrelease.stress.dsl.exec.Control
-import com.xebialabs.xlrelease.stress.dsl.xlr.{Releases, Tasks, Users}
-import com.xebialabs.xlrelease.stress.dsl.{API, Program}
-import com.xebialabs.xlrelease.stress.handlers.exec.io.ControlHandler
-import com.xebialabs.xlrelease.stress.handlers.xlr.io.{ReleasesHandler, TasksHandler, UsersHandler}
+import com.xebialabs.xlrelease.stress.dsl
+import com.xebialabs.xlrelease.stress.handlers.io.{ControlHandler, HttpClientHandler}
 import com.xebialabs.xlrelease.stress.scenarios.Scenario
 import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 import freestyle.free._
@@ -18,48 +17,39 @@ import scala.util.{Success, Try}
 
 object io {
   class RunnerContext()(implicit
-                        val usersHandler: Users.Handler[IO],
-                        val releasesHandler: Releases.Handler[IO],
-                        val tasksHandler: Tasks.Handler[IO],
-                        val ec: ExecutionContext)
-
-  object RunnerContext {
-    def controlHandler(implicit ctx: RunnerContext): Control.Handler[IO] = ControlHandler.controlHandler
-  }
+                        val httpClientHandler: dsl.http.Client.Handler[IO],
+                        val controlHandler: dsl.Control.Handler[IO])
 
   def runnerContext(implicit
                     server: XlrServer,
                     admin: AdminPassword,
-                    client: AkkaHttpClient,
                     ec: ExecutionContext): RunnerContext = {
-    import client.materializer
+    val httpHandler = new HttpClientHandler()
+    implicit val httpClientHandler: dsl.http.Client.Handler[IO] = httpHandler.clientHandler
 
-    val usersInterpreter = new UsersHandler
-    val releasesInterpreter = new ReleasesHandler
-    val tasksInterpreter = new TasksHandler
+    val controlHandler = new ControlHandler()
+    implicit val handler: dsl.Control.Handler[IO] = controlHandler.controlHandler
 
-    new RunnerContext()(
-      usersInterpreter.usersHandler,
-      releasesInterpreter.releasesHandler,
-      tasksInterpreter.tasksHandler,
-      ec)
+    new RunnerContext()
   }
 
-  def runIO[A](program: Program[A])
+  def runIO[A](program: dsl.Program[A])
               (implicit ctx: RunnerContext): IO[A] = {
     import ctx._
-    import ControlHandler.controlHandler
     import freestyle.free.loggingJVM.log4s.implicits.taglessLoggingApplicative
+    import freestyle.free.effects.error.implicits.freeStyleErrorMHandler
 
     program.interpret[IO]
   }
 
   def runScenario[A](scenario: Scenario[A])
-                    (implicit ctx: RunnerContext, api: API): Unit = {
+                    (implicit ctx: RunnerContext, ec: ExecutionContext): Unit = {
     import scenario.showParams
+    import scenario.api
+    import scenario.Program
 
-    def info(msg: String): api.log.FS[Unit] = api.log.info(s"${scenario.name}: $msg")
-    def warn(msg: String): api.log.FS[Unit] = api.log.warn(s"${scenario.name}: $msg")
+    def info(msg: String): Program[Unit] = api.log.info(s"${scenario.name}: $msg")
+    def warn(msg: String): Program[Unit] = api.log.warn(s"${scenario.name}: $msg")
 
     val setup: Program[A] = for {
       _ <- info("setting up...")
