@@ -114,6 +114,11 @@ object JsUtils {
         .map(e => readIdString(e) >>= parseTaskId(sep))
         .sequence[JsParsed, Task.ID]
 
+  def readDependencyId(sep: String): JsValue => JsParsed[Dependency.ID] =
+    json =>
+      readIdString(json) >>=
+        parseDependencyId(sep)
+
   def getStatus: JsValue => JsParsed[JsValue] =
     getField("status")
 
@@ -227,6 +232,23 @@ object JsUtils {
           parseTaskIdError(fullId)
       }
 
+  def parseDependencyId(sep: String = "/"): String => JsParsed[Dependency.ID] =
+    fullId =>
+      fullId.split(sep).toList match {
+        case _ :: _ :: _ :: Nil =>
+          parseDependencyIdError(fullId)
+        case releaseId :: phaseId :: taskIdAndDependency =>
+           taskIdAndDependency.span(_.startsWith("Task")) match {
+             case (taskIds, dependencyId :: Nil) if taskIds.nonEmpty =>
+               val phase = Phase.ID(releaseId, phaseId)
+               val task = Task.ID(phase, taskIds.mkString("/"))
+               Dependency.ID(task, dependencyId).asRight
+             case _ => parseDependencyIdError(fullId)
+           }
+        case _ =>
+          parseDependencyIdError(fullId)
+      }
+
   def isReleaseId: String => Boolean = _.startsWith("Release")
   def isPhaseId: String => Boolean = _.startsWith("Phase")
   def isTaskId: String => Boolean = _.startsWith("Task")
@@ -236,6 +258,9 @@ object JsUtils {
 
   def parseTaskIdError[A](fullId: String): JsParsed[A] =
     error(s"parseTaskId: not a Task ID: $fullId")
+
+  def parseDependencyIdError[A](str: String): JsParsed[A] =
+    error("parseDependencyId: not a Dependency ID: $fullId")
 
   def notFound[A](msg: String, key: String, actual: JsValue): JsParsed[A] =
     err(s"$msg: Not found, key: $key.", actual)

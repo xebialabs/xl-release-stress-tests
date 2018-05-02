@@ -35,8 +35,8 @@ trait ScenarioUtils extends dsl.API {
       for {
         _ <- api.log.debug(s"createReleaseFromGroovy($title)")
         phaseId <- api.xlr.releases.createRelease(title)
-        taskId <- api.xlr.tasks.appendScriptTask(phaseId, "groovy task", "xlrelease.GroovyScriptTask", updated)
-        manualTaskId <- api.xlr.tasks.appendManualTask(phaseId, "wait before completing")
+        taskId <- api.xlr.tasks.appendScript(phaseId, "groovy task", "xlrelease.GroovyScriptTask", updated)
+        manualTaskId <- api.xlr.tasks.appendManual(phaseId, "wait before completing")
         _ <- api.xlr.tasks.assignTo(manualTaskId, session.user.username)
         _ <- api.xlr.releases.start(phaseId.release)
         _ <- api.xlr.tasks.waitFor(taskId, TaskStatus.Completed, interval = 5 seconds, retries = Some(20))

@@ -10,5 +10,6 @@ class Xlr[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit protec
   val users: Users[F] = new Users[F](server, adminPassword)
   val templates: Templates[F] = new Templates[F](server)
   val releases: Releases[F] = new Releases[F](server)
-  val tasks: Tasks[F] = new Tasks[F](server)
+  val phases: Phases[F] = new Phases[F](server)
+  val tasks: Tasks[F] = new Tasks[F](server, phases)
 }
