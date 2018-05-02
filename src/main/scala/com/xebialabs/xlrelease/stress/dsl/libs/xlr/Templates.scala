@@ -20,7 +20,7 @@ class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ex
                (implicit session: User.Session): Program[Template.ID] =
     for {
       _ <- log.debug(s"xlr.templates.importXlr(${template.name})")
-      resp <- lib.http.zip.post(server.api(_ / "templates" / "import"), template.xlrTemplate)
+      resp <- lib.http.zip.post(server.api(_ ?/ "templates" / "import"), template.xlrTemplate)
       content <- api.http.parseJson(resp)
       templateId <- lib.json.read(JsUtils.readFirstId)(content)
     } yield templateId
@@ -29,7 +29,7 @@ class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ex
               (implicit session: User.Session): Program[Seq[Team]] =
     for {
       _ <- log.debug(s"xlr.templates.getTeams($templateId)")
-      content <- lib.http.json.get(server.api(_ / "templates" / "Applications" / templateId / "teams"))
+      content <- lib.http.json.get(server.api(_ ?/ "templates" / "Applications" / templateId / "teams"))
       teams <- lib.json.read(JsUtils.readTeams)(content)
     } yield teams
 
@@ -37,7 +37,7 @@ class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ex
               (implicit session: User.Session): Program[Map[String, String]] =
     for {
       _ <- log.debug(s"xlr.templates.setTeams($templateId, ${teams.map(_.teamName).mkString("[", ", ", "]")})")
-      resp <- lib.http.json.post(server.api(_ / "templates" / "Applications" / templateId / "teams"), teams.map(_.toJson).toJson)
+      resp <- lib.http.json.post(server.api(_ ?/ "templates" / "Applications" / templateId / "teams"), teams.map(_.toJson).toJson)
       content <- api.http.parseJson(resp)
       teamIds <- lib.json.read(JsUtils.readTeamIds)(content)
     } yield teamIds
@@ -47,7 +47,7 @@ class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ex
     val user = scriptUser.getOrElse(session.user)
     for {
       _ <- log.debug(s"xlr.templates.setScriptUser($templateId, $scriptUser)")
-      resp <- lib.http.json.put(server.api(_ / "templates" / "Applications" / templateId),
+      resp <- lib.http.json.put(server.api(_ ?/ "templates" / "Applications" / templateId),
         JsObject(
           "id" -> JsNull,
           "scheduledStartDate" -> DateTime.now.toJson,

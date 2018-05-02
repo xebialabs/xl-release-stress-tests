@@ -28,7 +28,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % "2.5.11",
   "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.1",
   "commons-io" % "commons-io" % "2.5",
-  "com.github.nscala-time" %% "nscala-time" % "2.18.0"
+  "com.github.nscala-time" %% "nscala-time" % "2.18.0",
+  "org.log4s" %% "log4s" % "1.6.1"
 )
 
 mainClass := Some("com.xebialabs.xlrelease.stress.Main")

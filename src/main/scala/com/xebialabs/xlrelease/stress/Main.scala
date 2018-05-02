@@ -39,10 +39,9 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    val api: DSL[DSL.Op] = implicitly[DSL[DSL.Op]]
-
     scenarios
-      .CompleteReleases(numUsers)(config, api).run
+        .TestSomething().run
+//      .CompleteReleases(numUsers).run
 
     pool.shutdown()
 

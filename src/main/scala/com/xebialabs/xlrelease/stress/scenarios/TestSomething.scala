@@ -3,27 +3,39 @@ package com.xebialabs.xlrelease.stress.scenarios
 import cats.Show
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.XlrConfig
-import com.xebialabs.xlrelease.stress.domain.Template.ID
-import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.dsl.DSL
+import freestyle.free._
 import freestyle.free.implicits._
-
-import scala.io.Source
 
 case class TestSomething()
                         (implicit
                          val config: XlrConfig,
                          val _api: DSL[DSL.Op])
-  extends Scenario[(Role, Template.ID)]
+  extends Scenario[Unit]
     with ScenarioUtils {
 
   val name: String = s"Test Something"
 
-  override def setup: Program[(Role, Template.ID)] = ???
+  override def setup: Program[Unit] = ().pure[Program]
 
-  override def program(params: (Role, Template.ID)): Program[Unit] = ???
+  override def program(params: Unit): Program[Unit] =
+    api.xlr.users.admin() >>= { implicit session =>
+      for {
+        phaseId <- api.xlr.releases.createRelease("Test Release", Some(session.user))
+        releaseId = phaseId.release
+        m1 <- api.xlr.tasks.appendManual(phaseId, "m1")
+        m2 <- api.xlr.tasks.appendManual(phaseId, "m2")
+        pg1 <- api.xlr.phases.appendTask(phaseId, "pg1", "xlrelease.ParallelGroup")
+        pg1m1 <- api.xlr.tasks.move(m1, pg1)
+        pg1m2 <- api.xlr.tasks.move(m2, pg1)
+        _ <- api.log.info(s"pg1: ${pg1.show}")
+        _ <- api.log.info(s"pg1m1: ${pg1m1.show}")
+        _ <- api.log.info(s"pg1m2: ${pg1m2.show}")
+      } yield ()
+    }
 
-  override def cleanup(params: (Role, Template.ID)): Program[Unit] = ???
 
-  override implicit val showParams: Show[(Role, ID)] = ???
+  override def cleanup(params: Unit): Program[Unit] = ().pure[Program]
+
+  override implicit val showParams: Show[Unit] = _ => ""
 }

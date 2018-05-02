@@ -27,7 +27,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
   def login(user: User): Program[HttpSession] =
     for {
       _ <- api.log.debug(s"xlr.users.login(${user.username})")
-      resp <- lib.http.json.post.plain(server.root(_ / "login"),
+      resp <- lib.http.json.post.plain(server.root(_ ?/ "login"),
         JsObject(
           "username" -> adminUser.username.toJson,
           "password" -> adminUser.password.toJson
@@ -44,7 +44,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.createUser(${user.username})")
-        resp <- lib.http.json.post(server.api(_ / "users" / user.username),
+        resp <- lib.http.json.post(server.api(_ ?/ "users" / user.username),
           JsObject(
             "fullName" -> user.fullName.toJson,
             "email" -> user.email.toJson,
@@ -60,7 +60,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.createRole(${role.roleName})")
-        resp <- lib.http.json.post(server.api(_ / "roles" / role.roleName),
+        resp <- lib.http.json.post(server.api(_ ?/ "roles" / role.roleName),
           JsObject(
             "name" -> role.roleName.toJson,
             "permissions" -> role.permissions.map(_.permission.toJson).toJson,
@@ -74,7 +74,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.deleteUser($userId)")
-        resp <- api.http.delete(server.api(_ / "users" / userId))
+        resp <- api.http.delete(server.api(_ ?/ "users" / userId))
         _ <- api.http.discard(resp)
       } yield ()
     }
@@ -83,7 +83,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.deleteRole($roleId)")
-        resp <- api.http.delete(server.api(_ / "roles" / roleId))
+        resp <- api.http.delete(server.api(_ ?/ "roles" / roleId))
         _ <- api.http.discard(resp)
       } yield ()
   }

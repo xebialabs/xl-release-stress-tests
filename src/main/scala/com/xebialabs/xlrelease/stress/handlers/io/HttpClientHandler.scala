@@ -15,18 +15,28 @@ class HttpClientHandler() {
   val client = new AkkaHttpClient
   import client.materializer
 
+  private[this] val logger = org.log4s.getLogger("HTTP")
+
   implicit def clientHandler: Client.Handler[IO] = new Client.Handler[IO] with SprayJsonSupport with DefaultJsonProtocol {
-    protected def get(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] =
+    protected def get(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] = {
+      logger.debug(s"GET ${uri.toString}")
       client.get(uri, headers).io
+    }
 
-    protected def post(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] =
+    protected def post(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] = {
+      logger.debug(s"POST ${uri.toString} | ${entity.toString}")
       client.post(uri, entity, headers).io
+    }
 
-    protected def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] =
+    protected def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] = {
+      logger.debug(s"PUT ${uri.toString} | ${entity.toString}")
       client.put(uri, entity, headers).io
+    }
 
-    protected def delete(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] =
+    protected def delete(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] = {
+      logger.debug(s"DELETE ${uri.toString}")
       client.delete(uri, headers)(null).io
+    }
 
     protected def parseJson(resp: HttpResponse): IO[JsValue] = {
       import client.{ec, materializer}

@@ -3,7 +3,7 @@ package com.xebialabs.xlrelease.stress.dsl.libs.xlr
 import akka.http.scaladsl.model.Uri
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.XlrServer
-import com.xebialabs.xlrelease.stress.domain.Target.ConcreteTarget
+import com.xebialabs.xlrelease.stress.domain.Target._
 import com.xebialabs.xlrelease.stress.domain._
 import com.xebialabs.xlrelease.stress.dsl.DSL
 import com.xebialabs.xlrelease.stress.utils.JsUtils
@@ -21,34 +21,34 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
             (implicit session: User.Session): Program[Task.ID] =
     for {
       _ <- log.debug(s"xlr.tasks.append(${task.compactPrint}, ${container.show})")
-      resp <- lib.http.json.post(server.api(_ / "tasks" / "Applications" ++ container.path / "tasks"), task)
+      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" ++ container.path / "tasks"), task)
       taskId <- lib.json.parse(JsUtils.readTaskId(sep = "/"))(resp)
     } yield taskId
 
   def get(taskId: Task.ID)
-         (implicit session: User.Session): Program[(Task.ID, JsObject)] =
+         (implicit session: User.Session): Program[JsObject] =
     for {
       _ <- log.debug(s"xlr.tasks.get(${taskId.show})")
-      content <- lib.http.json.get(server.api(_ / "tasks" / "Applications" ++ taskId.path))
+      content <- lib.http.json.get(server.api(_ ?/ "tasks" / "Applications" ++ taskId.path))
       task <- lib.json.read(JsUtils.jsObject)(content)
-      taskId <- lib.json.read(JsUtils.readTaskId(sep = "/"))(content)
-    } yield taskId -> task
+      _ <- lib.json.read(JsUtils.readTaskId(sep = "/"))(content)
+    } yield task
 
   def delete(taskId: Task.ID)
             (implicit session: User.Session): Program[Unit] =
     for {
       _ <- log.debug(s"xlr.tasks.delete(${taskId.show})")
-      resp <- api.http.delete(server.api(_ / "tasks" / "Applications" ++ taskId.path))
+      resp <- api.http.delete(server.api(_ ?/ "tasks" / "Applications" ++ taskId.path))
       _ <- api.http.discard(resp)
     } yield ()
 
-  def copy(taskId: Task.ID, container: ConcreteTarget, position: Int = 0)
+  def copy(taskId: Task.ID, phaseId: Phase.ID, position: Int = 0)
           (implicit session: User.Session): Program[Task.ID] =
     for {
-      _ <- log.debug(s"xlr.tasks.copy(${taskId.show}, ${container.show})")
+      _ <- log.debug(s"xlr.tasks.copy(${taskId.show}, ${phaseId.show})")
       resp <- lib.http.json.post(
-        server.api(_ / "tasks" / "Applications" ++ taskId.path / "copy").withQuery(Uri.Query(
-            "targetContainerId" -> container.show,
+        server.api(_ ?/ "tasks" / "Applications" ++ taskId.path / "copy").withQuery(Uri.Query(
+            "targetContainerId" -> s"Applications/${phaseId.show}",
             "targetPosition" -> position.toString
         )),
         JsNull
@@ -56,18 +56,34 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
       newTaskId <- lib.json.parse(JsUtils.readTaskId(sep = "/"))(resp)
     } yield newTaskId
 
-  def move(taskId: Task.ID, container: ConcreteTarget)
+  def move(taskId: Task.ID, phaseId: Phase.ID)
           (implicit session: User.Session): Program[Task.ID] =
     for {
-      newTaskId <- copy(taskId, container)
+      newTaskId <- copy(taskId, phaseId)
       _ <- delete(taskId)
     } yield newTaskId
+
+  def move(taskId: Task.ID, container: ConcreteTarget)
+          (implicit session: User.Session): Program[Task.ID] = container match {
+    case PhaseTarget(phaseId) => move(taskId, phaseId)
+    case _ =>
+      for {
+        task <- get(taskId)
+        newTaskId <- append(task, container)
+        _ <- delete(taskId)
+      } yield newTaskId
+  }
+
+
+  def move(taskId: Task.ID, subTaskId: Task.ID)
+          (implicit session: User.Session): Program[Task.ID] =
+    move(taskId, taskId.target)
 
   def appendScript(phaseId: Phase.ID, title: String, taskType: String, script: String)
                   (implicit session: User.Session): Program[Task.ID] =
     for {
       _ <- log.debug(s"xlr.tasks.appendScript(${phaseId.show}, $title, $taskType, $script)")
-      resp <- lib.http.json.post(server.api(_ / "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
         JsObject(
           "id" -> JsNull,
           "title" -> title.toJson,
@@ -95,7 +111,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
                    (implicit session: User.Session): Program[Dependency.ID] =
     for {
       _ <- log.debug(s"xlr.tasks.addDependency(${gateTaskId.show}, ${target.show})")
-      resp <- lib.http.json.post(server.api(_ / "tasks" ++ gateTaskId.path / "dependencies" ++ gateTaskId.path),
+      resp <- lib.http.json.post(server.api(_ ?/ "tasks" ++ gateTaskId.path / "dependencies" ++ gateTaskId.path),
         JsObject(
           "taskId" -> ("Applications/" ++ gateTaskId.show).toJson,
           "targetId" -> target.show.toJson
@@ -110,7 +126,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
     for {
       _ <- log.debug(s"xlr.tasks.assignTo(${taskId.show}, $assignee")
       resp <- lib.http.json.post(
-        server.api(_ / "tasks" / "Applications" ++ taskId.path / "assign" / assignee),
+        server.api(_ ?/ "tasks" / "Applications" ++ taskId.path / "assign" / assignee),
         JsNull
       )
       _ <- api.http.discard(resp)
@@ -121,7 +137,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
     for {
       _ <- log.debug(s"xlr.tasks.complete(${taskId.show}, $comment)")
       resp <- lib.http.json.post(
-        server.api(_ / "tasks" / "Applications" ++ taskId.path / "complete"),
+        server.api(_ ?/ "tasks" / "Applications" ++ taskId.path / "complete"),
         comment.map(content => JsObject("comment" -> content.toJson)).getOrElse(JsObject.empty)
       )
       content <- api.http.parseJson(resp)
@@ -151,7 +167,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
                    (implicit session: User.Session): Program[TaskStatus] =
     for {
       _ <- log.debug(s"xlr.tasks.getTaskStatus(${taskId.show})")
-      resp <- lib.http.json.post(server.root(_ / "tasks" / "poll"), JsObject("ids" -> Seq(taskId.show).toJson))
+      resp <- lib.http.json.post(server.root(_ ?/ "tasks" / "poll"), JsObject("ids" -> Seq(taskId.show).toJson))
       taskStatus <- lib.json.parse(JsUtils.readFirstTaskStatus)(resp)
     } yield taskStatus
 
@@ -160,7 +176,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
                  (implicit session: User.Session): Program[Seq[Comment]] =
     for {
       _ <- log.debug(s"xlr.tasks.getComments(${taskId.show})")
-      content <- lib.http.json.get(server.api(_ / "tasks" / "Applications" ++ taskId.path))
+      content <- lib.http.json.get(server.api(_ ?/ "tasks" / "Applications" ++ taskId.path))
       comments <- lib.json.read(JsUtils.readComments)(content)
     } yield comments
 
