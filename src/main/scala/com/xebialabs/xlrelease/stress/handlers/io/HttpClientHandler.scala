@@ -35,7 +35,7 @@ class HttpClientHandler() {
 
     protected def delete(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] = {
       logger.debug(s"DELETE ${uri.toString}")
-      client.delete(uri, headers)(null).io
+      client.delete(uri, headers).io
     }
 
     protected def parseJson(resp: HttpResponse): IO[JsValue] = {

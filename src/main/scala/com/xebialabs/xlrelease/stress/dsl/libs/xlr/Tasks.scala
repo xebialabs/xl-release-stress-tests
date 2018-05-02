@@ -38,7 +38,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
             (implicit session: User.Session): Program[Unit] =
     for {
       _ <- log.debug(s"xlr.tasks.delete(${taskId.show})")
-      resp <- api.http.delete(server.api(_ ?/ "tasks" / "Applications" ++ taskId.path))
+      resp <- lib.http.delete(server.api(_ ?/ "tasks" / "Applications" ++ taskId.path))
       _ <- api.http.discard(resp)
     } yield ()
 

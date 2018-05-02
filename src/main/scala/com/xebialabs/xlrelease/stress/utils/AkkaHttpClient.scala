@@ -36,41 +36,8 @@ class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
   def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
     Http().singleRequest(HttpRequest(PUT, uri, headers, entity))
 
-  def getJSON(uri: Uri)(implicit session: HttpSession): Future[JsValue] =
-    Http().singleRequest(HttpRequest(GET, uri, headers = Accept(`application/json`) :: session.cookies.toList))
-      .flatMap(_.entity.asJson[JsValue])
-
-  def postJSON0(uri: Uri, entity: JsValue, headers: List[HttpHeader] = List(Accept(`application/json`, MediaRanges.`*/*`))): Future[HttpResponse] =
-    Http().singleRequest(HttpRequest(POST, uri,
-      entity = HttpEntity(`application/json`, entity.compactPrint),
-      headers = headers
-    ))
-
-  def postJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] =
-    postJSON0(uri, entity, Accept(`application/json`) :: session.cookies.toList)
-
-  def putJSON(uri: Uri, entity: JsValue)(implicit session: HttpSession): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequest(PUT, uri,
-      entity = HttpEntity(`application/json`, entity.compactPrint),
-      headers = Accept(`application/json`) :: session.cookies.toList
-    ))
-  }
-
-  def postZip(uri: Uri, content: File)(implicit session: HttpSession): Future[HttpResponse] = {
-    val payload = Multipart.FormData(
-      Multipart.FormData.BodyPart.fromFile(name = "file", `application/zip`, content)
-    )
-    Http().singleRequest(HttpRequest(POST, uri,
-      entity = payload.toEntity(),
-      headers = Accept(`application/json`) :: session.cookies.toList
-    ))
-  }
-
-  def delete(uri: Uri, headers: List[HttpHeader] = defaultHeaders)(implicit session: HttpSession): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequest(DELETE, uri,
-      headers = Accept(`application/json`) :: session.cookies.toList
-    ))
-  }
+  def delete(uri: Uri, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
+    Http().singleRequest(HttpRequest(DELETE, uri, headers))
 
   def shutdown(): Future[Unit] =
     Http().shutdownAllConnectionPools()
