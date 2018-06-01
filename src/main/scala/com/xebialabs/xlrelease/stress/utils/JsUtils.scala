@@ -140,6 +140,15 @@ object JsUtils {
     json =>
       getStatus(json) >>= toReleaseStatus
 
+  def readReleaseIdAndStatus: JsValue => JsParsed[(Release.ID, ReleaseStatus)] =
+    json =>
+      jsObject(json) >>= { obj =>
+        for {
+          id <- readIdString(obj)
+          status <- readReleaseStatus(obj)
+        } yield id -> status
+      }
+
   def readFirstPhaseId(sep: String): JsValue => JsParsed[Phase.ID] =
     json =>
       getField("phases")(json) >>=

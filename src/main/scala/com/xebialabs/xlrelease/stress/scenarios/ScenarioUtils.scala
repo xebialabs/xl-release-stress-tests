@@ -6,6 +6,7 @@ import cats._
 import cats.implicits._
 import freestyle.free._
 import freestyle.free.implicits._
+import org.joda.time.DateTime
 
 import scala.util.matching.Regex
 import scala.concurrent.duration._
@@ -54,5 +55,41 @@ trait ScenarioUtils extends dsl.API {
 //        _ <- api.log.info(s"createReleaseFromGroovy($title) completed: $releaseId")
       } yield releaseId
     }
+  }
+
+  // TODO: move to lib?
+  protected def withHealthCheck[A, B](program: Program[A], checkInterval: FiniteDuration, checkProgram: Program[B]): Program[(A, List[(DateTime, FiniteDuration, B)])] =
+    api.control.backgroundOf(program) {
+      for {
+        res <- healthCheck(checkProgram)
+        _ <- api.control.sleep(checkInterval)
+      } yield res
+    }
+
+  // TODO: move to lib?
+  protected def healthCheck[A](program: Program[A]): Program[(DateTime, FiniteDuration, A)] =
+    for {
+      start <- api.control.now()
+      result <- api.control.time(program)
+    } yield (start, result._1, result._2)
+
+  // TODO: move to control lib
+  def rampUp[A](start: Int, end: Int, step: Int => Int)(program: Int => Program[A]): Program[List[List[A]]] = {
+    RampUpRange.toList(RampUpRange(start, end, step)).map { n =>
+      api.control.parallel[A](n) { i =>
+        program(i)
+      }
+    }.sequence
+  }
+
+  case class RampUpRange(start: Int, end: Int, step: Int => Int = _ + 1)
+
+  object RampUpRange {
+    def toStream(range: RampUpRange): Stream[Int] =
+      if (range.start <= range.end) {
+        range.start #:: toStream(range.copy(start = range.step(range.start)))
+      } else Stream.empty
+
+    def toList(range: RampUpRange): List[Int] = toStream(range).toList
   }
 }

@@ -37,22 +37,20 @@ class ControlHandler()(implicit httpClientHandler: dsl.http.Client.Handler[IO]) 
 
       var acc = List.empty[B]
       val stop = new AtomicBoolean(false)
-      def bgLoop: IO[List[B]] = IO.cancelable { cb =>
-        val res: IO[Unit] = if (stop.get()) {
-          try {
-            cb(Right(acc))
-          } catch { case NonFatal(e) => cb(Left(e)) }
-          IO(())
+
+      def bgLoop: IO[List[B]] = IO.suspend {
+        if (stop.get()) {
+          IO.pure(acc)
         } else {
-          for {
+          val next = for {
             b <- bg
-            _ <- IO.apply {
+            _ <- IO {
               acc = b :: acc
             }
-            _ <- bgLoop
-          } yield ()
+            res <- bgLoop
+          } yield res
+          IO.cancelBoundary *> next
         }
-        res
       }
 
       for {

@@ -8,6 +8,7 @@ import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.XlrConfig
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
 import com.xebialabs.xlrelease.stress.dsl.DSL
+import com.xebialabs.xlrelease.stress.utils.JsUtils
 import freestyle.free._
 import freestyle.free.implicits._
 import org.joda.time.DateTime
@@ -35,7 +36,8 @@ case class CompleteReleases(numUsers: Int)
   override def setup: Program[(Role, Template.ID)] =
     api.xlr.users.admin() flatMap { implicit session =>
       for {
-        role        <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
+        _ <- api.log.info("setting up role....")
+        role <- createUsers(numUsers) >>= createGlobalRole("superDuperRole")
         automationId  <- createReleaseFromGroovy(
           "Create Master Automation Template from groovy",
           masterAutomationTpl,
@@ -50,73 +52,46 @@ case class CompleteReleases(numUsers: Int)
         )
         _ <- setupTeams(role, automationId)
         _ <- setupTeams(role, seedId)
+        _ <- api.log.info("setup role complete!")
       } yield (role, seedId)
     }
-
-  private def setupTeams(role: Role, templateId: Template.ID)(implicit session: User.Session): Program[Unit] =
-    for {
-      _ <- api.log.info("template created: " + templateId)
-      _ <- api.log.info("getting template teams...")
-      teams <- api.xlr.templates.getTeams(templateId)
-      teamsMap = teams.map(t => t.teamName -> t).toMap
-      templateOwner = teamsMap("Template Owner") match {
-        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
-      }
-      releaseAdmin = teamsMap("Release Admin") match {
-        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
-      }
-      _ <- api.log.info("setting up teams:")
-      _ <- api.log.info(templateOwner.show)
-      _ <- api.log.info(releaseAdmin.show)
-      _ <- api.xlr.templates.setTeams(templateId, Seq(templateOwner, releaseAdmin))
-      _ <- api.log.info("template teams setup correctly")
-    } yield ()
 
   override def program(params: (Role, Template.ID)): Program[Unit] = params match {
     case (role, templateId) =>
       val users = role.principals.toList
-      val generateLoad = rampUp(1, 32, _ * 2) { n =>
+      val generateLoad = rampUp(1, numUsers, _ * 2) { n =>
         simple(templateId, users(n))
       }.map(_ => ())
+      api.xlr.users.admin() >>= { implicit session =>
+        for {
+          results <- withHealthCheck(program = generateLoad, checkInterval = new FiniteDuration(1, SECONDS), checkProgram = checkReleases)
+          (_, health) = results
+          _ <- api.log.info(s"**** RESULTS: ${health.size} entries *****")
+          sorted = health.sortBy(_._2.toMillis)
+          fastest = sorted.head
+          slowest = sorted.last
+          _ <- api.log.info(s"*** FASTEST: ${fastest._1} | ${fastest._2} | ${fastest._3.mapValues(_.size).mkString(", ")}")
+          _ <- api.log.info(s"*** SLOWEST: ${slowest._1} | ${slowest._2} | ${slowest._3.mapValues(_.size).mkString(", ")}")
+          _ <- health.map { case (t, d, releasesByStatus) =>
+            api.log.info(s"${t.toString} | ${d.toMillis}ms | ${releasesByStatus.mapValues(_.size).mkString(", ")}")
+          }.sequence
+        } yield ()
+      }
+  }
+
+
+  override def cleanup(params: (Role, Template.ID)): Program[Unit] = params match {
+    case (role, _) =>
       for {
-        results <- withHealthCheck[Unit, Int](program = generateLoad, checkInterval = new FiniteDuration(1, SECONDS), checkProgram = ???)
-        (_, health) = results
-        // TODO: show time serie
+        _ <- api.log.info("Cleaning up users and role")
+        _ <- deleteUsers(role.principals.map(_.username).toList)
+        _ <- api.xlr.users.deleteRole(role.roleName)
       } yield ()
   }
 
-  protected def withHealthCheck[A, B](program: Program[A], checkInterval: FiniteDuration, checkProgram: Program[B]): Program[(A, List[(DateTime, FiniteDuration, B)])] =
-    api.control.backgroundOf(program) {
-      for {
-        res <- healthCheck(checkProgram)
-        _ <- api.control.sleep(checkInterval)
-      } yield res
-    }
-
-  protected def healthCheck[A](program: Program[A]): Program[(DateTime, FiniteDuration, A)] =
-    for {
-      start <- api.control.now()
-      result <- api.control.time(program)
-    } yield (start, result._1, result._2)
-
-  // TODO: move to control lib
-  def rampUp[A](start: Int, end: Int, step: Int => Int)(program: Int => Program[A]): Program[List[List[A]]] = {
-    RampUpRange.toList(RampUpRange(start, end, step)).map { n =>
-      api.control.parallel[A](n) { i =>
-        program(i)
-      }
-    }.sequence
-  }
-
-  case class RampUpRange(start: Int, end: Int, step: Int => Int = _ + 1)
-
-  object RampUpRange {
-    def toStream(range: RampUpRange): Stream[Int] =
-      if (range.start <= range.end) {
-        range.start #:: toStream(range.copy(start = range.step(range.start)))
-      } else Stream.empty
-
-    def toList(range: RampUpRange): List[Int] = toStream(range).toList
+  implicit val showParams: Show[(Role, Template.ID)] = {
+    case (role, templateId) =>
+      s"role"
   }
 
   protected def simple(templateId: Template.ID, user: User): Program[Unit] = {
@@ -155,19 +130,24 @@ case class CompleteReleases(numUsers: Int)
     }
   }
 
-  override def cleanup(params: (Role, Template.ID)): Program[Unit] = params match {
-    case (role, _) =>
-      for {
-        _ <- api.log.info("Cleaning up users and role")
-        _ <- deleteUsers(role.principals.map(_.username).toList)
-        _ <- api.xlr.users.deleteRole(role.roleName)
-      } yield ()
-  }
-
-  implicit val showParams: Show[(Role, Template.ID)] = {
-    case (role, templateId) =>
-      s"role"
-  }
+  private def setupTeams(role: Role, templateId: Template.ID)(implicit session: User.Session): Program[Unit] =
+    for {
+      _ <- api.log.info("template created: " + templateId)
+      _ <- api.log.info("getting template teams...")
+      teams <- api.xlr.templates.getTeams(templateId)
+      teamsMap = teams.map(t => t.teamName -> t).toMap
+      templateOwner = teamsMap("Template Owner") match {
+        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+      }
+      releaseAdmin = teamsMap("Release Admin") match {
+        case team => team.copy(members = team.members :+ RoleMember(role.roleName))
+      }
+      _ <- api.log.info("setting up teams:")
+      _ <- api.log.info(templateOwner.show)
+      _ <- api.log.info(releaseAdmin.show)
+      _ <- api.xlr.templates.setTeams(templateId, Seq(templateOwner, releaseAdmin))
+      _ <- api.log.info("template teams setup correctly")
+    } yield ()
 
   protected def createGlobalRole(rolename: Role.ID)(users: List[User]): Program[Role] = {
     val role = Role(rolename, Set(CreateTemplate, CreateRelease, CreateTopLevelFolder), users.toSet)
@@ -191,5 +171,14 @@ case class CompleteReleases(numUsers: Int)
   protected def deleteUsers(users: List[User.ID]): Program[Unit] = {
     users.map(api.xlr.users.deleteUser).sequence.map(_ => ())
   }
+
+  protected def checkReleases(implicit session: User.Session): Program[Map[ReleaseStatus, Set[Release.ID]]] =
+    for {
+      array <- api.xlr.releases.search(planned = true, active = true)
+      raw <- array.elements.toList.map(api.lib.json.read(JsUtils.readReleaseIdAndStatus)).sequence
+    } yield raw.groupBy(_._2).mapValues(_.map(_._1).toSet)
+
+
+
 
 }

@@ -22,8 +22,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
     for {
       _ <- log.debug(s"xlr.releases.createFromTeamplate($templateId, ${createReleaseArgs.show})")
       resp <- lib.http.json.post(server.api(_ ?/ "templates" / "Applications" / templateId / "create"), createReleaseArgs.toJson)
-      content <- api.http.parseJson(resp)
-      releaseId <- lib.json.read(JsUtils.readIdString)(content)
+      releaseId <- lib.json.parse(JsUtils.readIdString)(resp)
     } yield releaseId
 
   def createRelease(title: String, scriptUser: Option[User] = None)
@@ -46,8 +45,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
           ),
           "scriptUserPassword" -> user.password.toJson
         ))
-      content <- api.http.parseJson(resp)
-      phaseId <- lib.json.read(JsUtils.readFirstPhaseId(sep = "-"))(content)
+      phaseId <- lib.json.parse(JsUtils.readFirstPhaseId(sep = "-"))(resp)
     } yield phaseId
   }
 
@@ -81,6 +79,23 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
       content <- lib.http.json.get(server.api(_ ?/ "tasks" / "byTitle").withQuery(query))
       taskIds <- lib.json.read(JsUtils.readTaskIds(sep = "/"))(content)
     } yield taskIds
+  }
+
+  def search(planned: Boolean, active: Boolean)
+            (implicit session: User.Session): Program[JsArray] = {
+    val query = Uri.Query(
+      "page" -> "0",
+      "resultsPerPage" -> "100"
+    )
+    for {
+      _ <- log.debug(s"xlr.releases.search(planned = $planned, active = $active)")
+      resp <- lib.http.json.post(server.api(_ ?/ "releases" / "search").withQuery(query), JsObject(
+        "planned" -> planned.toJson,
+        "active" -> active.toJson,
+        "inactive" -> false.toJson
+      ))
+      array <- lib.json.parse(JsUtils.jsArray)(resp)
+    } yield array
   }
 
   def waitFor(releaseId: Release.ID, status: ReleaseStatus, interval: FiniteDuration = 5 seconds, retries: Option[Int] = None)

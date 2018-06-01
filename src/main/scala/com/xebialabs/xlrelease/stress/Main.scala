@@ -39,9 +39,8 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    scenarios
-        .TestSomething().run
-//      .CompleteReleases(numUsers).run
+//    scenarios.TestSomething().run
+    scenarios.CompleteReleases(numUsers).run
 
     pool.shutdown()
 

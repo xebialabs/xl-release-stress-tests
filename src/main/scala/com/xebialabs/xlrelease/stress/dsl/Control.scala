@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.dsl
 
 import freestyle.free._
-import org.joda.time.{DateTime}
+import org.joda.time.DateTime
 
 import scala.concurrent.duration.FiniteDuration
 
