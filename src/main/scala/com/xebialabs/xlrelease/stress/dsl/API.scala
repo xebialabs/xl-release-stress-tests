@@ -9,6 +9,8 @@ import freestyle.free.implicits._
 import freestyle.free.effects.error.ErrorM
 import freestyle.free.logging.LoggingM
 
+import scala.concurrent.duration.FiniteDuration
+
 
 trait API { self =>
   def config: XlrConfig

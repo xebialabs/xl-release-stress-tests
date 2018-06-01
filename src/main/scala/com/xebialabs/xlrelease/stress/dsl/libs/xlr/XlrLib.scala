@@ -2,12 +2,13 @@ package com.xebialabs.xlrelease.stress.dsl.libs.xlr
 
 import cats._
 import cats.implicits._
-import com.xebialabs.xlrelease.stress.dsl.{Control, DSL}
+import com.xebialabs.xlrelease.stress.dsl.Control
 import com.xebialabs.xlrelease.stress.dsl.http.{Client, libs}
 import com.xebialabs.xlrelease.stress.dsl.http.libs.log.SessionLog
 import com.xebialabs.xlrelease.stress.dsl.libs.Api
 import com.xebialabs.xlrelease.stress.dsl.libs.control.Until
 import freestyle.free._
+import freestyle.free.implicits._
 import freestyle.free.effects.error.ErrorM
 import freestyle.free.logging.LoggingM
 

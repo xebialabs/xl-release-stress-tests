@@ -1,15 +1,18 @@
 package com.xebialabs.xlrelease.stress.handlers.io
 
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import cats.implicits._
 import cats.effect.IO
 import com.xebialabs.xlrelease.stress.dsl
 import freestyle.free._
 import freestyle.free.implicits._
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 
 class ControlHandler()(implicit httpClientHandler: dsl.http.Client.Handler[IO]) {
@@ -28,6 +31,41 @@ class ControlHandler()(implicit httpClientHandler: dsl.http.Client.Handler[IO]) 
         b <- r.join
       } yield (a, b)
 
+    protected def backgroundOf[A, B](foreground: dsl.Program[A])(background: dsl.Program[B]): IO[(A, List[B])] = {
+      val fg: IO[A] = IO.shift *> foreground.interpret[IO]
+      val bg: IO[B] = background.interpret[IO]
+
+      var acc = List.empty[B]
+      val stop = new AtomicBoolean(false)
+      def bgLoop: IO[List[B]] = IO.cancelable { cb =>
+        val res: IO[Unit] = if (stop.get()) {
+          try {
+            cb(Right(acc))
+          } catch { case NonFatal(e) => cb(Left(e)) }
+          IO(())
+        } else {
+          for {
+            b <- bg
+            _ <- IO.apply {
+              acc = b :: acc
+            }
+            _ <- bgLoop
+          } yield ()
+        }
+        res
+      }
+
+      for {
+        fa <- IO.shift *> fg.start
+        fb <- IO.shift *> bgLoop.start
+        a <- fa.join
+        _ <- IO {
+          stop.set(true)
+        }
+        bs <- fb.join
+      } yield (a, bs)
+    }
+
     protected def repeat[A](n: Int)(program: dsl.Program[A]): IO[List[A]] = {
       val code: IO[A] = program.interpret[IO]
       (0 until n).toList
@@ -44,12 +82,12 @@ class ControlHandler()(implicit httpClientHandler: dsl.http.Client.Handler[IO]) 
     protected def now(): IO[DateTime] =
       IO(DateTime.now)
 
-    protected def time[A](p: dsl.Program[A]): IO[(Duration, A)] =
+    protected def time[A](p: dsl.Program[A]): IO[(FiniteDuration, A)] =
       for {
         start <- now()
         result <- p.interpret[IO]
         end <- now()
-        duration = new Duration(start, end)
+        duration = new FiniteDuration(end.getMillis - start.getMillis, MILLISECONDS)
       } yield duration -> result
   }
 }

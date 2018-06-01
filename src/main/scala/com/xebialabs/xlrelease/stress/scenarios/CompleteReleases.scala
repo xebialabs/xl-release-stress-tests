@@ -5,13 +5,14 @@ import com.xebialabs.xlrelease.stress.dsl.libs.xlr.protocol.CreateReleaseArgs
 import com.xebialabs.xlrelease.stress.domain.Permission.{CreateRelease, CreateTemplate, CreateTopLevelFolder}
 import com.xebialabs.xlrelease.stress.domain._
 import cats.implicits._
-import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
+import com.xebialabs.xlrelease.stress.config.XlrConfig
 import com.xebialabs.xlrelease.stress.domain.Member.RoleMember
 import com.xebialabs.xlrelease.stress.dsl.DSL
-import com.xebialabs.xlrelease.stress.utils.TmpResource
 import freestyle.free._
 import freestyle.free.implicits._
+import org.joda.time.DateTime
 
+import scala.concurrent.duration._
 import scala.io.Source
 
 case class CompleteReleases(numUsers: Int)
@@ -74,9 +75,48 @@ case class CompleteReleases(numUsers: Int)
   override def program(params: (Role, Template.ID)): Program[Unit] = params match {
     case (role, templateId) =>
       val users = role.principals.toList
-      api.control.parallel(numUsers) { n =>
+      val generateLoad = rampUp(1, 32, _ * 2) { n =>
         simple(templateId, users(n))
       }.map(_ => ())
+      for {
+        results <- withHealthCheck[Unit, Int](program = generateLoad, checkInterval = new FiniteDuration(1, SECONDS), checkProgram = ???)
+        (_, health) = results
+        // TODO: show time serie
+      } yield ()
+  }
+
+  protected def withHealthCheck[A, B](program: Program[A], checkInterval: FiniteDuration, checkProgram: Program[B]): Program[(A, List[(DateTime, FiniteDuration, B)])] =
+    api.control.backgroundOf(program) {
+      for {
+        res <- healthCheck(checkProgram)
+        _ <- api.control.sleep(checkInterval)
+      } yield res
+    }
+
+  protected def healthCheck[A](program: Program[A]): Program[(DateTime, FiniteDuration, A)] =
+    for {
+      start <- api.control.now()
+      result <- api.control.time(program)
+    } yield (start, result._1, result._2)
+
+  // TODO: move to control lib
+  def rampUp[A](start: Int, end: Int, step: Int => Int)(program: Int => Program[A]): Program[List[List[A]]] = {
+    RampUpRange.toList(RampUpRange(start, end, step)).map { n =>
+      api.control.parallel[A](n) { i =>
+        program(i)
+      }
+    }.sequence
+  }
+
+  case class RampUpRange(start: Int, end: Int, step: Int => Int = _ + 1)
+
+  object RampUpRange {
+    def toStream(range: RampUpRange): Stream[Int] =
+      if (range.start <= range.end) {
+        range.start #:: toStream(range.copy(start = range.step(range.start)))
+      } else Stream.empty
+
+    def toList(range: RampUpRange): List[Int] = toStream(range).toList
   }
 
   protected def simple(templateId: Template.ID, user: User): Program[Unit] = {
