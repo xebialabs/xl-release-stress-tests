@@ -143,8 +143,27 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
       content <- api.http.parseJson(resp)
     } yield JsUtils.matchesTaskStatus(TaskStatus.Completed)(content)
 
+  def fail(taskId: Task.ID, comment: String)
+          (implicit session: User.Session): Program[Boolean] =
+    for {
+      _ <- log.debug(s"xlr.tasks.fail(${taskId.show}, $comment)")
+      resp <- lib.http.json.post(
+        server.api(_ ?/ "tasks" / "Applications" ++ taskId.path / "fail"),
+        JsObject("comment" -> comment.toJson)
+      )
+      content <- api.http.parseJson(resp)
+    } yield JsUtils.matchesTaskStatus(TaskStatus.Failed)(content)
+
   def retry(taskId: Task.ID, comment: String)
-           (implicit session: User.Session): Program[Comment.ID] = notImplemented("retry")
+           (implicit session: User.Session): Program[Boolean] =
+    for {
+      _ <- log.debug(s"xlr.tasks.retry(${taskId.show}, $comment)")
+      resp <- lib.http.json.post(
+        server.api(_ ?/ "tasks" / "Applications" ++ taskId.path / "retry"),
+        JsObject("comment" -> comment.toJson)
+      )
+      content <- api.http.parseJson(resp)
+    } yield JsUtils.matchesTaskStatus(TaskStatus.InProgress)(content)
 
   def skip(taskId: Task.ID, comment: String)
           (implicit session: User.Session): Program[Comment.ID] = notImplemented("skip")

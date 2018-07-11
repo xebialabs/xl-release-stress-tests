@@ -74,7 +74,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.deleteUser($userId)")
-        resp <- api.http.delete(server.api(_ ?/ "users" / userId))
+        resp <- lib.http.delete(server.api(_ ?/ "users" / userId))
         _ <- api.http.discard(resp)
       } yield ()
     }
@@ -83,7 +83,7 @@ class Users[F[_]](server: XlrServer, adminPassword: AdminPassword)(implicit prot
     admin() >>= { implicit session =>
       for {
         _ <- log.debug(s"xlr.users.deleteRole($roleId)")
-        resp <- api.http.delete(server.api(_ ?/ "roles" / roleId))
+        resp <- lib.http.delete(server.api(_ ?/ "roles" / roleId))
         _ <- api.http.discard(resp)
       } yield ()
   }

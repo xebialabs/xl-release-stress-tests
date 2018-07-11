@@ -1,7 +1,7 @@
 package com.xebialabs.xlrelease.stress.handlers.io
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.{HttpHeader, HttpResponse, RequestEntity, Uri}
+import akka.http.scaladsl.model._
 import cats.effect.IO
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.dsl.http.Client
@@ -18,25 +18,17 @@ class HttpClientHandler() {
   private[this] val logger = org.log4s.getLogger("HTTP")
 
   implicit def clientHandler: Client.Handler[IO] = new Client.Handler[IO] with SprayJsonSupport with DefaultJsonProtocol {
-    protected def get(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] = {
-      logger.debug(s"GET ${uri.toString}")
+    protected def get(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] =
       client.get(uri, headers).io
-    }
 
-    protected def post(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] = {
-      logger.debug(s"POST ${uri.toString} | ${entity.toString}")
+    protected def post(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] =
       client.post(uri, entity, headers).io
-    }
 
-    protected def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] = {
-      logger.debug(s"PUT ${uri.toString} | ${entity.toString}")
+    protected def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader]): IO[HttpResponse] =
       client.put(uri, entity, headers).io
-    }
 
-    protected def delete(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] = {
-      logger.debug(s"DELETE ${uri.toString}")
+    protected def delete(uri: Uri, headers: List[HttpHeader]): IO[HttpResponse] =
       client.delete(uri, headers).io
-    }
 
     protected def parseJson(resp: HttpResponse): IO[JsValue] = {
       import client.{ec, materializer}

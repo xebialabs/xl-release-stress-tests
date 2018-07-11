@@ -12,6 +12,6 @@ object Role {
 
   implicit def showRole(implicit showPermission: Show[Permission], showUser: Show[User]): Show[Role] = {
     case Role(name, permissions, principals) =>
-      s"$name (permissions: ${permissions.map(_.show).mkString(" ")}) [${principals.map(_.show).mkString(", ")}]"
+      s"$name (permissions: ${permissions.map(_.show).mkString(" ")}) [${principals.toList.sortBy(_.username).map(_.show).mkString(", ")}]"
   }
 }

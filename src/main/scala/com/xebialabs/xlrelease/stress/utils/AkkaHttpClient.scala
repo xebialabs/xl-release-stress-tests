@@ -11,6 +11,7 @@ import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.{DateTime => _, _}
 import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, Materializer}
+import cats.effect.IO
 import com.xebialabs.xlrelease.stress.domain.HttpSession
 import com.xebialabs.xlrelease.stress.config.defaults.http.client.{headers => defaultHeaders}
 import spray.json._
@@ -23,21 +24,29 @@ import scala.util.{Failure, Success, Try}
 class AkkaHttpClient extends SprayJsonSupport with DefaultJsonProtocol {
   import AkkaHttpClient._
 
+  private[this] val logger = org.log4s.getLogger("HTTP")
+
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
 
   def get(uri: Uri, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
-    Http().singleRequest(HttpRequest(GET, uri, headers))
+    request(HttpRequest(GET, uri, headers))
 
   def post(uri: Uri, entity: RequestEntity, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
-    Http().singleRequest(HttpRequest(POST, uri, headers, entity))
+    request(HttpRequest(POST, uri, headers, entity))
 
   def put(uri: Uri, entity: RequestEntity, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
-    Http().singleRequest(HttpRequest(PUT, uri, headers, entity))
+    request(HttpRequest(PUT, uri, headers, entity))
 
   def delete(uri: Uri, headers: List[HttpHeader] = defaultHeaders): Future[HttpResponse] =
-    Http().singleRequest(HttpRequest(DELETE, uri, headers))
+    request(HttpRequest(DELETE, uri, headers))
+
+  def request(req: HttpRequest): Future[HttpResponse] =
+    Http().singleRequest(req).map { resp =>
+      logger.debug(req.method.value + " " + req.uri.toString + ": " + resp.status.toString)
+      resp
+    }
 
   def shutdown(): Future[Unit] =
     Http().shutdownAllConnectionPools()
