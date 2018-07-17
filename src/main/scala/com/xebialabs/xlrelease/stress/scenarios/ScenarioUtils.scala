@@ -82,6 +82,14 @@ trait ScenarioUtils extends dsl.API {
     }.sequence
   }
 
+  def grouped[A](howMany: Int, groupSize: Int)(program: Int => Program[A]): Program[List[List[A]]] = {
+    (0 until howMany).grouped(groupSize).toList.map { batch =>
+      api.control.parallel(groupSize) { i =>
+        program(batch.head + i)
+      }
+    }.sequence
+  }
+
   case class RampUpRange(start: Int, end: Int, step: Int => Int = _ + 1)
 
   object RampUpRange {

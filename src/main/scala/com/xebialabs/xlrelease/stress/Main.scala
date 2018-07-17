@@ -2,9 +2,13 @@ package com.xebialabs.xlrelease.stress
 
 import java.util.concurrent._
 
+import cats._
+import cats.implicits._
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
+import com.xebialabs.xlrelease.stress.domain.{ReleaseStatus, Template}
 import com.xebialabs.xlrelease.stress.dsl.DSL
+import com.xebialabs.xlrelease.stress.runners.io
 import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
@@ -28,8 +32,11 @@ object Main {
 
     val hostname = Uri(args(0))
     val adminPassword = args(1)
-    val numUsers = args(2).toInt
-    val threads = 2 * Math.max(1, numUsers)
+//    val numUsers = args(2).toInt
+//    val threads = 2 * Math.max(1, numUsers)
+
+    val templateId: Template.ID = args(2)
+    val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(
       server = XlrServer(hostname),
@@ -39,10 +46,28 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-//    scenarios.TestSomething().run
-    scenarios.CompleteReleases(numUsers).run
+    scenarios.TestSomething(templateId).run
 
-    pool.shutdown()
+//    scenarios.TestSomething().run
+//    scenarios.CompleteReleases(numUsers).run
+//    val programs = List(
+//      scenarios.Generate(numUsers, ReleaseStatus.Planned),
+//      scenarios.Generate(numUsers, ReleaseStatus.Failed),
+//      scenarios.Generate(numUsers, ReleaseStatus.InProgress),
+//      scenarios.Generate(numUsers, ReleaseStatus.Completed),
+//      scenarios.Generate(numUsers, ReleaseStatus.Aborted)
+//    )
+//
+//    val p = programs.head
+//
+//    val full = for {
+//      params <- p.setup
+//      _ <- programs.map(_.program(params)).sequence
+//      _ <- p.cleanup(params)
+//    } yield ()
+//    io.runIO(full)(io.runnerContext(config.server, config.adminPassword, ec)).unsafeRunSync()
+
+//    pool.shutdown()
 
     sys.exit(0)
   }

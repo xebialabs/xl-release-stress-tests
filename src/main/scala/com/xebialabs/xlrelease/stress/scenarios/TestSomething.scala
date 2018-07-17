@@ -4,14 +4,16 @@ import cats.Show
 import cats.implicits._
 import com.xebialabs.xlrelease.stress.config.XlrConfig
 import com.xebialabs.xlrelease.stress.dsl.DSL
-import com.xebialabs.xlrelease.stress.domain.Target._
+import com.xebialabs.xlrelease.stress.domain.{Task, TaskStatus, Template, User}
+import com.xebialabs.xlrelease.stress.dsl.libs.xlr.protocol.CreateReleaseArgs
 import freestyle.free._
 import freestyle.free.implicits._
 
-import scala.concurrent.duration.{FiniteDuration, SECONDS}
-import scala.util.Random
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-case class TestSomething()
+
+case class TestSomething(templateId: Template.ID)
                         (implicit
                          val config: XlrConfig,
                          val _api: DSL[DSL.Op])
@@ -22,53 +24,30 @@ case class TestSomething()
 
   override def setup: Program[Unit] = ().pure[Program]
 
-  override def program(params: Unit): Program[Unit] = {
-    val dummy1 = for {
-      _ <- api.log.info("DUMMY. waiting 20 seconds...")
-      _ <- api.control.sleep(new FiniteDuration(20, SECONDS))
-      _ <- api.log.info("DUMMY: DONE")
-    } yield ()
-    val bg: Program[Int] = for {
-      _ <- api.log.info("BG: tick")
-      _ <- api.control.sleep(new FiniteDuration(1, SECONDS))
-    } yield Random.nextInt
-    //      api.xlr.users.admin() >>= { implicit session =>
-    //        for {
-    //          results <- withHealthCheck(program = generateLoad, checkInterval = new FiniteDuration(1, SECONDS), checkProgram = checkReleases)
-    //          (_, health) = results
-    //          _ <- api.log.info("**** RESULTS *****")
-    //          _ <- health.map { case (t, d, releasesByStatus) =>
-    //            api.log.info(s"${t.toString} | ${d.toMillis}ms | ${releasesByStatus.toString}")
-    //          }.sequence
-    //        } yield ()
-    //      }
-    api.control.backgroundOf(dummy1)(bg).flatMap { case (_, checks) =>
-      api.log.info("bgOf done: checks: " + checks.toString)
+  override def program(params: Unit): Program[Unit] =
+    api.xlr.users.admin() >>= { implicit session =>
+      (1 to 1000).toList.map { n =>
+        for {
+          releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(title = s"Release #$n", variables = Map("v1" -> s"test#$n")))
+          _ <- api.xlr.releases.start(releaseId)
+          t3Id <- api.xlr.releases.getTasksByTitle(releaseId, "t3").map(_.head)
+          _ <- api.xlr.tasks.waitFor(t3Id, TaskStatus.InProgress, 2 seconds, None)
+          _ <- api.log.info(s"failAndRetry($t3Id, 4)")
+          _ <- failAndRetry(t3Id, 4)
+        } yield ()
+      }.sequence[Program, Unit].map(_ => ())
     }
-  }
-//    api.xlr.users.admin() >>= { implicit session =>
-//      for {
-//        phaseId <- api.xlr.releases.createRelease("Test Release XY", Some(session.user))
-//        releaseId = phaseId.release
-//        m1 <- api.xlr.tasks.appendManual(phaseId, "m1")
-//        m2 <- api.xlr.tasks.appendManual(phaseId, "m2")
-//        pg1 <- api.xlr.phases.appendTask(phaseId, "pg1", "xlrelease.ParallelGroup")
-//        task1 <- api.xlr.tasks.get(m1)
-//        task2 <- api.xlr.tasks.get(m2)
-//        pg1m1 <- api.xlr.tasks.append(task1, pg1.target)
-//        pg1m2 <- api.xlr.tasks.append(task2, pg1.target)
-//        _ <- api.xlr.tasks.delete(m1)
-//        _ <- api.xlr.tasks.delete(m2)
-////        pg1m1 <- api.xlr.tasks.move(m1, pg1)
-////        pg1m2 <- api.xlr.tasks.move(m2, pg1)
-//        _ <- api.log.info(s"pg1: ${pg1.show}")
-//        _ <- api.log.info(s"pg1m1: ${pg1m1.show}")
-//        _ <- api.log.info(s"pg1m2: ${pg1m2.show}")
-//      } yield ()
-//    }
-
 
   override def cleanup(params: Unit): Program[Unit] = ().pure[Program]
 
   override implicit val showParams: Show[Unit] = _ => ""
+
+  protected def failAndRetry(taskId: Task.ID, times: Int)
+                            (implicit session: User.Session): Program[List[Unit]] =
+    (1 to times).toList.map { i =>
+      for {
+        _ <- api.xlr.tasks.fail(taskId, s"failed#$i")
+        _ <- api.xlr.tasks.retry(taskId, s"retry$i")
+      } yield ()
+    }.sequence
 }
