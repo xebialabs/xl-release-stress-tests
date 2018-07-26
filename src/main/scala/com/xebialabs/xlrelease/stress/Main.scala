@@ -20,12 +20,12 @@ object Main {
       |    sbt "run xlReleaseUrl adminPassword numUsers"
       |
       |example:
-      |    sbt "run http://xl-release.xebialabs.com:5516 admin 100"
+      |    sbt "run http://xl-release.xebialabs.com:5516 admin templateId howMany"
     """.stripMargin
 
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 3) {
+    if (args.length < 4) {
       println(usage)
       System.exit(-1)
     }
@@ -36,6 +36,7 @@ object Main {
 //    val threads = 2 * Math.max(1, numUsers)
 
     val templateId: Template.ID = args(2)
+    val howMany: Int = args(3).toInt
     val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(
@@ -46,7 +47,7 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    scenarios.TestSomething(templateId).run
+    scenarios.TestSomething(templateId, howMany).run
 
 //    scenarios.TestSomething().run
 //    scenarios.CompleteReleases(numUsers).run
