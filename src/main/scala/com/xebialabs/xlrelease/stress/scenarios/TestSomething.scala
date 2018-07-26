@@ -27,14 +27,17 @@ case class TestSomething(templateId: Template.ID,
 
   override def program(params: Unit): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
-      api.control.repeat(1) {
-        api.control.parallel(howMany) { i =>
-          for {
-            releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(title = "Whatever", variables = Map.empty))
-            _ <- api.xlr.releases.start(releaseId)
-            _ <- api.xlr.releases.waitFor(releaseId, ReleaseStatus.Completed, 5 seconds, None)
-          } yield ()
-        }.map(_ => ())
+      rampUp(2, howMany, _ * 2) { _ =>
+        for {
+          releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs(title = "Whatever", variables = Map.empty))
+          _ <- api.log.info(s"[${releaseId.show}] created")
+          _ <- api.xlr.releases.start(releaseId)
+          start <- api.control.now()
+          _ <- api.log.info(s"[${releaseId.show}] started")
+          _ <- api.xlr.releases.waitFor(releaseId, ReleaseStatus.Completed, 5 seconds, None)
+          end <- api.control.now()
+          _ <- api.log.info(s"[${releaseId.show}] completed in ${start.getMillis - end.getMillis}ms")
+        } yield ()
       }.map(_ => ())
     }
 
