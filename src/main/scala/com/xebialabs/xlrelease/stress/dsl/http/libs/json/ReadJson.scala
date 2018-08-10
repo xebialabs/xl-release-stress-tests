@@ -26,6 +26,17 @@ trait ReadJson[F[_]] extends Api[F] { self =>
   def parse[A](reader: JsValue => JsParsed[A])(resp: HttpResponse): Program[A] =
     api.http.parseJson(resp) flatMap read(reader)
 
+//  def parseOrDefault[A](reader: JsValue => JsParsed[A], default: => A)(resp: HttpResponse): Program[A] =
+//    api.http.parseJson(resp) flatMap { value =>
+//      val parsed: JsParsed[Program[A]] = reader(value).map(_.pure[Program])
+//      val recovered: JsParsed[Program[A]] = parsed.recover {
+//        case e: DeserializationException =>
+//          api.log.warn(s"Deserialization exception: ${e.getMessage}").map {
+//            _ => default
+//          }
+//      }
+//      recovered.toOption.get
+//    }
 
   protected def error[A](msg: String, original: JsValue, fieldNames: List[String] = Nil, cause: Throwable = null): Program[A] =
     api.error.error[A](DeserializationException(msg, JsUtils.debug(msg)(original), fieldNames))

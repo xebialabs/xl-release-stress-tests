@@ -175,7 +175,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
              (implicit session: User.Session): Program[Unit] = {
     for {
       _ <- log.debug(s"xlr.tasks.waitFor(${taskId.show}, $expectedStatus, $interval, $retries")
-      _ <- lib.control.until[TaskStatus](_ == expectedStatus, interval, retries) {
+      _ <- lib.control.until[Option[TaskStatus]](_.contains(expectedStatus), interval, retries) {
         getTaskStatus(taskId)
       }
     } yield ()
@@ -183,10 +183,11 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
   }
 
   def getTaskStatus(taskId: Task.ID)
-                   (implicit session: User.Session): Program[TaskStatus] =
+                   (implicit session: User.Session): Program[Option[TaskStatus]] =
     for {
       _ <- log.debug(s"xlr.tasks.getTaskStatus(${taskId.show})")
-      resp <- lib.http.json.post(server.root(_ ?/ "tasks" / "poll"), JsObject("ids" -> Seq(taskId.show).toJson))
+      payload = JsObject("ids" -> Seq(taskId.show.replace("/", "-").stripPrefix("Applications-")).toJson)
+      resp <- lib.http.json.post(server.root(_ ?/ "tasks" / "poll"), payload)
       taskStatus <- lib.json.parse(JsUtils.readFirstTaskStatus)(resp)
     } yield taskStatus
 

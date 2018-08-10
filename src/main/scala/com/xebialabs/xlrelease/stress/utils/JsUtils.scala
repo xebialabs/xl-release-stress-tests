@@ -84,10 +84,17 @@ object JsUtils {
 
   def getFirst: JsValue => JsParsed[JsValue] =
     json =>
+      getFirstOption(json) >>= {
+        case None =>
+          err("getFirst: empty array.", json)
+        case Some(first) =>
+          first.asRight
+      }
+
+  def getFirstOption: JsValue => JsParsed[Option[JsValue]] =
+    json =>
       jsArray(json) >>= { array =>
-        array.elements.headOption.map(_.asRight).getOrElse(
-          err("getFirst: empty array.", array)
-        )
+        array.elements.headOption.asRight
       }
 
   def readIdString: JsValue => JsParsed[String] =
@@ -126,10 +133,20 @@ object JsUtils {
     json =>
       getStatus(json) >>= toTaskStatus
 
-  def readFirstTaskStatus: JsValue => JsParsed[TaskStatus] =
-    json =>
-      getFirst(json) >>=
-        readTaskStatus
+  def readFirstTaskStatus: JsValue => JsParsed[Option[TaskStatus]] =
+    json => {
+      getFirstOption(json) >>= {
+        case None =>
+          Option.empty[TaskStatus].asRight
+        case Some(first) =>
+          readTaskStatus(first) match {
+            case Left(_) =>
+              Option.empty[TaskStatus].asRight
+            case Right(status) =>
+              Some(status).asRight
+          }
+      }
+    }
 
   def matchesTaskStatus(expectedStatus: TaskStatus): JsValue => Boolean =
     json =>

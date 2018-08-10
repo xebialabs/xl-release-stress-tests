@@ -20,7 +20,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def createFromTemplate(templateId: Template.ID, createReleaseArgs: CreateReleaseArgs)
                         (implicit session: User.Session): Program[Release.ID] =
     for {
-      _ <- log.debug(s"xlr.releases.createFromTeamplate($templateId, ${createReleaseArgs.show})")
+      _ <- log.debug(s"xlr.releases.createFromTeamplate(${templateId.show}, ${createReleaseArgs.show})")
       resp <- lib.http.json.post(server.api(_ ?/ "templates" / "Applications" / templateId.id / "create"), createReleaseArgs.toJson)
       releaseId <- lib.json.parse(JsUtils.readIdString)(resp)
     } yield Release.ID(releaseId)
@@ -52,7 +52,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def start(releaseId: Release.ID)
            (implicit session: User.Session): Program[Release.ID] =
     for {
-      _ <- log.debug(s"xlr.releases.start($releaseId)")
+      _ <- log.debug(s"xlr.releases.start(${releaseId.show})")
       resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId.id / "start"), JsNull)
       _ <- api.http.discard(resp)
     } yield releaseId
@@ -60,7 +60,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def abort(releaseId: Release.ID)
            (implicit session: User.Session): Program[Release.ID] =
     for {
-      _ <- log.debug(s"xlr.releases.abort($releaseId)")
+      _ <- log.debug(s"xlr.releases.abort(${releaseId.show})")
       resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId.id / "abort"), JsNull)
       _ <- api.http.discard(resp)
     } yield releaseId
@@ -68,14 +68,14 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def getTasksByTitle(releaseId: Release.ID, taskTitle: String, phaseTitle: Option[String] = None)
                      (implicit session: User.Session): Program[Seq[Task.ID]] = {
     val baseQuery = Uri.Query(
-      "releaseId" -> s"Applications/$releaseId",
+      "releaseId" -> s"Applications/${releaseId.id}",
       "taskTitle" -> taskTitle
     )
     val query = phaseTitle.fold(baseQuery) { pt =>
       ("phaseTitle" -> pt) +: baseQuery
     }
     for {
-      _ <- log.debug(s"xlr.releases.getTasksByTitle($releaseId, $taskTitle, $phaseTitle)")
+      _ <- log.debug(s"xlr.releases.getTasksByTitle(${releaseId.id}, $taskTitle, $phaseTitle)")
       content <- lib.http.json.get(server.api(_ ?/ "tasks" / "byTitle").withQuery(query))
       taskIds <- lib.json.read(JsUtils.readTaskIds(sep = "/"))(content)
     } yield taskIds
@@ -101,7 +101,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def waitFor(releaseId: Release.ID, status: ReleaseStatus, interval: FiniteDuration = 5 seconds, retries: Option[Int] = None)
              (implicit session: User.Session): Program[Unit] =
     for {
-      _ <- log.debug(s"xlr.releases.waitFor($releaseId, $status, $interval, $retries)")
+      _ <- log.debug(s"xlr.releases.waitFor(${releaseId.show}, $status, $interval, $retries)")
       _ <- lib.control.until[ReleaseStatus](_ == status, interval, retries) {
         getReleaseStatus(releaseId)
       }
@@ -110,7 +110,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
   def getReleaseStatus(releaseId: Release.ID)
                       (implicit session: User.Session): Program[ReleaseStatus] =
     for {
-      _ <- log.debug(s"xlr.releases.getReleaseStatus($releaseId)")
+      _ <- log.debug(s"xlr.releases.getReleaseStatus(${releaseId.show})")
       content <- lib.http.json.get(server.api(_ ?/ "releases" / "Applications" / releaseId.id))
       releaseStatus <- lib.json.read(JsUtils.readReleaseStatus)(content)
     } yield releaseStatus

@@ -19,33 +19,21 @@ case class CommentsScenario(howMany: Int)
                            (implicit
                             val config: XlrConfig,
                             val _api: DSL[DSL.Op])
-  extends Scenario[(Template.ID, Task.ID)]
+  extends Scenario[Template.ID]
     with ScenarioUtils
     with DefaultJsonProtocol {
 
   val name: String = s"Test Something"
 
-  override def setup: Program[(Template.ID, Task.ID)] =
+  override def setup: Program[Template.ID] =
     api.xlr.users.admin() >>= { implicit session =>
       for {
         _ <- api.log.info("Creating parallel template...")
-        phaseId <- api.xlr.templates.create("The ManyComments Template")
-        par1 <- createParGroup(phaseId, "Par1", 24) { i =>
-          JsObject(
-            "id" -> JsNull,
-            "type" -> "xlrelease.ScriptTask".toJson,
-            "script" -> """""".toJson
-          )
-        }
-        par1 <- createParGroup(phaseId, "Par2", 24) { i =>
-          JsObject(
-            "id" -> JsNull,
-            "type" -> "xlrelease.ScriptTask".toJson,
-            "script" -> """""".toJson
-          )
-        }
-        controlId <- api.xlr.phases.appendTask(phaseId, "Control Task", "xlrelease.Task")
-      } yield Template.ID(phaseId.release.id) -> controlId
+        phaseId <- api.xlr.templates.create("The ManyComments Template", scriptUser = Some(session.user))
+        _ <- createParGroup(phaseId, "Par1", 24)(i => myScriptTask(s"t1_$i"))
+        _ <- createParGroup(phaseId, "Par2", 24)(i => myScriptTask(s"t2_$i"))
+        _ <- api.xlr.phases.appendTask(phaseId, "Control Task", "xlrelease.Task")
+      } yield Template.ID(phaseId.release.id)
     }
 
   protected def createParGroup(phaseId: Phase.ID, groupTitle: String, tasks: Int)
@@ -59,18 +47,58 @@ case class CommentsScenario(howMany: Int)
       }.sequence[Program, Task.ID]
     } yield taskId -> subTasks
 
-  override def program(params: (Template.ID, Task.ID)): Program[Unit] =
+  protected val script: String =
+    s"""|import string
+        |import random
+        |import time
+        |
+        |def gen_comment(size=1024, chars=string.printable):
+        |    return taskApi.newComment(''.join(random.choice(chars) for _ in range(size)))
+        |
+        |taskId = getCurrentTask().id
+        |
+        |def stress():
+        |    comment = gen_comment(1024)
+        |    taskApi.commentTask(taskId, comment)
+        |    print(comment.comment + '\\n')
+        |    return comment
+        |
+        |comment1 = stress()
+        |comment2 = stress()
+        |comment3 = stress()
+        |comment4 = stress()
+        |
+        |print('DONE\\n')
+       """.stripMargin
+
+  protected def myScriptTask(title: String): JsObject = JsObject(
+    "id" -> JsNull,
+    "type" -> "xlrelease.ScriptTask".toJson,
+    "title" -> title.toJson,
+    "script" -> script.toJson
+  )
+
+  override def program(templateId: Template.ID): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
-      val templateId = params._1
-      rampUp(8, howMany, _ * 2) { _ =>
+      rampUp(1, howMany, _ * 2) { _ =>
         api.control.repeat(5) {
           for {
             releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs("Test Release", Map.empty))
-            taskId = params._2.copy(phaseId = params._2.phaseId.copy(release = releaseId))
+            par1 <- api.xlr.releases.getTasksByTitle(releaseId, "Par1").map(_.head)
+            par2 <- api.xlr.releases.getTasksByTitle(releaseId, "Par2").map(_.head)
+            ctrl <- api.xlr.releases.getTasksByTitle(releaseId, "Control Task").map(_.head)
+            _ <- api.xlr.tasks.assignTo(ctrl, session.user.username)
             _ <- api.log.info(s"[${releaseId.show}] created")
-            _ <- api.xlr.releases.start(releaseId)
             start <- api.control.now()
+            _ <- api.xlr.releases.start(releaseId)
             _ <- api.log.info(s"[${releaseId.show}] started")
+            _ <- api.xlr.tasks.waitFor(par1, TaskStatus.Completed, 5 seconds, None)
+            _ <- api.log.info(s"[${par1.show}] Par1 completed")
+            _ <- api.xlr.tasks.waitFor(par2, TaskStatus.Completed, 5 seconds, None)
+            _ <- api.log.info(s"[${par1.show}] Par1 completed")
+            _ <- api.xlr.tasks.waitFor(ctrl, TaskStatus.InProgress, 1 seconds, None)
+            _ <- api.xlr.tasks.complete(ctrl, Some("COMPLETED"))
+            _ <- api.log.info(s"[${ctrl.show}] Ctrl completed")
             end <- api.control.now()
             _ <- api.log.info(s"[${releaseId.show}] done in ${end.getMillis - start.getMillis}ms")
           } yield ()
@@ -78,7 +106,7 @@ case class CommentsScenario(howMany: Int)
       }.map(_ => ())
     }
 
-  override def cleanup(params: (Template.ID, Task.ID)): Program[Unit] = ().pure[Program]
+  override def cleanup(params: Template.ID): Program[Unit] = ().pure[Program]
 
-  override implicit val showParams: Show[(Template.ID, Task.ID)] = { case (templateId, _) => templateId.show }
+  override implicit val showParams: Show[Template.ID] = Template.showTemplateId
 }

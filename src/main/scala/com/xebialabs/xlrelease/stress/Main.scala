@@ -17,12 +17,12 @@ object Main {
       |    sbt "run xlReleaseUrl adminPassword numUsers"
       |
       |example:
-      |    sbt "run http://xl-release.xebialabs.com:5516 admin howMany templateId"
+      |    sbt "run http://xl-release.xebialabs.com:5516 admin 10"
     """.stripMargin
 
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 4) {
+    if (args.length < 3) {
       println(usage)
       System.exit(-1)
     }
@@ -33,7 +33,6 @@ object Main {
 //    val threads = 2 * Math.max(1, numUsers)
 
     val howMany: Int = args(2).toInt
-    val templateId: Template.ID = Template.ID(args(3))
     val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(
@@ -44,28 +43,7 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    scenarios.TestSomething(templateId, howMany).run
-
-//    scenarios.TestSomething().run
-//    scenarios.CompleteReleases(numUsers).run
-//    val programs = List(
-//      scenarios.Generate(numUsers, ReleaseStatus.Planned),
-//      scenarios.Generate(numUsers, ReleaseStatus.Failed),
-//      scenarios.Generate(numUsers, ReleaseStatus.InProgress),
-//      scenarios.Generate(numUsers, ReleaseStatus.Completed),
-//      scenarios.Generate(numUsers, ReleaseStatus.Aborted)
-//    )
-//
-//    val p = programs.head
-//
-//    val full = for {
-//      params <- p.setup
-//      _ <- programs.map(_.program(params)).sequence
-//      _ <- p.cleanup(params)
-//    } yield ()
-//    io.runIO(full)(io.runnerContext(config.server, config.adminPassword, ec)).unsafeRunSync()
-
-//    pool.shutdown()
+    scenarios.CommentsScenario(howMany).run
 
     sys.exit(0)
   }
