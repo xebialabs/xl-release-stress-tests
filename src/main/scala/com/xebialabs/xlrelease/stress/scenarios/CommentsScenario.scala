@@ -94,7 +94,7 @@ case class CommentsScenario(howMany: Int)
   override def program(templateId: Template.ID): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
       rampUp(1, howMany, _ * 2) { _ =>
-        api.control.repeat(4) {
+        api.control.repeat(2) {
           for {
             releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs("Test Release", Map.empty))
             par1 <- api.xlr.releases.getTasksByTitle(releaseId, "Par1").map(_.head)
