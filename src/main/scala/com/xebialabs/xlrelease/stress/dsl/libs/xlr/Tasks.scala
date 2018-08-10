@@ -83,7 +83,7 @@ class Tasks[F[_]](server: XlrServer, phases: Phases[F])(implicit protected val _
                   (implicit session: User.Session): Program[Task.ID] =
     for {
       _ <- log.debug(s"xlr.tasks.appendScript(${phaseId.show}, $title, $taskType, $script)")
-      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" / phaseId.release.id / phaseId.phase / "tasks"),
         JsObject(
           "id" -> JsNull,
           "title" -> title.toJson,

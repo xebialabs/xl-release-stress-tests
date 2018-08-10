@@ -17,9 +17,9 @@ object Target {
 
   implicit class ConcreteTargetOps(val target: ConcreteTarget) extends AnyVal {
     def asNel: NonEmptyList[String] = target match {
-      case ReleaseTarget(releaseId) => NonEmptyList(releaseId, Nil)
-      case PhaseTarget(phaseId) => NonEmptyList(phaseId.release, phaseId.phase :: Nil)
-      case TaskTarget(taskId) => NonEmptyList(taskId.release, taskId.phase :: taskId.task.split("/").toList)
+      case ReleaseTarget(releaseId) => NonEmptyList(releaseId.id, Nil)
+      case PhaseTarget(phaseId) => NonEmptyList(phaseId.release.id, phaseId.phase :: Nil)
+      case TaskTarget(taskId) => NonEmptyList(taskId.release.id, taskId.phase :: taskId.task.split("/").toList)
     }
 
     def path: Uri.Path = {

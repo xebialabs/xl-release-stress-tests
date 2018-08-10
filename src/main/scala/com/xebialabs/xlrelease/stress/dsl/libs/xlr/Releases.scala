@@ -21,9 +21,9 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
                         (implicit session: User.Session): Program[Release.ID] =
     for {
       _ <- log.debug(s"xlr.releases.createFromTeamplate($templateId, ${createReleaseArgs.show})")
-      resp <- lib.http.json.post(server.api(_ ?/ "templates" / "Applications" / templateId / "create"), createReleaseArgs.toJson)
+      resp <- lib.http.json.post(server.api(_ ?/ "templates" / "Applications" / templateId.id / "create"), createReleaseArgs.toJson)
       releaseId <- lib.json.parse(JsUtils.readIdString)(resp)
-    } yield releaseId
+    } yield Release.ID(releaseId)
 
   def createRelease(title: String, scriptUser: Option[User] = None)
                    (implicit session: User.Session): Program[Phase.ID] = {
@@ -53,7 +53,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
            (implicit session: User.Session): Program[Release.ID] =
     for {
       _ <- log.debug(s"xlr.releases.start($releaseId)")
-      resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId / "start"), JsNull)
+      resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId.id / "start"), JsNull)
       _ <- api.http.discard(resp)
     } yield releaseId
 
@@ -61,7 +61,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
            (implicit session: User.Session): Program[Release.ID] =
     for {
       _ <- log.debug(s"xlr.releases.abort($releaseId)")
-      resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId / "abort"), JsNull)
+      resp <- lib.http.json.post(server.api(_ ?/ "releases" / "Applications" / releaseId.id / "abort"), JsNull)
       _ <- api.http.discard(resp)
     } yield releaseId
 
@@ -111,7 +111,7 @@ class Releases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ext
                       (implicit session: User.Session): Program[ReleaseStatus] =
     for {
       _ <- log.debug(s"xlr.releases.getReleaseStatus($releaseId)")
-      content <- lib.http.json.get(server.api(_ ?/ "releases" / "Applications" / releaseId))
+      content <- lib.http.json.get(server.api(_ ?/ "releases" / "Applications" / releaseId.id))
       releaseStatus <- lib.json.read(JsUtils.readReleaseStatus)(content)
     } yield releaseStatus
 

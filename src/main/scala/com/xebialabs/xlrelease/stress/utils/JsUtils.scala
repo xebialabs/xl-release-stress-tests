@@ -146,7 +146,7 @@ object JsUtils {
         for {
           id <- readIdString(obj)
           status <- readReleaseStatus(obj)
-        } yield id -> status
+        } yield Release.ID(id) -> status
       }
 
   def readFirstPhaseId(sep: String): JsValue => JsParsed[Phase.ID] =
@@ -225,7 +225,7 @@ object JsUtils {
     fullId =>
       fullId.split(sep).toList match {
         case releaseId :: phaseId :: Nil if isReleaseId(releaseId) && isPhaseId(phaseId) =>
-          Phase.ID(releaseId, phaseId).asRight
+          Phase.ID(Release.ID(releaseId), phaseId).asRight
         case _ =>
           parsePhaseIdError(fullId)
       }
@@ -236,7 +236,7 @@ object JsUtils {
         case _ :: _ :: Nil =>
           parseTaskIdError(fullId)
         case releaseId :: phaseId :: taskId if isReleaseId(releaseId) && isPhaseId(phaseId) && (taskId forall isTaskId) =>
-          Task.ID(Phase.ID(releaseId, phaseId), taskId.mkString("/")).asRight
+          Task.ID(Phase.ID(Release.ID(releaseId), phaseId), taskId.mkString("/")).asRight
         case _ =>
           parseTaskIdError(fullId)
       }
@@ -249,7 +249,7 @@ object JsUtils {
         case releaseId :: phaseId :: taskIdAndDependency =>
            taskIdAndDependency.span(_.startsWith("Task")) match {
              case (taskIds, dependencyId :: Nil) if taskIds.nonEmpty =>
-               val phase = Phase.ID(releaseId, phaseId)
+               val phase = Phase.ID(Release.ID(releaseId), phaseId)
                val task = Task.ID(phase, taskIds.mkString("/"))
                Dependency.ID(task, dependencyId).asRight
              case _ => parseDependencyIdError(fullId)

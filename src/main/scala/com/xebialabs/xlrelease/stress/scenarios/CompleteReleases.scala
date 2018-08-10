@@ -50,10 +50,11 @@ case class CompleteReleases(numUsers: Int)
           "###ADMIN_PASSWORD###",
           session.user.password
         )
-        _ <- setupTeams(role, automationId)
-        _ <- setupTeams(role, seedId)
+        templateId = Template.ID(seedId.id)
+        _ <- setupTeams(role, Template.ID(automationId.id))
+        _ <- setupTeams(role, templateId)
         _ <- api.log.info("setup role complete!")
-      } yield (role, seedId)
+      } yield (role, templateId)
     }
 
   override def program(params: (Role, Template.ID)): Program[Unit] = params match {
@@ -116,8 +117,8 @@ case class CompleteReleases(numUsers: Int)
           api.fail(s"No comments in task ${taskId.show}")
         }
         _ <- api.log.debug("last comment: "+ comment)
-        createdRelId <- getIdFromComment(comment.text).map(id => api.ok[Release.ID](id)).getOrElse {
-          api.fail(s"Cannot extract releaseId from comment: ${comment}")
+        createdRelId <- getIdFromComment(comment.text).map(id => api.ok(Release.ID(id.id))).getOrElse {
+          api.fail(s"Cannot extract releaseId from comment: $comment")
         }
         manualTaskIds <- api.xlr.releases.getTasksByTitle(createdRelId, "UI")
         uiTaskId = manualTaskIds.head

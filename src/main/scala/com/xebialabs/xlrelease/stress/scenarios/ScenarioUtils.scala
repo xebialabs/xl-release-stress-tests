@@ -22,7 +22,7 @@ trait ScenarioUtils extends dsl.API {
       if (m.groupCount < 3) {
         None
       } else {
-        Some(m.group(3))
+        Some(Template.ID(m.group(3)))
       }
     }
 
@@ -53,7 +53,7 @@ trait ScenarioUtils extends dsl.API {
         _ <- api.xlr.tasks.complete(manualTaskId, comment = None)
 //        _ <- api.xlr.releases.waitFor(phaseId.release, status = ReleaseStatus.Completed, interval = 5 seconds, retries = Some(10))
 //        _ <- api.log.info(s"createReleaseFromGroovy($title) completed: $releaseId")
-      } yield releaseId
+      } yield Release.ID(releaseId.id)
     }
   }
 

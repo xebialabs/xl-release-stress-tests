@@ -10,7 +10,7 @@ object Variable {
   object ID {
     implicit val showVariableID: Show[ID] = {
       case ID(None, key) => "${" ++ key ++ "}"
-      case ID(Some(releaseId), key) => releaseId ++ "/${" ++ key ++ "}"
+      case ID(Some(releaseId), key) => releaseId.id ++ "/${" ++ key ++ "}"
     }
   }
 }

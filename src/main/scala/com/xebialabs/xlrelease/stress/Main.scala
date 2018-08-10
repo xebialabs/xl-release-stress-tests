@@ -6,6 +6,7 @@ import cats._
 import cats.implicits._
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
+import com.xebialabs.xlrelease.stress.domain.Template
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -32,7 +33,7 @@ object Main {
 //    val threads = 2 * Math.max(1, numUsers)
 
     val howMany: Int = args(2).toInt
-    val templateId: String = args(3)
+    val templateId: Template.ID = Template.ID(args(3))
     val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(

@@ -13,18 +13,24 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-case class TestSomething(templateId: Template.ID, howMany: Int)
-                        (implicit
-                         val config: XlrConfig,
-                         val _api: DSL[DSL.Op])
-  extends Scenario[Unit]
+case class CommentsScenario(howMany: Int)
+                           (implicit
+                            val config: XlrConfig,
+                            val _api: DSL[DSL.Op])
+  extends Scenario[Template.ID]
     with ScenarioUtils {
 
   val name: String = s"Test Something"
 
-  override def setup: Program[Unit] = ().pure[Program]
+  override def setup: Program[Template.ID] =
+    api.xlr.users.admin() >>= { implicit session =>
+      for {
+        _ <- api.log.info("Creating parallel template...")
+        templateId <- api.xlr.templates.create("The ManyComments Template")
+      } yield templateId
+    }
 
-  override def program(params: Unit): Program[Unit] =
+  override def program(templateId: Template.ID): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
       rampUp(8, howMany, _ * 2) { _ =>
         api.control.repeat(5) {
@@ -53,7 +59,7 @@ case class TestSomething(templateId: Template.ID, howMany: Int)
       }.map(_ => ())
     }
 
-  override def cleanup(params: Unit): Program[Unit] = ().pure[Program]
+  override def cleanup(params: Template.ID): Program[Unit] = ().pure[Program]
 
-  override implicit val showParams: Show[Unit] = _ => ""
+  override implicit val showParams: Show[Template.ID] = templateId => s"Template($templateId)"
 }

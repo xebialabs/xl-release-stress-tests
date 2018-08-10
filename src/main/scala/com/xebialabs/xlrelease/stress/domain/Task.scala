@@ -17,7 +17,7 @@ object Task {
     def release: Release.ID = taskId.phaseId.release
     def phase: String = taskId.phaseId.phase
 
-    def asNel: NonEmptyList[String] = NonEmptyList(release, phase :: taskId.task.split("/").toList)
+    def asNel: NonEmptyList[String] = NonEmptyList(release.id, phase :: taskId.task.split("/").toList)
 
     def path: Uri.Path = {
       val nel = asNel

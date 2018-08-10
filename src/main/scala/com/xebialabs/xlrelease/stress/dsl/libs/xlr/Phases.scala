@@ -18,7 +18,7 @@ class Phases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) exten
                 (implicit session: User.Session): Program[Task.ID] =
     for {
       _ <- log.debug(s"xlr.tasks.appendToPhase(${phaseId.show}, $title, $taskType)")
-      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" / phaseId.release / phaseId.phase / "tasks"),
+      resp <- lib.http.json.post(server.api(_ ?/ "tasks" / "Applications" / phaseId.release.id / phaseId.phase / "tasks"),
         JsObject(
           "id" -> JsNull,
           "title" -> title.toJson,
@@ -34,7 +34,7 @@ class Phases[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) exten
     for {
       _ <- log.debug(s"xlr.tasks.insertInPhase(${phaseId.show}, $title, $taskType, $position)")
       resp <- lib.http.json.post(
-        server.api(_ ?/ "phases" / "Applications" / phaseId.release / phaseId.phase / "tasks").withQuery(
+        server.api(_ ?/ "phases" / "Applications" / phaseId.release.id / phaseId.phase / "tasks").withQuery(
           Uri.Query("position" -> position.toString)
         ),
         JsObject(
