@@ -30,22 +30,35 @@ case class CommentsScenario(howMany: Int)
       for {
         _ <- api.log.info("Creating parallel template...")
         phaseId <- api.xlr.templates.create("The ManyComments Template", scriptUser = Some(session.user))
-        _ <- createParGroup(phaseId, "Par1", 24)(i => myScriptTask(s"t1_$i"))
-        _ <- createParGroup(phaseId, "Par2", 24)(i => myScriptTask(s"t2_$i"))
+        _ <- createParGroup(phaseId, "Par1", 4, 16)(i => myScriptTask(s"t1_$i"))
+        _ <- createParGroup(phaseId, "Par2", 4, 16)(i => myScriptTask(s"t2_$i"))
         _ <- api.xlr.phases.appendTask(phaseId, "Control Task", "xlrelease.Task")
       } yield Template.ID(phaseId.release.id)
     }
 
-  protected def createParGroup(phaseId: Phase.ID, groupTitle: String, tasks: Int)
+  protected def parGroup(title: String): JsObject = JsObject(
+    "id" -> JsNull,
+    "type" -> "xlrelease.ParallelGroup".toJson,
+    "title" -> title.toJson
+  )
+
+  protected def mkParGroup(container: ConcreteTarget, title: String, subTasks: Int)
+                          (mkTask: Int => JsObject)
+                          (implicit session: User.Session): Program[Task.ID] =
+    for {
+      p <- api.xlr.tasks.append(parGroup("p1"), container)
+      _ <- (1 to subTasks).toList.map(mkTask).map { taskObj =>
+        api.xlr.tasks.append(taskObj, p.target)
+      }.sequence[Program, Task.ID].map(_ => ())
+    } yield p
+
+  protected def createParGroup(phaseId: Phase.ID, groupTitle: String, tasks: Int, subTasks: Int)
                               (mkTask: Int => JsObject)
-                              (implicit session: User.Session): Program[(Task.ID, List[Task.ID])] =
+                              (implicit session: User.Session): Program[Task.ID] =
     for {
       taskId <- api.xlr.phases.appendTask(phaseId, groupTitle, "xlrelease.ParallelGroup")
-      container = taskId.target
-      subTasks <- (1 to tasks).toList.map(mkTask).map { taskObj =>
-        api.xlr.tasks.append(taskObj, container)
-      }.sequence[Program, Task.ID]
-    } yield taskId -> subTasks
+      _ <- (1 to tasks).toList.map(i => mkParGroup(taskId.target, s"p$i", subTasks)(mkTask)).sequence
+    } yield taskId
 
   protected val script: String =
     s"""|import string
@@ -81,7 +94,7 @@ case class CommentsScenario(howMany: Int)
   override def program(templateId: Template.ID): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
       rampUp(1, howMany, _ * 2) { _ =>
-        api.control.repeat(5) {
+        api.control.repeat(4) {
           for {
             releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs("Test Release", Map.empty))
             par1 <- api.xlr.releases.getTasksByTitle(releaseId, "Par1").map(_.head)
