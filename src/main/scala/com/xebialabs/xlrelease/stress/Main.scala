@@ -22,7 +22,7 @@ object Main {
 
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 3) {
+    if (args.length < 5) {
       println(usage)
       System.exit(-1)
     }
@@ -32,7 +32,9 @@ object Main {
 //    val numUsers = args(2).toInt
 //    val threads = 2 * Math.max(1, numUsers)
 
-    val howMany: Int = args(2).toInt
+    val parallelism: Int = args(2).toInt
+    val parGroups: Int = args(3).toInt
+    val parTasks: Int = args(4).toInt
     val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(
@@ -43,7 +45,7 @@ object Main {
     val pool: ExecutorService = Executors.newFixedThreadPool(threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-    scenarios.CommentsScenario(howMany).run
+    scenarios.CommentsScenario(parallelism, parGroups, parTasks).run
 
     sys.exit(0)
   }

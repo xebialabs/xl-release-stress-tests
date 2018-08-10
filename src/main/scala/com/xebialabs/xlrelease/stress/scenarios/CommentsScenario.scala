@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-case class CommentsScenario(howMany: Int)
+case class CommentsScenario(parallelism: Int, parGroups: Int, parTasks: Int)
                            (implicit
                             val config: XlrConfig,
                             val _api: DSL[DSL.Op])
@@ -30,8 +30,8 @@ case class CommentsScenario(howMany: Int)
       for {
         _ <- api.log.info("Creating parallel template...")
         phaseId <- api.xlr.templates.create("The ManyComments Template", scriptUser = Some(session.user))
-        _ <- createParGroup(phaseId, "Par1", 4, 16)(i => myScriptTask(s"t1_$i"))
-        _ <- createParGroup(phaseId, "Par2", 4, 16)(i => myScriptTask(s"t2_$i"))
+        _ <- createParGroup(phaseId, "Par1", parGroups, parTasks)(i => myScriptTask(s"t1_$i"))
+        _ <- createParGroup(phaseId, "Par2", parGroups, parTasks)(i => myScriptTask(s"t2_$i"))
         _ <- api.xlr.phases.appendTask(phaseId, "Control Task", "xlrelease.Task")
       } yield Template.ID(phaseId.release.id)
     }
@@ -93,7 +93,7 @@ case class CommentsScenario(howMany: Int)
 
   override def program(templateId: Template.ID): Program[Unit] =
     api.xlr.users.admin() >>= { implicit session =>
-      rampUp(1, howMany, _ * 2) { _ =>
+      rampUp(1, parallelism, _ * 2) { _ =>
         api.control.repeat(2) {
           for {
             releaseId <- api.xlr.releases.createFromTemplate(templateId, CreateReleaseArgs("Test Release", Map.empty))
