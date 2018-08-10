@@ -17,7 +17,7 @@ import spray.json._
 class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) extends XlrLib[F] with DateFormat {
 
   def create(title: String)
-            (implicit session: User.Session): Program[Template.ID] =
+            (implicit session: User.Session): Program[Phase.ID] =
     for {
       _ <- log.debug(s"xlr.templates.create($title)")
       resp <- lib.http.json.post(server.api(_ ?/ "templates"), JsObject(
@@ -27,8 +27,8 @@ class Templates[F[_]](server: XlrServer)(implicit protected val _api: DSL[F]) ex
         "scheduledStartDate" -> (new Date).toString.toJson
       ))
       content <- api.http.parseJson(resp)
-      templateId <- lib.json.read(JsUtils.readIdString)(content)
-    } yield Template.ID(templateId)
+      phaseId <- lib.json.read(JsUtils.readFirstPhaseId(sep = "/"))(content)
+    } yield phaseId
 
   def importXlr(template: Template)
                (implicit session: User.Session): Program[Template.ID] =
