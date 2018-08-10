@@ -6,10 +6,6 @@ import cats._
 import cats.implicits._
 import akka.http.scaladsl.model.Uri
 import com.xebialabs.xlrelease.stress.config.{AdminPassword, XlrConfig, XlrServer}
-import com.xebialabs.xlrelease.stress.domain.{ReleaseStatus, Template}
-import com.xebialabs.xlrelease.stress.dsl.DSL
-import com.xebialabs.xlrelease.stress.runners.io
-import com.xebialabs.xlrelease.stress.utils.AkkaHttpClient
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -20,7 +16,7 @@ object Main {
       |    sbt "run xlReleaseUrl adminPassword numUsers"
       |
       |example:
-      |    sbt "run http://xl-release.xebialabs.com:5516 admin templateId howMany"
+      |    sbt "run http://xl-release.xebialabs.com:5516 admin howMany templateId"
     """.stripMargin
 
 
@@ -35,8 +31,8 @@ object Main {
 //    val numUsers = args(2).toInt
 //    val threads = 2 * Math.max(1, numUsers)
 
-    val templateId: Template.ID = args(2)
-    val howMany: Int = args(3).toInt
+    val howMany: Int = args(2).toInt
+    val templateId: String = args(3)
     val threads = 20
 
     implicit val config: XlrConfig = XlrConfig(
